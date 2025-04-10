@@ -1,41 +1,35 @@
-import React from "react";
 import Link from "next/link";
-import clsx from "clsx";
+import { clsx } from "clsx";
 
-type ButtonProps = {
+interface ButtonProps {
   children: React.ReactNode;
-  variant?: "primary" | "outline";
   href?: string;
+  variant?: "primary" | "outline";
   onClick?: () => void;
-  className?: string;
-};
+}
 
-export const Button: React.FC<ButtonProps> = ({
-  children,
-  variant = "primary",
-  href,
-  onClick,
-  className,
-}) => {
-  const baseStyles = "px-6 py-3 rounded-lg text-base font-semibold transition-all";
-  const variants = {
+export function Button({ children, href, variant = "primary", onClick }: ButtonProps) {
+  const baseClasses =
+    "px-6 py-3 rounded-lg text-base font-semibold transition duration-200";
+  const variantClasses = {
     primary: "bg-pink-600 hover:bg-pink-700 text-white",
     outline: "border border-white text-white hover:bg-white hover:text-black",
   };
 
-  const combined = clsx(baseStyles, variants[variant], className);
+  const classes = clsx(baseClasses, variantClasses[variant]);
+
 
   if (href) {
     return (
-      <Link href={href}>
-        <a className={combined}>{children}</a>
+      <Link href={href} className={classes}>
+        {children}
       </Link>
     );
   }
 
   return (
-    <button onClick={onClick} className={combined}>
+    <button onClick={onClick} className={classes}>
       {children}
     </button>
   );
-};
+}
