@@ -1,0 +1,131 @@
+/* 1. Dancing Shadow */
+@keyframes dancing-shadow {
+  0% {
+    text-shadow: 0 0 5px #f0f, 0 0 10px #0ff;
+  }
+  50% {
+    text-shadow: 0 0 15px #0ff, 0 0 25px #f0f;
+  }
+  100% {
+    text-shadow: 0 0 5px #f0f, 0 0 10px #0ff;
+  }
+}
+.animate-dancing-shadow {
+  animation: dancing-shadow 1.5s infinite;
+  color: white;
+}
+
+/* 2. Melting Text (agora: efeito de derretimento visual com gradiente animado) */
+@keyframes melting-text {
+  0% {
+    background-position: left;
+  }
+  100% {
+    background-position: right;
+  }
+}
+.animate-melting-text {
+  background: linear-gradient(to right, #ff7e5f, #feb47b, #ff7e5f);
+  background-size: 200% auto;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  animation: melting-text 3s ease-in-out infinite alternate;
+}
+
+/* 3. Matrix Effect (mais digital com luz pulsante) */
+@keyframes matrix {
+  0%, 100% {
+    color: #00ff00;
+    text-shadow: 0 0 5px #0f0, 0 0 10px #0f0;
+  }
+  50% {
+    color: #0f0;
+    text-shadow: 0 0 20px #0f0, 0 0 30px #0f0;
+  }
+}
+.animate-matrix {
+  animation: matrix 1.2s infinite;
+  font-family: monospace;
+}
+
+/* 4. Text Masking (efeito de "scanning") */
+@keyframes text-masking {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 100% 50%;
+  }
+}
+.animate-text-masking {
+  background: linear-gradient(90deg, #000, #fff, #000);
+  background-size: 200% auto;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  animation: text-masking 2s linear infinite;
+}
+
+/* 5. 3D Spin (substituído por um efeito de profundidade com sombra) */
+@keyframes spin3d {
+  0% {
+    text-shadow: 0 0 10px #00f, 2px 2px 20px #0ff;
+  }
+  100% {
+    text-shadow: 0 0 10px #f0f, -2px -2px 20px #ff0;
+  }
+}
+.animate-spin-3d {
+  animation: spin3d 2s infinite alternate;
+  color: #fff;
+}
+
+/* 6. Glitch Effect (sem mover, mas com sombra piscando colorida) */
+@keyframes glitch {
+  0%, 100% {
+    text-shadow: 2px 0 red, -2px 0 cyan;
+  }
+  50% {
+    text-shadow: -2px 0 red, 2px 0 lime;
+  }
+}
+.animate-glitch-effect {
+  animation: glitch 0.2s infinite alternate;
+  color: white;
+}
+
+/* 7. Neon Glow (expandido com pulsação de brilho) */
+@keyframes neon-glow {
+  0% {
+    text-shadow: 0 0 5px #ff00ff, 0 0 10px #ff00ff;
+  }
+  50% {
+    text-shadow: 0 0 15px #00ffff, 0 0 25px #00ffff;
+  }
+  100% {
+    text-shadow: 0 0 5px #ff00ff, 0 0 10px #ff00ff;
+  }
+}
+.animate-neon-glow {
+  animation: neon-glow 1.2s ease-in-out infinite;
+  color: #fff;
+}
+
+/* 8. Wavy Text (efeito de onda com gradiente em zigue-zague) */
+@keyframes wavy-text {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 100% 50%;
+  }
+}
+.animate-wavy-text {
+  background: linear-gradient(270deg, #ff6ec4, #7873f5, #4ade80, #ff6ec4);
+  background-size: 800% 800%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  animation: wavy-text 3s ease infinite;
+}

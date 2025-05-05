@@ -12,6 +12,9 @@ module.exports = {
         geist: ["var(--font-geist-mono)"],
       },
     },
+    animation: {
+      'scroll-left': 'scrollLeft 10s linear infinite',
+    },
   },
   plugins: [],
 }

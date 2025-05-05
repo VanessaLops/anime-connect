@@ -6,7 +6,7 @@ export default function Hero() {
     return (
         <section className="px-6 md:px-20 pt-16 pb-20 bg-gradient-to-b from-[#1a1a1a] to-black">
             <div className="flex flex-col lg:flex-row items-center justify-between gap-10">
-                {/* Texto */}
+
                 <div className="max-w-xl">
                     <h1 className="text-white text-4xl md:text-5xl font-semibold leading-tight mb-3">
                         Bem-vindo ao
@@ -23,7 +23,7 @@ export default function Hero() {
                     </div>
                 </div>
 
-                {/* Avatar */}
+
                 <div className="w-full lg:w-[400px] drop-shadow-[0_0_80px_rgba(236,72,153,0.8)]">
                     <Image
                         src="/avatar.png"
