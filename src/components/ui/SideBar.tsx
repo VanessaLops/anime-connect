@@ -22,20 +22,22 @@ export const grupos = [
 ];
 
 export const getGroupBackground = (groupName: string) => {
-    const gruposInfo = grupos
+    const gruposInfo = grupos;
     return gruposInfo.find(g => g.nome === groupName)?.background_image || '';
 };
 
+interface SidebarProps {
+  selectedItem: string;
+  onSelect: (item: string) => void;
+}
 
-
-export default function Sidebar({ selectedItem, onSelect}: any) {
+export default function Sidebar({ selectedItem, onSelect }: SidebarProps) {
   return (
     <div className="w-20 bg-[#202225] flex flex-col items-center py-4 space-y-4 overflow-y-auto">
 
       <button
         onClick={() => onSelect('direct')}
-        className={`w-12 h-12 rounded-full hover:rounded-2xl transition-all duration-300 ${selectedItem === 'direct' ? 'bg-[#5865F2]' : 'bg-gray-700'
-          }`}
+        className={`w-12 h-12 rounded-full hover:rounded-2xl transition-all duration-300 ${selectedItem === 'direct' ? 'bg-[#5865F2]' : 'bg-gray-700'}`}
       >
         <Image
           src="https://cdn-icons-png.flaticon.com/512/201/201623.png"
@@ -45,14 +47,12 @@ export default function Sidebar({ selectedItem, onSelect}: any) {
         />
       </button>
 
-
       <div className="flex-grow space-y-2 flex flex-col  items-center">
         {grupos.map((grupo) => (
           <button
             key={grupo.id}
             onClick={() => onSelect(grupo.nome)}
-            className={`w-12 h-12 rounded-full hover:rounded-2xl transition-all duration-300 ${selectedItem === grupo.nome ? 'bg-[#5865F2]' : 'bg-gray-700'
-              }`}
+            className={`w-12 h-12 rounded-full hover:rounded-2xl transition-all duration-300 ${selectedItem === grupo.nome ? 'bg-[#5865F2]' : 'bg-gray-700'}`}
           >
             <Image
               src={grupo.imagem}

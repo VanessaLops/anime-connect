@@ -1,5 +1,5 @@
-// components/AvatarSlideshow.tsx
 import React, { useEffect, useState } from "react";
+import Image from "next/image"; // Import the Image component from next/image
 
 interface AvatarSlideshowProps {
   images: string[];
@@ -22,12 +22,12 @@ const AvatarSlideshow: React.FC<AvatarSlideshowProps> = ({
   }, [images, interval]);
 
   return (
-    <img
-      src={images[currentIndex]}
+    <Image
+      src={images[currentIndex]} // Use the current image URL
       alt="Slideshow Avatar"
+      width={size} // Set the width
+      height={size} // Set the height
       style={{
-        width: size,
-        height: size,
         objectFit: "contain",
         transition: "opacity 0.5s ease-in-out",
       }}

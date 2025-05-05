@@ -1,4 +1,5 @@
 import React from "react";
+import Image from 'next/image';
 import '../../styles/animations.css';
 
 import visitante_lapis from "../../utils/icons/Visitante/visitante_1.gif";
@@ -25,12 +26,13 @@ interface PeaoStatusProps {
 }
 
 const PeaoAvatar: React.FC<PeaoStatusProps> = ({ isTyping, username, type, power, relacionamento }) => {
-    let avatarSrc: string | undefined
+    let avatarSrc: string = "";  // Garantir que avatarSrc seja uma string (não undefined)
+    
     if (type === "Avatar_Power_Peao") {
         return (
             <div style={{ display: 'flex', alignItems: 'center', padding: '4px' }}>
                 <AvatarSlideshow
-                    images={[
+                    images={[ 
                         dono_geral.src,
                         dono_sala.src,
                         moderador_sala.src
@@ -88,12 +90,12 @@ const PeaoAvatar: React.FC<PeaoStatusProps> = ({ isTyping, username, type, power
 
     return (
         <div style={{ display: 'flex', alignItems: 'center', padding: '4px' }}>
-            <img
-                src={avatarSrc}
+            <Image
+                src={avatarSrc || ""} 
                 alt="Avatar"
+                width={20}
+                height={20}
                 style={{
-                    width: 20,
-                    height: 20,
                     objectFit: 'contain',
                 }}
             />

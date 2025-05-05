@@ -19,7 +19,7 @@ export default function ComunidadePage() {
         </p>
 
         <Link
-          href="/signup"
+          href="/chat"
           className="bg-pink-600 hover:bg-pink-700 transition duration-300 text-white font-semibold py-3 px-8 rounded-full shadow-lg"
         >
           Entrar Agora

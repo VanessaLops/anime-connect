@@ -18,7 +18,7 @@ export default function Hero() {
                         O app definitivo para fãs de anime e mangá! Compartilhe, converse, descubra novos títulos e ganhe XP.
                     </p>
                     <div className="flex flex-col sm:flex-row gap-4">
-                        <Button variant="primary" href="/comunidade">Entrar na Comunidade</Button>
+                        <Button variant="primary" href="/comunidade">Entrar nas Comunidade</Button>
                         <Button variant="outline" href="/funcionalidades">Ver Funcionalidades</Button>
                     </div>
                 </div>

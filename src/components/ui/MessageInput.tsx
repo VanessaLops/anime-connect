@@ -1,6 +1,7 @@
+'use client'
+
 import { useState } from 'react';
 import Image from 'next/image';
-
 interface MessageInputProps {
     setIsTyping: (typing: boolean) => void;
 }
@@ -8,7 +9,7 @@ interface MessageInputProps {
 export default function MessageInput({ setIsTyping }: MessageInputProps) {
     const [message, setMessage] = useState('');
     const [typingTimeout, setTypingTimeout] = useState<NodeJS.Timeout | null>(null);
-  
+
     const emojis = [
         { code: '(hug)', src: 'https://s0.xat.com/web_gear/chat/GetStrip8.php?c=a_(hug)_30' },
         { code: '(heart)', src: 'https://s0.xat.com/web_gear/chat/GetStrip8.php?c=a_(heart)_30' },
@@ -24,40 +25,34 @@ export default function MessageInput({ setIsTyping }: MessageInputProps) {
         { code: '(clap)', src: 'https://s0.xat.com/web_gear/chat/GetStrip8.php?c=a_(clap)_30' }
     ];
 
-    const handleSendMessage = () => {
-        if (message.trim() !== '') {
-            console.log('Mensagem enviada:', message);
-            setMessage('');
-        }
-    };
-
     const handleEmojiClick = (emoji: string) => {
         setMessage((prev) => prev + ` ${emoji}`);
     };
-    
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setMessage(value);
-    
-    setIsTyping(true);
 
-    if (typingTimeout) clearTimeout(typingTimeout);
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        setMessage(value);
 
-    const timeout = setTimeout(() => {
-      setIsTyping(false);
-    }, 1000); 
-    setTypingTimeout(timeout);
-  };
+        setIsTyping(true);
+
+        if (typingTimeout) clearTimeout(typingTimeout);
+
+        const timeout = setTimeout(() => {
+            setIsTyping(false);
+        }, 1000);
+        setTypingTimeout(timeout);
+    };
 
     return (
         <div className="bg-[#40444b] p-4 rounded-lg shadow-lg relative w-full flex flex-col">
-
             <div className="emoji-picker flex gap-2 mb-2">
                 {emojis.map((emoji) => (
                     <button key={emoji.code} onClick={() => handleEmojiClick(emoji.code)}>
-                        <img
+                        <Image
                             src={emoji.src}
                             alt={emoji.code}
+                            width={32} // Set the width of the emoji
+                            height={32} // Set the height of the emoji
                             className="h-8 w-8"
                         />
                     </button>
@@ -65,18 +60,15 @@ export default function MessageInput({ setIsTyping }: MessageInputProps) {
             </div>
 
             <div className="flex items-center space-x-4 mt-4">
-
                 <input
-                
                     type="text"
                     value={message}
-                    onChange={(e) => setMessage(e.target.value)}
+                    onChange={handleChange}
                     placeholder="Digite sua mensagem..."
                     className="w-162 p-4 rounded-lg bg-[#2f3136] text-white placeholder-gray-400 focus:outline-none h-25"
                 />
 
                 <div className="flex items-center space-x-4 mt-4">
-
                     <button
                         onClick={() => console.log('Entrar no chat')}
                         className="bg-[#34b7f1] text-white p-3 rounded-full hover:bg-[#29a3cc] transition-all duration-200"
