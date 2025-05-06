@@ -2,7 +2,11 @@
 import Image from "next/image";
 import { Button } from "./Button";
 
+
+
 export default function Hero() {
+
+    
     return (
         <section className="px-6 md:px-20 pt-16 pb-20 bg-gradient-to-b from-[#1a1a1a] to-black">
             <div className="flex flex-col lg:flex-row items-center justify-between gap-10">

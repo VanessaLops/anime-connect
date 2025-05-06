@@ -23,10 +23,10 @@ const AvatarSlideshow: React.FC<AvatarSlideshowProps> = ({
 
   return (
     <Image
-      src={images[currentIndex]} // Use the current image URL
+      src={images[currentIndex]}
       alt="Slideshow Avatar"
-      width={size} // Set the width
-      height={size} // Set the height
+      width={size}
+      height={size} 
       style={{
         objectFit: "contain",
         transition: "opacity 0.5s ease-in-out",

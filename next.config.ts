@@ -7,7 +7,9 @@ const nextConfig = {
       'gs.xat.com',
       'images.stockcake.com',
       'upload.wikimedia.org',
-      'cdn-icons-png.flaticon.com'
+      'cdn-icons-png.flaticon.com',
+      'img.myloview.com.br',
+      'img.myloview.com.br'
     ],
   },
 };

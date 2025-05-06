@@ -1,23 +1,29 @@
-import PeaoAvatar from "./PeaoStatus"
+'use client'
 
-const users = [
-  { username: "Ester", type: "Admin_mod", power: 7, relacionamento: "bff" },
-  { username: "Super_Power", type: "Avatar_Power_Peao", power: 7, relacionamento: "casado" }
-]
 
-interface Props {
-  isTyping: boolean
+
+import { User } from "@/utils/userStorage";
+import PeaoAvatar from "./PeaoStatus";
+
+
+
+export interface PeaoAvatarProps extends User {
+  isTyping: boolean;
+  usersData: User[];
 }
 
-export default function DirectChat({ isTyping }: Props) {
+export default function DirectChat({ isTyping, usersData }: PeaoAvatarProps) {
+ 
+ console.log(usersData,'usersData')
   return (
     <div className="flex h-full flex-col bg-[#36393f] text-white">
       <div className="p-4 border-b border-gray-700 font-bold text-lg">Mensagens Diretas</div>
-      
-      <div className="p-4 space-y-4 overflow-y-auto">
-        {users.map((user, index) => (
+
+      {/* <div className="p-4 space-y-4 overflow-y-auto">
+        {usersData.map((user, index) => (
           <PeaoAvatar
             key={index}
+            group={user.group}
             username={user.username}
             type={user.type}
             power={user.power}
@@ -25,7 +31,7 @@ export default function DirectChat({ isTyping }: Props) {
             isTyping={isTyping}
           />
         ))}
-      </div>
+      </div> */}
     </div>
   )
 }
