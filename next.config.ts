@@ -1,7 +1,14 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    domains: ['gs.xat.com','images.stockcake.com','upload.wikimedia.org','cdn-icons-png.flaticon.com'],
+    domains: [
+      'www.free-smileys.com',
+      's0.xat.com',
+      'gs.xat.com',
+      'images.stockcake.com',
+      'upload.wikimedia.org',
+      'cdn-icons-png.flaticon.com'
+    ],
   },
 };
 

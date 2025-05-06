@@ -11,19 +11,18 @@ export default function MessageInput({ setIsTyping }: MessageInputProps) {
     const [typingTimeout, setTypingTimeout] = useState<NodeJS.Timeout | null>(null);
 
     const emojis = [
-        { code: '(hug)', src: 'https://s0.xat.com/web_gear/chat/GetStrip8.php?c=a_(hug)_30' },
-        { code: '(heart)', src: 'https://s0.xat.com/web_gear/chat/GetStrip8.php?c=a_(heart)_30' },
-        { code: '(smile)', src: 'https://s0.xat.com/web_gear/chat/GetStrip8.php?c=a_(smile)_30' },
-        { code: '(wink)', src: 'https://s0.xat.com/web_gear/chat/GetStrip8.php?c=a_(wink)_30' },
-        { code: '(cry)', src: 'https://s0.xat.com/web_gear/chat/GetStrip8.php?c=a_(cry)_30' },
-        { code: '(sad)', src: 'https://s0.xat.com/web_gear/chat/GetStrip8.php?c=a_(sad)_30' },
-        { code: '(kiss)', src: 'https://s0.xat.com/web_gear/chat/GetStrip8.php?c=a_(kiss)_30' },
-        { code: '(angry)', src: 'https://s0.xat.com/web_gear/chat/GetStrip8.php?c=a_(angry)_30' },
-        { code: '(love)', src: 'https://s0.xat.com/web_gear/chat/GetStrip8.php?c=a_(love)_30' },
-        { code: '(cool)', src: 'https://s0.xat.com/web_gear/chat/GetStrip8.php?c=a_(cool)_30' },
-        { code: '(tongue)', src: 'https://s0.xat.com/web_gear/chat/GetStrip8.php?c=a_(tongue)_30' },
-        { code: '(clap)', src: 'https://s0.xat.com/web_gear/chat/GetStrip8.php?c=a_(clap)_30' }
-    ];
+        { code: '(happy)', src: 'https://www.free-smileys.com/files/happy-smileys/572.gif' },
+        { code: '(wink)', src: 'https://www.free-smileys.com/files/happy-smileys/573.gif' },
+        { code: '(cool)', src: 'https://www.free-smileys.com/files/happy-smileys/576.gif' },
+        { code: '(laugh)', src: 'https://www.free-smileys.com/files/happy-smileys/574.gif' },
+        { code: '(sad)', src: 'https://www.free-smileys.com/files/happy-smileys/579.gif' },
+        { code: '(surprised)', src: 'https://www.free-smileys.com/files/happy-smileys/581.gif' },
+        { code: '(disappointed)', src: 'https://www.free-smileys.com/files/disappointed-smileys/898.gif' },
+        { code: '(love1)', src: 'https://www.free-smileys.com/files/love-smileys/871.gif' },
+        { code: '(love)', src: 'https://www.free-smileys.com/files/love-smileys/872.gif' },
+        { code: '(love3)', src: 'https://www.free-smileys.com/files/love-smileys/870.gif' },
+      ];
+      
 
     const handleEmojiClick = (emoji: string) => {
         setMessage((prev) => prev + ` ${emoji}`);
@@ -51,10 +50,11 @@ export default function MessageInput({ setIsTyping }: MessageInputProps) {
                         <Image
                             src={emoji.src}
                             alt={emoji.code}
-                            width={32} // Set the width of the emoji
-                            height={32} // Set the height of the emoji
+                            width={32}
+                            height={32}
                             className="h-8 w-8"
                         />
+
                     </button>
                 ))}
             </div>
