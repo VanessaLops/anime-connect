@@ -1,5 +1,5 @@
 import { database } from "../../firebase";
-import { ref, set } from "firebase/database";
+import { ref, set, get } from "firebase/database";
 
 export type UserType =
   | "Dono_Geral"
@@ -10,7 +10,7 @@ export type UserType =
   | "Visitante";
 
 export interface User {
-  id: string;         
+  id: string;
   username: string;
   type: UserType;
   power: number;
@@ -38,14 +38,26 @@ const isMobileDevice = (): boolean => {
   return mobile;
 };
 
+function getVisitorIdFromCookie(): string | null {
+  const match = document.cookie.match(/(^| )visitor_id=([^;]+)/);
+  return match ? match[2] : null;
+}
+
+
 export const saveUserAsVisitor = async (): Promise<User> => {
+  const existingId = getVisitorIdFromCookie();
+
+  if (existingId) {
+    const snapshot = await get(ref(database, `visitors/${existingId}`));
+    if (snapshot.exists()) {
+      return snapshot.val();
+    }
+  }
+
   const ip = await getUserIP();
   const device = isMobileDevice() ? "mobile" : "desktop";
-
-  // 1) Geramos nosso próprio ID
   const uuid = crypto.randomUUID();
 
-  // 2) Montamos o objeto de visitante COM esse ID
   const visitante: User = {
     id: uuid,
     username: ip ? `Visitante_${ip}` : `Visitante_${Math.floor(Math.random() * 100000)}`,
@@ -55,36 +67,14 @@ export const saveUserAsVisitor = async (): Promise<User> => {
     relacionamento: "",
   };
 
-  console.log(">> saveUserAsVisitor visitante:", visitante);
+  await set(ref(database, `visitors/${uuid}`), {
+    ...visitante,
+    ip: ip ?? "unknown",
+    device,
+    timestamp: new Date().toISOString(),
+  });
 
-  try {
-    // 3) Usamos set em vez de push, para usar uuid como chave
-    const node = ref(database, `visitors/${uuid}`);
-    console.log(">> gravando em /visitors/" + uuid);
+  document.cookie = `visitor_id=${uuid}; path=/; max-age=31536000`;
 
-    await set(node, {
-      ...visitante,
-      ip: ip ?? "unknown",
-      device,
-      timestamp: new Date().toISOString(),
-    });
-    console.log("✅ gravação bem‑sucedida em /visitors/" + uuid);
-  } catch (error) {
-    console.error("❌ erro ao salvar visitante no Realtime Database:", error);
-  }
-
-  // 4) Salvamos no localStorage TODO o objeto, incluindo o ID
-  localStorage.setItem("chat_user", JSON.stringify(visitante));
   return visitante;
-};
-
-export const getUserFromLocalStorage = (): User | null => {
-  if (typeof window === "undefined") return null;
-  const s = localStorage.getItem("chat_user");
-  if (!s) return null;
-  try {
-    return JSON.parse(s) as User;
-  } catch {
-    return null;
-  }
 };

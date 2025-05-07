@@ -1,42 +1,27 @@
-
 'use client'
 
 import { useEffect, useState } from 'react';
 import Sidebar from '../../components/ui/SideBar';
 import ChatWindow from '../../components/ui/ChatWindow';
 import MessageInput from '../../components/ui/MessageInput';
-import { getUserFromLocalStorage, saveUserAsVisitor, User } from '@/utils/userStorage';
+import { saveUserAsVisitor, User } from '@/utils/userStorage';
 
 export default function ChatPage() {
   const [selectedItem, setSelectedItem] = useState<'direct' | string>('direct');
   const [isTyping, setIsTyping] = useState(false);
-  const [currentUser, setCurrentUser] = useState<User | null>();
-
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   console.log(currentUser)
   useEffect(() => {
-    const initUser = async () => {
-      const user = getUserFromLocalStorage();
-      if (!user) {
-        const visitante = await saveUserAsVisitor();
-        setCurrentUser(visitante);
-      } else {
+    const loadVisitor = async () => {
+      try {
+        const user = await saveUserAsVisitor();
         setCurrentUser(user);
+      } catch (error) {
+        console.error("Erro ao carregar o visitante:", error);
       }
-
-
-      //COMENTANDO POR ENQUANTO NAO TEM TABELA AMIGOS
-      // const amigosSalvos = JSON.parse(localStorage.getItem('friends') || '[]');
-      // setFriends(amigosSalvos);
-
-
-      // if (amigosSalvos.length > 0) {
-      //   setSelectedItem('direct');
-      // } else {
-      //   setSelectedItem('geral');
-      // }
     };
 
-    initUser();
+    loadVisitor();
   }, []);
 
   return (
@@ -44,20 +29,15 @@ export default function ChatPage() {
       <Sidebar selectedItem={selectedItem} onSelect={setSelectedItem} />
       {selectedItem === 'direct' ? (
         <>
-         {/* <DirectChat isTyping={isTyping} usersData={[currentUser]}/> */}
+          {/* Aqui você pode adicionar o componente de chat direto, caso necessário */}
           <h1>DESATIVADO</h1>
         </>
       ) : (
-        <>
-          <div className="flex flex-col flex-1">
-            <ChatWindow isTyping={isTyping} groupName={selectedItem} />
-            <MessageInput setIsTyping={setIsTyping} />
-          </div>
-        </>
+        <div className="flex flex-col flex-1">
+          <ChatWindow isTyping={isTyping} groupName={selectedItem} />
+          <MessageInput setIsTyping={setIsTyping} />
+        </div>
       )}
-
-
-
     </div>
   );
 }
