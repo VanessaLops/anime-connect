@@ -17,6 +17,8 @@ export interface User {
   group: string[];
   relacionamento?: string;
   image: string;
+  userNameAcess: string;
+  password: string;
 }
 
 const AJUDA_GROUP_ID = "d03330f1-834a-4535-af18-6a805642c962";
@@ -92,7 +94,9 @@ export const saveUserAsVisitor = async (): Promise<User> => {
     power: 0,
     group: [AJUDA_GROUP_ID],
     relacionamento: "",
-    image: avatar
+    image: avatar,
+    userNameAcess: '',
+    password: ''
   };
 
 

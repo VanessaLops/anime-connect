@@ -53,7 +53,7 @@ export default function ChatWindow({ isTyping, groupName }: ChatWindowProps) {
 
     const fetchUsers = async () => {
         const usersFromFirebase = await getUsersFromFirebase();
-        console.log(usersFromFirebase,'usersFromFirebase')
+        console.log(usersFromFirebase, 'usersFromFirebase')
         setUsers(usersFromFirebase);
     };
 
@@ -140,6 +140,9 @@ export default function ChatWindow({ isTyping, groupName }: ChatWindowProps) {
                                     isTyping={isTyping}
                                     id={user.userData.id}
                                     image={user.userData.image}
+                                    userNameAcess=""
+                                    password=""
+
                                 />
                             </div>
                         ))
@@ -178,6 +181,8 @@ export default function ChatWindow({ isTyping, groupName }: ChatWindowProps) {
                                     group={user.userData.group}
                                     id={user.userData.id}
                                     image={user.userData.image}
+                                    userNameAcess=""
+                                    password=""
                                 />
                             </div>
                         ))

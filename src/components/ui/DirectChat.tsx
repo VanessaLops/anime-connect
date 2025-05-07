@@ -13,11 +13,11 @@ export interface DirectChatProps {
 
 export default function DirectChat({ isTyping, usersData }: DirectChatProps) {
 
-console.log(isTyping,'isTypingisTyping')
+  console.log(isTyping, 'isTypingisTyping')
   const normalizedUsers = Array.isArray(usersData) ? usersData : [usersData];
 
 
-  
+
 
   console.log(usersData, 'usersData')
   return (
@@ -35,6 +35,8 @@ console.log(isTyping,'isTypingisTyping')
             isTyping={isTyping}
             id={user.id}
             image={user.image}
+            userNameAcess=""
+            password=""
           />
         ))}
 
