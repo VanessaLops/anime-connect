@@ -68,8 +68,8 @@ export const saveUserAsVisitor = async (): Promise<User> => {
 
   try {
     // 3) Usamos set em vez de push, para usar uuid como chave
-    const node = ref(database, `users/${uuid}`);
-    console.log(">> gravando em /users/" + uuid);
+    const node = ref(database, `visitors/${uuid}`);
+    console.log(">> gravando em /visitors/" + uuid);
 
     await set(node, {
       ...visitante,
@@ -77,7 +77,7 @@ export const saveUserAsVisitor = async (): Promise<User> => {
       device,
       timestamp: new Date().toISOString(),
     });
-    console.log("✅ gravação bem‑sucedida em /users/" + uuid);
+    console.log("✅ gravação bem‑sucedida em /visitors/" + uuid);
   } catch (error) {
     console.error("❌ erro ao salvar visitante no Realtime Database:", error);
   }

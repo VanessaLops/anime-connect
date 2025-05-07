@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import '../../app/globals.css';
 import PeaoAvatar from "./PeaoStatus";
-import { get, ref } from "firebase/database";
+import { get, ref, set } from "firebase/database";
 import { database } from '../../../firebase';
 import { User } from "@/utils/userStorage";
 import { GroupData } from "./SideBar";
@@ -17,27 +17,53 @@ interface Users {
     users: User[];
 }
 
-
-
-const getUserFromLocalStorage = (): User[] => {
+export const getUsersFromFirebase = async (): Promise<User[]> => {
     try {
-        const storedUsers = localStorage.getItem('chat_user');
-        return storedUsers ? JSON.parse(storedUsers) : [];
+        // Referência ao nó "users" do Firebase
+        const usersRef = ref(database, "visitors");
+
+        // Recuperando os dados dos usuários
+        const snapshot = await get(usersRef);
+
+        if (snapshot.exists()) {
+            const usersData = snapshot.val();
+
+            // Transformando os dados em um array de usuários
+            const users: User[] = Object.keys(usersData).map(key => ({
+                id: key,
+                ...usersData[key]
+            }));
+
+            console.log("Usuários recuperados do Firebase:", users);
+            return users;
+        } else {
+            console.log("Nenhum usuário encontrado.");
+            return [];
+        }
     } catch (error) {
-        console.error("Erro ao recuperar usuários do localStorage", error);
+        console.error("Erro ao recuperar usuários do Firebase:", error);
         return [];
     }
 };
-
 export default function ChatWindow({ isTyping, groupName }: ChatWindowProps) {
     console.log(groupName, 'groupName')
-    
+    const [users, setUsers] = useState<User[]>([]);
     const [grupos, setGrupos] = useState<GroupData[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
-    const users = getUserFromLocalStorage() || [];
+
+    const fetchUsers = async () => {
+        const usersFromFirebase = await getUsersFromFirebase();
+        console.log(usersFromFirebase,'usersFromFirebase')
+        setUsers(usersFromFirebase);
+    };
+
+    useEffect(() => {
+        fetchUsers();
+    }, []);
+
     const [usersData] = useState<Users>({ users });
     console.log(users, 'users')
-    
+
     console.log(groupName, 'groupName')
     console.log("Dados de usersData:", usersData?.users);
 
@@ -80,7 +106,7 @@ export default function ChatWindow({ isTyping, groupName }: ChatWindowProps) {
         ? usersData.users
         : [usersData.users];
 
-        console.log(usuarios,'usuarios')
+    console.log(usuarios, 'usuarios')
     const gruposPorUsuario = usuarios.map(user => ({
         userData: user,
         grupos: filtrarGrupos(grupos, user)
@@ -90,7 +116,7 @@ export default function ChatWindow({ isTyping, groupName }: ChatWindowProps) {
 
     return (
         <div className="flex h-screen bg-[#36393f] text-white">
-            <div className="flex-1 flex flex-col">
+            {/* <div className="flex-1 flex flex-col">
                 <div className="p-4 border-b border-gray-700 font-bold text-lg">
                     {groupName}
                 </div>
@@ -155,7 +181,7 @@ export default function ChatWindow({ isTyping, groupName }: ChatWindowProps) {
                         ))
                     )}
                 </div>
-            </div>
+            </div> */}
         </div>
     );
 }
