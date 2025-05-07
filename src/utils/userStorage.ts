@@ -10,7 +10,7 @@ export type UserType =
   | "Visitante";
 
 export interface User {
-  id: string;            
+  id: string;         
   username: string;
   type: UserType;
   power: number;
@@ -45,8 +45,6 @@ export const saveUserAsVisitor = async (): Promise<User> => {
   // 1) Geramos nosso próprio ID
   const uuid = crypto.randomUUID();
 
-
-  
   // 2) Montamos o objeto de visitante COM esse ID
   const visitante: User = {
     id: uuid,
@@ -55,7 +53,6 @@ export const saveUserAsVisitor = async (): Promise<User> => {
     power: 0,
     group: [AJUDA_GROUP_ID],
     relacionamento: "",
-    
   };
 
   console.log(">> saveUserAsVisitor visitante:", visitante);
