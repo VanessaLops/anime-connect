@@ -16,7 +16,7 @@ export interface User {
   power: number;
   group: string[];
   relacionamento?: string;
-  image: string[]
+  image: string;
 }
 
 const AJUDA_GROUP_ID = "d03330f1-834a-4535-af18-6a805642c962";
@@ -30,13 +30,12 @@ const generateUsername = () => {
 };
 
 
-const generateAvatars = () => {
-  const avatarUrls = [];
-  for (let i = 0; i < 10; i++) {
-    avatarUrls.push(`https://api.dicebear.com/6.x/croodles-neutral/svg?seed=${Math.floor(Math.random() * 100000)}`);
-  }
-  return avatarUrls;
+
+const generateAvatar = () => {
+  return `https://api.dicebear.com/6.x/croodles-neutral/svg?seed=${Math.floor(Math.random() * 100000)}`;
 };
+
+
 
 export const getUserIP = async (): Promise<string | null> => {
   try {
@@ -84,7 +83,7 @@ export const saveUserAsVisitor = async (): Promise<User> => {
   const uuid = crypto.randomUUID();
 
   const username = generateUsername();
-  const avatars = generateAvatars();
+  const avatar = generateAvatar();
 
   const visitante: User = {
     id: uuid,
@@ -93,7 +92,7 @@ export const saveUserAsVisitor = async (): Promise<User> => {
     power: 0,
     group: [AJUDA_GROUP_ID],
     relacionamento: "",
-    image: avatars
+    image: avatar
   };
 
 
