@@ -4,19 +4,18 @@ export interface User {
   username: string;
   type: UserType;
   power: number;
-  group: number[];
+  group: string[]; 
   relacionamento?: string;
 }
 
-// Obtém usuário do localStorage (se existir)
-export const getUserFromLocalStorage = (): User | null => {
-  if (typeof window === 'undefined') return null;
-
-  const user = localStorage.getItem('chat_user');
-  return user ? JSON.parse(user) as User : null;
+// Valida se a string é um UserType válido
+const isValidUserType = (type: UserType) => {
+  return ["Dono_Geral", "Admin_mod", "Dono_Sala", "Staff", "Membro", "Visitante"].includes(type);
 };
 
-// Função para pegar IP público
+const AJUDA_GROUP_ID = "d03330f1-834a-4535-af18-6a805642c962";
+
+// Função para obter IP público do usuário
 export const getUserIP = async (): Promise<string | null> => {
   try {
     const response = await fetch('https://api.ipify.org?format=json');
@@ -28,7 +27,6 @@ export const getUserIP = async (): Promise<string | null> => {
   }
 };
 
-// Salva um novo usuário Visitante no localStorage com IP real
 export const saveUserAsVisitor = async (): Promise<User> => {
   const ip = await getUserIP();
 
@@ -36,9 +34,35 @@ export const saveUserAsVisitor = async (): Promise<User> => {
     username: ip ? `Visitante_${ip}` : `Visitante_${Math.floor(Math.random() * 100000)}`,
     type: "Visitante",
     power: 1,
-    group: [0], // Grupo 0 = acesso a todos os grupos
+    group: [AJUDA_GROUP_ID], // Sempre atribui o grupo "Ajuda" primeiro
+    relacionamento: '',
   };
 
   localStorage.setItem('chat_user', JSON.stringify(visitante));
   return visitante;
 };
+
+export const getUserFromLocalStorage = (): User | null => {
+  if (typeof window === 'undefined') return null;
+
+  const userString = localStorage.getItem('chat_user');
+  if (!userString) return null;
+
+  try {
+    const parsed = JSON.parse(userString);
+    if (
+      typeof parsed.username === 'string' &&
+      typeof parsed.power === 'number' &&
+      Array.isArray(parsed.group) &&
+      isValidUserType(parsed.type)
+    ) {
+      return parsed as User;
+    } else {
+      return null;
+    }
+  } catch (err) {
+    console.error("Erro ao parsear usuário do localStorage:", err);
+    return null;
+  }
+};
+

@@ -1,65 +1,47 @@
 'use client'
-
-
-
 import { useState, useEffect } from "react";
 import '../../app/globals.css';
 import PeaoAvatar from "./PeaoStatus";
 import { get, ref } from "firebase/database";
 import { database } from '../../../firebase';
-import { UserType } from "@/utils/userStorage";
+import { User } from "@/utils/userStorage";
+import { GroupData } from "./SideBar";
 
 interface ChatWindowProps {
     isTyping: boolean;
     groupName: string;
 }
 
-const users = [
-    { username: "Visitante", type: "Visitante", power: 1, group: [0] },
-    { username: "Membro 1", type: "Membro", power: 1, group: [2] },
-    { username: "Membro 2", type: "Membro", power: 3, group: [3] },
-    {
-        username: "Dono Geral",
-        type: "Dono_Geral",
-        power: 4,
-        group: [1, 2, 3],
-    },
-    {
-        username: "Dono Sala",
-        type: "Dono_Sala",
-        power: 5,
-        relacionamento: "casado",
-        group: [2],
-    },
-    { username: "Staff", type: "Staff", power: 6, group: [1] },
-    {
-        username: "POWER AVATAR",
-        type: "Membro",
-        power: 8,
-        relacionamento: "casado",
-        group: [2],
-    },
-    {
-        username: "ESTER",
-        type: "Admin_mod",
-        power: 1,
-        relacionamento: "casado",
-        group: [2],
-    },
-];
 
-const order: Record<UserType, number> = {
-    "Dono_Geral": 1,
-    "Dono_Sala": 2,
-    "Admin_mod": 2,
-    "Staff": 3,
-    "Membro": 4,
-    "Visitante": 5
+interface Users {
+    users: User[];
+}
+
+
+
+const getUserFromLocalStorage = (): User[] => {
+    try {
+        const storedUsers = localStorage.getItem('chat_user');
+        return storedUsers ? JSON.parse(storedUsers) : [];
+    } catch (error) {
+        console.error("Erro ao recuperar usuários do localStorage", error);
+        return [];
+    }
 };
 
 export default function ChatWindow({ isTyping, groupName }: ChatWindowProps) {
-    const [grupos, setGrupos] = useState<any[]>([]);
+    console.log(groupName, 'groupName')
+    
+    const [grupos, setGrupos] = useState<GroupData[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
+    const users = getUserFromLocalStorage() || [];
+    const [usersData] = useState<Users>({ users });
+
+    console.log(groupName, 'groupName')
+    console.log("Dados de usersData:", usersData?.users);
+
+    console.log(grupos, 'grupos');
+
 
     const fetchGrupos = async () => {
         try {
@@ -76,29 +58,33 @@ export default function ChatWindow({ isTyping, groupName }: ChatWindowProps) {
         }
     };
 
-
     useEffect(() => {
         fetchGrupos();
     }, []);
 
 
-    const getGroupIdByName = (nome: string) => {
-        return grupos.find(g => g.nome === nome)?.id;
-    };
 
 
-    const groupId = getGroupIdByName(groupName);
+    function filtrarGrupos(grupos: GroupData[], usuario: User): GroupData[] {
+        const grupoAjudaId = "d03330f1-834a-4535-af18-6a805642c962";
+        // Se for visitante, incluir o grupo de ajuda mesmo que não esteja em usuario.group
+        const gruposPermitidos = usuario.type === "Visitante"
+            ? [...usuario.group, grupoAjudaId]
+            : usuario.group;
 
-    const sortedUsers = users.sort((a, b) => {
-        if (a.type === "Dono_Geral" && !b.group.includes(3)) return -1;
-        if (b.type === "Dono_Geral" && !a.group.includes(3)) return 1;
-        return order[a.type as UserType] - order[b.type as UserType];
-    });
+        return grupos.filter(grupo => gruposPermitidos.includes(grupo.groupId));
+    }
+
+    const usuarios = Array.isArray(usersData.users)
+        ? usersData.users
+        : [usersData.users];
+
+    const gruposPorUsuario = usuarios.map(user => ({
+        userData: user,
+        grupos: filtrarGrupos(grupos, user)
+    }));
 
 
-    const visibleUsers = groupId !== undefined
-        ? sortedUsers.filter(user => user.group.includes(groupId))
-        : [];
 
     return (
         <div className="flex h-screen bg-[#36393f] text-white">
@@ -111,18 +97,18 @@ export default function ChatWindow({ isTyping, groupName }: ChatWindowProps) {
                     {loading ? (
                         <p>Carregando grupos...</p>
                     ) : (
-                        visibleUsers?.map((user, index) => (
+                        gruposPorUsuario?.map((user, index) => (
                             <div
                                 key={index}
                                 className="flex items-center gap-2 px-1 py-1 hover:bg-[#2e2e3a] rounded-sm transition-all"
                             >
                                 <PeaoAvatar
                                     key={index}
-                                    group={user.group}
-                                    username={user.username}
-                                    type={user.type}
-                                    power={user.power}
-                                    relacionamento={user.relacionamento}
+                                    group={user.userData.group}
+                                    username={user.userData.username}
+                                    type={user.userData.type}
+                                    power={user.userData.power}
+                                    relacionamento={user.userData.relacionamento}
                                     isTyping={isTyping}
                                 />
                             </div>
@@ -148,18 +134,18 @@ export default function ChatWindow({ isTyping, groupName }: ChatWindowProps) {
                     {loading ? (
                         <p>Carregando usuários...</p>
                     ) : (
-                        visibleUsers.map((user, index) => (
+                        gruposPorUsuario.map((user, index) => (
                             <div
                                 key={index}
                                 className="flex items-center gap-2 px-1 py-1 hover:bg-[#2e2e3a] rounded-sm transition-all"
                             >
                                 <PeaoAvatar
-                                    username={user.username}
-                                    type={user.type}
-                                    power={user.power}
-                                    relacionamento={user.relacionamento}
+                                    username={user.userData.username}
+                                    type={user.userData.type}
+                                    power={user.userData.power}
+                                    relacionamento={user.userData.relacionamento}
                                     isTyping={isTyping}
-                                    group={user.group}
+                                    group={user.userData.group}
                                 />
                             </div>
                         ))

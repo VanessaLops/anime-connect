@@ -12,7 +12,6 @@ import membro_cachorro from "../../utils/icons/Membro/membro_cachorro.png";
 
 import membro_griter1 from "../../utils/powers/gritter/power_griter_membro.gif";
 
-import ester from "../../utils/icons/🖤 (11).gif";
 import dono_geral from "../../utils/icons/dono_geral.png";
 import dono_sala from "../../utils/icons/Dono_Sala/owner.png";
 import moderador_sala from "../../utils/icons/Moderador/mod.png";
@@ -30,7 +29,6 @@ const PeaoAvatar: React.FC<AvatarProps> = ({
     type,
     power,
     relacionamento,
-    group,
 }) => {
 
     let avatarSrc: string = "";
