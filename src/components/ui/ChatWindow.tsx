@@ -110,6 +110,7 @@ export default function ChatWindow({ isTyping, groupName }: ChatWindowProps) {
                                     power={user.userData.power}
                                     relacionamento={user.userData.relacionamento}
                                     isTyping={isTyping}
+                                    id={user.userData.id}
                                 />
                             </div>
                         ))
@@ -146,6 +147,7 @@ export default function ChatWindow({ isTyping, groupName }: ChatWindowProps) {
                                     relacionamento={user.userData.relacionamento}
                                     isTyping={isTyping}
                                     group={user.userData.group}
+                                    id={user.userData.id}
                                 />
                             </div>
                         ))

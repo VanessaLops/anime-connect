@@ -33,6 +33,7 @@ console.log(isTyping,'isTypingisTyping')
             power={user?.power}
             relacionamento={user?.relacionamento}
             isTyping={isTyping}
+            id={user.id}
           />
         ))}
 
