@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import '../../app/globals.css';
 import PeaoAvatar from "./PeaoStatus";
-import { get, ref, set } from "firebase/database";
+import { get, ref } from "firebase/database";
 import { database } from '../../../firebase';
 import { User } from "@/utils/userStorage";
 import { GroupData } from "./SideBar";

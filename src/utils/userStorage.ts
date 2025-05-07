@@ -45,12 +45,6 @@ export const saveUserAsVisitor = async (): Promise<User> => {
   // 1) Geramos nosso próprio ID
   const uuid = crypto.randomUUID();
 
-  const fingerprint = {
-    userAgent: navigator.userAgent,
-    language: navigator.language,
-    platform: navigator.platform,
-    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-  };
 
   
   // 2) Montamos o objeto de visitante COM esse ID
