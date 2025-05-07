@@ -1,5 +1,7 @@
-export type UserType = "Dono_Geral" | "Admin_mod" | "Dono_Sala" | "Staff" | "Membro" | "Visitante";
 
+
+export type UserType = "Dono_Geral" | "Admin_mod" | "Dono_Sala" | "Staff" | "Membro" | "Visitante";
+import { db, ref, set, get, child } from "../../firebase";
 export interface User {
   username: string;
   type: UserType;
@@ -37,7 +39,9 @@ export const saveUserAsVisitor = async (): Promise<User> => {
     group: [AJUDA_GROUP_ID], // Sempre atribui o grupo "Ajuda" primeiro
     relacionamento: '',
   };
+};
 
+    await set(ref(db, `users/${userId}`), user);
   localStorage.setItem('chat_user', JSON.stringify(visitante));
   return visitante;
 };
