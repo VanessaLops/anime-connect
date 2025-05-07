@@ -50,7 +50,7 @@ export const saveUserAsVisitor = async (): Promise<User> => {
     id: uuid,
     username: ip ? `Visitante_${ip}` : `Visitante_${Math.floor(Math.random() * 100000)}`,
     type: "Visitante",
-    power: 1,
+    power: 0,
     group: [AJUDA_GROUP_ID],
     relacionamento: "",
   };
