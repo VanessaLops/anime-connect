@@ -62,7 +62,7 @@ export default function ChatWindow({ isTyping, groupName }: ChatWindowProps) {
     }, []);
 
     const [usersData] = useState<Users>({ users });
-    console.log(users, 'users')
+    console.log(users, 'visitors')
 
     console.log(groupName, 'groupName')
     console.log("Dados de usersData:", usersData?.users);
@@ -102,9 +102,9 @@ export default function ChatWindow({ isTyping, groupName }: ChatWindowProps) {
         return grupos.filter(grupo => gruposPermitidos.includes(grupo.groupId));
     }
 
-    const usuarios = Array.isArray(usersData.users)
-        ? usersData.users
-        : [usersData.users];
+    const usuarios = Array.isArray(users)
+        ? users
+        : [users];
 
     console.log(usuarios, 'usuarios')
     const gruposPorUsuario = usuarios.map(user => ({
@@ -116,7 +116,7 @@ export default function ChatWindow({ isTyping, groupName }: ChatWindowProps) {
 
     return (
         <div className="flex h-screen bg-[#36393f] text-white">
-            {/* <div className="flex-1 flex flex-col">
+            <div className="flex-1 flex flex-col">
                 <div className="p-4 border-b border-gray-700 font-bold text-lg">
                     {groupName}
                 </div>
@@ -181,7 +181,7 @@ export default function ChatWindow({ isTyping, groupName }: ChatWindowProps) {
                         ))
                     )}
                 </div>
-            </div> */}
+            </div>
         </div>
     );
 }
