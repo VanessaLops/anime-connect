@@ -10,7 +10,7 @@ export type UserType =
   | "Visitante";
 
 export interface User {
-  id: string;            // <- adicionamos aqui
+  id: string;            
   username: string;
   type: UserType;
   power: number;
@@ -45,6 +45,14 @@ export const saveUserAsVisitor = async (): Promise<User> => {
   // 1) Geramos nosso próprio ID
   const uuid = crypto.randomUUID();
 
+  const fingerprint = {
+    userAgent: navigator.userAgent,
+    language: navigator.language,
+    platform: navigator.platform,
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+  };
+
+  
   // 2) Montamos o objeto de visitante COM esse ID
   const visitante: User = {
     id: uuid,
@@ -53,14 +61,15 @@ export const saveUserAsVisitor = async (): Promise<User> => {
     power: 0,
     group: [AJUDA_GROUP_ID],
     relacionamento: "",
+    
   };
 
   console.log(">> saveUserAsVisitor visitante:", visitante);
 
   try {
     // 3) Usamos set em vez de push, para usar uuid como chave
-    const node = ref(database, `visitors/${uuid}`);
-    console.log(">> gravando em /visitors/" + uuid);
+    const node = ref(database, `users/${uuid}`);
+    console.log(">> gravando em /users/" + uuid);
 
     await set(node, {
       ...visitante,
@@ -68,7 +77,7 @@ export const saveUserAsVisitor = async (): Promise<User> => {
       device,
       timestamp: new Date().toISOString(),
     });
-    console.log("✅ gravação bem‑sucedida em /visitors/" + uuid);
+    console.log("✅ gravação bem‑sucedida em /users/" + uuid);
   } catch (error) {
     console.error("❌ erro ao salvar visitante no Realtime Database:", error);
   }

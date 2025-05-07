@@ -36,7 +36,8 @@ export default function ChatWindow({ isTyping, groupName }: ChatWindowProps) {
     const [loading, setLoading] = useState<boolean>(true);
     const users = getUserFromLocalStorage() || [];
     const [usersData] = useState<Users>({ users });
-
+    console.log(users, 'users')
+    
     console.log(groupName, 'groupName')
     console.log("Dados de usersData:", usersData?.users);
 
@@ -79,6 +80,7 @@ export default function ChatWindow({ isTyping, groupName }: ChatWindowProps) {
         ? usersData.users
         : [usersData.users];
 
+        console.log(usuarios,'usuarios')
     const gruposPorUsuario = usuarios.map(user => ({
         userData: user,
         grupos: filtrarGrupos(grupos, user)
