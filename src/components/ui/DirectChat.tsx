@@ -34,6 +34,7 @@ console.log(isTyping,'isTypingisTyping')
             relacionamento={user?.relacionamento}
             isTyping={isTyping}
             id={user.id}
+            image={user.image}
           />
         ))}
 

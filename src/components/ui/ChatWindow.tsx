@@ -139,6 +139,7 @@ export default function ChatWindow({ isTyping, groupName }: ChatWindowProps) {
                                     relacionamento={user.userData.relacionamento}
                                     isTyping={isTyping}
                                     id={user.userData.id}
+                                    image={user.userData.image}
                                 />
                             </div>
                         ))
@@ -176,6 +177,7 @@ export default function ChatWindow({ isTyping, groupName }: ChatWindowProps) {
                                     isTyping={isTyping}
                                     group={user.userData.group}
                                     id={user.userData.id}
+                                    image={user.userData.image}
                                 />
                             </div>
                         ))

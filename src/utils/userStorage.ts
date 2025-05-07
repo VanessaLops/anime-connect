@@ -16,11 +16,28 @@ export interface User {
   power: number;
   group: string[];
   relacionamento?: string;
+  image: string[]
 }
 
 const AJUDA_GROUP_ID = "d03330f1-834a-4535-af18-6a805642c962";
 
-// Função para obter IP do usuário
+const generateUsername = () => {
+  const animeNames = ["Naruto", "Sasuke", "Goku", "Luffy", "Saitama", "Hinata", "Kakashi", "Mikasa", "Yuno", "Light"];
+  const randomName1 = animeNames[Math.floor(Math.random() * animeNames.length)];
+  const randomName2 = animeNames[Math.floor(Math.random() * animeNames.length)];
+  const randomNumber = Math.floor(Math.random() * 100000);
+  return `${randomName1}${randomName2}${randomNumber}`;
+};
+
+
+const generateAvatars = () => {
+  const avatarUrls = [];
+  for (let i = 0; i < 10; i++) {
+    avatarUrls.push(`https://api.dicebear.com/6.x/croodles-neutral/svg?seed=${Math.floor(Math.random() * 100000)}`);
+  }
+  return avatarUrls;
+};
+
 export const getUserIP = async (): Promise<string | null> => {
   try {
     const r = await fetch("https://api.ipify.org?format=json");
@@ -33,51 +50,53 @@ export const getUserIP = async (): Promise<string | null> => {
   }
 };
 
-// Verifica se o dispositivo é móvel
+
 const isMobileDevice = (): boolean => {
   const mobile = /Mobi|Android/i.test(navigator.userAgent);
   console.log(">> isMobileDevice:", mobile);
   return mobile;
 };
 
-// Função para obter o visitor_id do cookie
+
 function getVisitorIdFromCookie(): string | null {
   const match = document.cookie.match(/(^| )visitor_id=([^;]+)/);
   return match ? match[2] : null;
 }
 
-// Função para salvar o visitante ou obter um já existente
+
 export const saveUserAsVisitor = async (): Promise<User> => {
   const existingId = getVisitorIdFromCookie();
 
-  // Se já tiver um visitor_id, verificar no Firebase
+
   if (existingId) {
     const snapshot = await get(ref(database, `visitors/${existingId}`));
     if (snapshot.exists()) {
-      // Se o visitante já existe, retornar os dados existentes
+
       console.log("Visitante já existe no Firebase:", snapshot.val());
       return snapshot.val();
     } else {
-      // Se o visitante não existe no Firebase, apagamos o cookie (opcional)
-      document.cookie = "visitor_id=; path=/; max-age=0"; // Remover cookie
+
+      document.cookie = "visitor_id=; path=/; max-age=0";
     }
   }
-
-  // Caso o visitante não exista ou não tenha um visitor_id no cookie, criamos um novo
   const ip = await getUserIP();
   const device = isMobileDevice() ? "mobile" : "desktop";
   const uuid = crypto.randomUUID();
 
+  const username = generateUsername();
+  const avatars = generateAvatars();
+
   const visitante: User = {
     id: uuid,
-    username: ip ? `Visitante_${ip}` : `Visitante_${Math.floor(Math.random() * 100000)}`,
+    username: ip ? `${username}` : `${username}`,
     type: "Visitante",
     power: 0,
     group: [AJUDA_GROUP_ID],
     relacionamento: "",
+    image: avatars
   };
 
-  // Salva o novo visitante no Firebase
+
   await set(ref(database, `visitors/${uuid}`), {
     ...visitante,
     ip: ip ?? "unknown",
@@ -85,7 +104,6 @@ export const saveUserAsVisitor = async (): Promise<User> => {
     timestamp: new Date().toISOString(),
   });
 
-  // Define o cookie para o visitante
   document.cookie = `visitor_id=${uuid}; path=/; max-age=31536000`;
 
   console.log("Novo visitante criado e salvo:", visitante);
