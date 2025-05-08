@@ -31,6 +31,7 @@ export interface VisitorData {
 
 export default function ChatModal({ visitorId, setIsOpen, groupName, currentUser }: ChatModalProps) {
     const [data, setData] = useState<ChatModalProps | null>(null);
+    
     const [userNameAcess, setUserNameAcess] = useState('');
     const [password, setPassword] = useState('');
     const [username, setUsername] = useState('');
@@ -38,7 +39,7 @@ export default function ChatModal({ visitorId, setIsOpen, groupName, currentUser
     const [userError, setUserError] = useState('');
     const [passwordError, setPasswordError] = useState('');
 
-    console.log(currentUser, 'visitorIdvisitorId')
+    console.log(currentUser, data,image, 'visitorIdvisitorId')
 
     useEffect(() => {
         const fetchVisitor = async () => {
@@ -105,76 +106,6 @@ export default function ChatModal({ visitorId, setIsOpen, groupName, currentUser
         } catch (error) {
 
         }
-        // try {
-        //    
-
-
-        //     const visitorData = snapshot.val();
-
-        //     // Se o visitante não tem nome de usuário ou senha, cria
-        //     if (!visitorData.userNameAcess || !visitorData.password) {
-        //        
-        //         const groupsSnap = await get(groupsRef);
-
-        //         if (groupsSnap.exists()) {
-        //             
-
-        //             if (groupEntry) {
-        //                
-
-        //                 // Atualiza o grupo com o visitante
-        //                 const groupMemberRef = ref(db, `grupos/${groupId}/members/${visitorId}`);
-        //                 const updatedVisitorData = { userNameAcess, password, type: 'Membro' };
-        //                 await set(groupMemberRef, updatedVisitorData);
-
-        //                 setIsOpen(false);
-        //                 alert('Nome de usuário e senha criados com sucesso!');
-        //                 return; // Não precisa continuar a execução após criação
-        //             }
-        //         }
-        //     } else {
-        //         // Verificação das credenciais no segundo acesso
-        //         const isUserCorrect = visitorData.userNameAcess === userNameAcess;
-        //         const isPasswordCorrect = visitorData.password === password;
-
-        //         if (!isUserCorrect) {
-        //             setUserError('Nome de usuário incorreto.');
-        //         }
-        //         if (!isPasswordCorrect) {
-        //             setPasswordError('Senha incorreta.');
-        //         }
-
-        //         if (!isUserCorrect || !isPasswordCorrect) {
-        //             alert('Erro: Credenciais incorretas');
-        //             return;
-        //         }
-
-        //         const groupsRef = ref(db, 'grupos');
-        //         const groupsSnap = await get(groupsRef);
-        //         if (groupsSnap.exists()) {
-        //             const groupsData = groupsSnap.val();
-        //             const groupEntry = Object.entries(groupsData).find((entry: any) =>
-        //                 entry[1].name?.toLowerCase() === groupName.toLowerCase()
-        //             );
-
-        //             if (groupEntry) {
-        //                 const [groupId] = groupEntry;
-        //                 const currentGroups: string[] = visitorData.group || [];
-        //                 // Verifica se o grupo já está na lista
-        //                 if (!currentGroups.includes(groupId)) {
-        //                     const updatedGroups = [...currentGroups, groupId];
-        //                     await update(visitorRef, { group: updatedGroups }); // Atualiza o visitante com o novo grupo
-        //                 }
-        //             }
-        //         }
-
-        //         setIsOpen(false);
-        //         alert('Acesso permitido!');
-        //     }
-        // } catch (error) {
-        //     console.error('Erro ao conceder acesso:', error);
-        //     alert('Erro ao conceder acesso.');
-        // }
     };
 
 

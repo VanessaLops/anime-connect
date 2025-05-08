@@ -41,11 +41,11 @@ export const getUsersFromFirebase = async (): Promise<User[]> => {
     }
 };
 
-export default function ChatWindow({ isTyping, groupName, setIsTyping, currentUser }: ChatWindowProps) {
+export default function ChatWindow({  groupName, setIsTyping, currentUser }: ChatWindowProps) {
     const [users, setUsers] = useState<User[]>([]);
     const [grupos, setGrupos] = useState<GroupData[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
-    const [grupoId, setGrupoId] = useState<string>('');
+
     const fetchUsers = async () => {
         const usersFromFirebase = await getUsersFromFirebase();
         setUsers(usersFromFirebase);
