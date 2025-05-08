@@ -2,13 +2,19 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
+import ChatModal from './Modal';
+
+
 interface MessageInputProps {
     setIsTyping: (typing: boolean) => void;
+    userId: string
+
 }
 
-export default function MessageInput({ setIsTyping }: MessageInputProps) {
+export default function MessageInput({ setIsTyping, userId }: MessageInputProps) {
     const [message, setMessage] = useState('');
     const [typingTimeout, setTypingTimeout] = useState<NodeJS.Timeout | null>(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
     const emojis = [
         { code: '(happy)', src: 'https://www.free-smileys.com/files/happy-smileys/572.gif' },
@@ -21,8 +27,7 @@ export default function MessageInput({ setIsTyping }: MessageInputProps) {
         { code: '(love1)', src: 'https://www.free-smileys.com/files/love-smileys/871.gif' },
         { code: '(love)', src: 'https://www.free-smileys.com/files/love-smileys/872.gif' },
         { code: '(love3)', src: 'https://www.free-smileys.com/files/love-smileys/870.gif' },
-      ];
-      
+    ];
 
     const handleEmojiClick = (emoji: string) => {
         setMessage((prev) => prev + ` ${emoji}`);
@@ -43,7 +48,7 @@ export default function MessageInput({ setIsTyping }: MessageInputProps) {
     };
 
     return (
-        <div className="bg-[#40444b] p-4 rounded-lg shadow-lg relative w-full flex flex-col">
+        <div className="">
             <div className="emoji-picker flex gap-2 mb-2">
                 {emojis.map((emoji) => (
                     <button key={emoji.code} onClick={() => handleEmojiClick(emoji.code)}>
@@ -54,12 +59,11 @@ export default function MessageInput({ setIsTyping }: MessageInputProps) {
                             height={32}
                             className="h-8 w-8"
                         />
-
                     </button>
                 ))}
             </div>
 
-            <div className="flex items-center space-x-4 mt-4">
+            <div className="items-center space-x-1 mt-1">
                 <input
                     type="text"
                     value={message}
@@ -78,7 +82,7 @@ export default function MessageInput({ setIsTyping }: MessageInputProps) {
 
                     <div className="flex flex-col space-y-2 flex-1">
                         <button
-                            onClick={() => console.log('Entrar no chat')}
+                            onClick={() => setIsModalOpen(true)}
                             className="bg-[#34b7f1] text-white p-3 rounded-full hover:bg-[#29a3cc] transition-all duration-200"
                         >
                             Entrar
@@ -92,6 +96,13 @@ export default function MessageInput({ setIsTyping }: MessageInputProps) {
                     </div>
                 </div>
             </div>
+
+            {isModalOpen && (
+                <ChatModal
+                    visitorId={userId}
+                    setIsOpen={setIsModalOpen}
+                />
+            )}
         </div>
     );
 }

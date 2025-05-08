@@ -66,8 +66,8 @@ function getVisitorIdFromCookie(): string | null {
 
 
 export const saveUserAsVisitor = async (): Promise<User> => {
-  const existingId = getVisitorIdFromCookie();
 
+  const existingId = getVisitorIdFromCookie();
 
   if (existingId) {
     const snapshot = await get(ref(database, `visitors/${existingId}`));
@@ -76,7 +76,6 @@ export const saveUserAsVisitor = async (): Promise<User> => {
       console.log("Visitante já existe no Firebase:", snapshot.val());
       return snapshot.val();
     } else {
-
       document.cookie = "visitor_id=; path=/; max-age=0";
     }
   }
@@ -112,3 +111,5 @@ export const saveUserAsVisitor = async (): Promise<User> => {
   console.log("Novo visitante criado e salvo:", visitante);
   return visitante;
 };
+
+

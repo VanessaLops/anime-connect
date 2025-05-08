@@ -3,14 +3,16 @@
 import { useEffect, useState } from 'react';
 import Sidebar from '../../components/ui/SideBar';
 import ChatWindow from '../../components/ui/ChatWindow';
-import MessageInput from '../../components/ui/MessageInput';
 import { saveUserAsVisitor, User } from '@/utils/userStorage';
 
 export default function ChatPage() {
   const [selectedItem, setSelectedItem] = useState<'direct' | string>('direct');
   const [isTyping, setIsTyping] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  console.log(currentUser)
+
+  console.log(currentUser,'currentUser')
+
+
   useEffect(() => {
     const loadVisitor = async () => {
       try {
@@ -34,8 +36,7 @@ export default function ChatPage() {
         </>
       ) : (
         <div className="flex flex-col flex-1">
-          <ChatWindow isTyping={isTyping} groupName={selectedItem} />
-          <MessageInput setIsTyping={setIsTyping} />
+          <ChatWindow isTyping={isTyping}  setIsTyping={setIsTyping} groupName={selectedItem} />
         </div>
       )}
     </div>

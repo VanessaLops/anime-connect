@@ -9,7 +9,8 @@ const nextConfig = {
       'upload.wikimedia.org',
       'cdn-icons-png.flaticon.com',
       'img.myloview.com.br',
-      'img.myloview.com.br'
+      'img.myloview.com.br',
+      'api.dicebear.com'
     ],
   },
 };

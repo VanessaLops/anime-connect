@@ -6,10 +6,12 @@ import { get, ref } from "firebase/database";
 import { database } from '../../../firebase';
 import { User } from "@/utils/userStorage";
 import { GroupData } from "./SideBar";
+import MessageInput from "./MessageInput";
 
 interface ChatWindowProps {
     isTyping: boolean;
     groupName: string;
+    setIsTyping: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 
@@ -45,30 +47,24 @@ export const getUsersFromFirebase = async (): Promise<User[]> => {
         return [];
     }
 };
-export default function ChatWindow({ isTyping, groupName }: ChatWindowProps) {
-    console.log(groupName, 'groupName')
+export default function ChatWindow({ isTyping, groupName, setIsTyping }: ChatWindowProps) {
+  
+    console.log(isTyping,'isTyping')   
+    console.log(groupName,'groupName')
+
     const [users, setUsers] = useState<User[]>([]);
     const [grupos, setGrupos] = useState<GroupData[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
-
+   
+    console.log(grupos,'grupos')
     const fetchUsers = async () => {
         const usersFromFirebase = await getUsersFromFirebase();
-        console.log(usersFromFirebase, 'usersFromFirebase')
         setUsers(usersFromFirebase);
     };
 
     useEffect(() => {
         fetchUsers();
     }, []);
-
-    const [usersData] = useState<Users>({ users });
-    console.log(users, 'visitors')
-
-    console.log(groupName, 'groupName')
-    console.log("Dados de usersData:", usersData?.users);
-
-    console.log(grupos, 'grupos');
-
 
     const fetchGrupos = async () => {
         try {
@@ -89,12 +85,8 @@ export default function ChatWindow({ isTyping, groupName }: ChatWindowProps) {
         fetchGrupos();
     }, []);
 
-
-
-
     function filtrarGrupos(grupos: GroupData[], usuario: User): GroupData[] {
         const grupoAjudaId = "d03330f1-834a-4535-af18-6a805642c962";
-        // Se for visitante, incluir o grupo de ajuda mesmo que não esteja em usuario.group
         const gruposPermitidos = usuario.type === "Visitante"
             ? [...usuario.group, grupoAjudaId]
             : usuario.group;
@@ -102,17 +94,10 @@ export default function ChatWindow({ isTyping, groupName }: ChatWindowProps) {
         return grupos.filter(grupo => gruposPermitidos.includes(grupo.groupId));
     }
 
-    const usuarios = Array.isArray(users)
-        ? users
-        : [users];
-
-    console.log(usuarios, 'usuarios')
-    const gruposPorUsuario = usuarios.map(user => ({
+    const gruposPorUsuario = users.map(user => ({
         userData: user,
         grupos: filtrarGrupos(grupos, user)
     }));
-
-
 
     return (
         <div className="flex h-screen bg-[#36393f] text-white">
@@ -121,41 +106,44 @@ export default function ChatWindow({ isTyping, groupName }: ChatWindowProps) {
                     {groupName}
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-[#2f3136] rounded-md">
+                <div className="flex-1 overflow-y-auto">
                     {loading ? (
                         <p>Carregando grupos...</p>
                     ) : (
-                        gruposPorUsuario?.map((user, index) => (
-                            <div
-                                key={index}
-                                className="flex items-center gap-2 px-1 py-1 hover:bg-[#2e2e3a] rounded-sm transition-all"
-                            >
-                                <PeaoAvatar
+                        <>
+                            {gruposPorUsuario?.map((user, index) => (
+                                <div
                                     key={index}
-                                    group={user.userData.group}
-                                    username={user.userData.username}
-                                    type={user.userData.type}
-                                    power={user.userData.power}
-                                    relacionamento={user.userData.relacionamento}
-                                    isTyping={isTyping}
-                                    id={user.userData.id}
-                                    image={user.userData.image}
-                                    userNameAcess=""
-                                    password=""
+                                    className="flex items-center gap-2 px-1 py-1 hover:bg-[#2e2e3a] rounded-sm transition-all"
+                                >
+                                    <PeaoAvatar
+                                        group={user.userData.group}
+                                        username={user.userData.username}
+                                        type={user.userData.type}
+                                        power={user.userData.power}
+                                        relacionamento={user.userData.relacionamento}
+                                        isTyping={isTyping}
+                                        id={user.userData.id}
+                                        image={user.userData.image}
+                                        password=""
+                                        userNameAcess=""
+                                    />
+                                </div>
+                            ))}
 
-                                />
-                            </div>
-                        ))
+                            {isTyping && (
+                                <div className="flex items-center space-x-2 mt-2">
+                                    <div className="w-2 h-2 bg-white rounded-full animate-bounce"></div>
+                                    <div className="w-2 h-2 bg-white rounded-full animate-bounce delay-150"></div>
+                                    <div className="w-2 h-2 bg-white rounded-full animate-bounce delay-300"></div>
+                                    <span className="text-sm text-gray-400 ml-2">Alguém está digitando...</span>
+                                </div>
+                            )}
+                        </>
                     )}
-
-                    {isTyping && (
-                        <div className="flex items-center space-x-2 mt-2">
-                            <div className="w-2 h-2 bg-white rounded-full animate-bounce"></div>
-                            <div className="w-2 h-2 bg-white rounded-full animate-bounce delay-150"></div>
-                            <div className="w-2 h-2 bg-white rounded-full animate-bounce delay-300"></div>
-                            <span className="text-sm text-gray-400 ml-2">Alguém está digitando...</span>
-                        </div>
-                    )}
+                </div>
+                <div className="p-4 border-t border-gray-700">
+                    <MessageInput setIsTyping={setIsTyping} userId={users[0]?.id || '' } />
                 </div>
             </div>
 
@@ -181,8 +169,8 @@ export default function ChatWindow({ isTyping, groupName }: ChatWindowProps) {
                                     group={user.userData.group}
                                     id={user.userData.id}
                                     image={user.userData.image}
-                                    userNameAcess=""
                                     password=""
+                                    userNameAcess=""
                                 />
                             </div>
                         ))

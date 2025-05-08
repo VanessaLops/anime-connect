@@ -1,8 +1,11 @@
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { database } from '../../../firebase';
-import { ref, set, get } from 'firebase/database';
+import { ref, set, get, getDatabase } from 'firebase/database';
 import { v4 as uuidv4 } from 'uuid';
+import { User } from '@/utils/userStorage';
+import { VisitorData } from './Modal';
+import { getUsersFromFirebase } from './ChatWindow';
 
 interface SidebarProps {
   selectedItem: string;
@@ -24,8 +27,14 @@ export interface GroupData {
 export default function Sidebar({ selectedItem, onSelect }: SidebarProps) {
   const [grupos, setGrupos] = useState<Record<string, GroupData> | null>(null); // Updated type here
   const [loading, setLoading] = useState<boolean>(false);
+  const [name, setName] = useState('');
+  const [info, setInfo] = useState('');
+  const [type, setType] = useState<'public' | 'private'>('public');
+  const [code, setCode] = useState('');
+  const [background, setBackground] = useState('');
+  const [image, setImage] = useState('');
+  const [users, setUsers] = useState<User[]>([]);
 
-  // Type assertion: Treat Object.values(grupos) as GroupData[]
   const gruposArray = grupos ? Object.values(grupos) as GroupData[] : [];
 
   const buscarGrupos = async () => {
@@ -36,7 +45,7 @@ export default function Sidebar({ selectedItem, onSelect }: SidebarProps) {
 
       if (snapshot.exists()) {
         const data = snapshot.val();
-        setGrupos(data); // The data should match Record<string, GroupData>
+        setGrupos(data);
         console.log(data, 'dados dos grupos');
       } else {
         console.log('Nenhum grupo encontrado.');
@@ -59,56 +68,67 @@ export default function Sidebar({ selectedItem, onSelect }: SidebarProps) {
   };
 
 
-  const [name, setName] = useState('');
-  const [info, setInfo] = useState('');
-  const [type, setType] = useState<'public' | 'private'>('public');
-  const [code, setCode] = useState('');
-  const [background, setBackground] = useState('');
-  const [image, setImage] = useState('');
 
-
-  const handleCreateGroup = async () => {
-    const groupId = uuidv4();
-    const idUser = uuidv4();
-    const grupoPath = `grupos/${groupId}`;
-    const userPath = `usuarios/${groupId}/grupos`;
-
-    try {
-      //const snapshot = await get(child(ref(database), userPath));
-      //const userGroups = snapshot.val() || {};
-
-      // const alreadyHasPublic = Object.values(userGroups).some((g: GroupData) => g.type === 'public');
-      // const alreadyHasPrivate = Object.values(userGroups).some((g: GroupData) => g.type === 'private');
-
-      // if ((type === 'public' && alreadyHasPublic) || (type === 'private' && alreadyHasPrivate)) {
-      //   alert('Você só pode criar 1 grupo público e 1 privado.');
-      //   return;
-      // }
-
-      const groupData: GroupData = {
-        name,
-        info,
-        type,
-        background,
-        ownerId: idUser,
-        image,
-        groupId,
-        createdAt: new Date().toISOString(),
-        ...(type === 'private' && { code })
-      };
-
-      await set(ref(database, grupoPath), groupData);
-      await set(ref(database, `${userPath}/${groupId}`), {
-        name,
-        type,
-      });
-
-      alert('Grupo criado com sucesso!');
-    } catch (error) {
-      console.error('Erro ao criar grupo:', error);
-      alert('Erro ao criar grupo');
-    }
+  let fetchUsers = async () => {
+    const usersFromFirebase = await getUsersFromFirebase();
+    setUsers(usersFromFirebase);
   };
+console.log(fetchUsers,'fetchUsers')
+  // useEffect(() => {
+  //   const fetchVisitor = async () => {
+  //     const db = getDatabase();
+  //     const visitorRef = ref(db, `visitors/${visitorId}`);
+  //     const snapshot = await get(visitorRef);
+  //     if (snapshot.exists()) {
+  //       const visitorData = snapshot.val();
+  //       setData(visitorData);
+  //     }
+  //   };
+  //   fetchVisitor();
+  // }, [visitorId]);
+
+
+  // const handleCreateGroup = async () => {
+  //   try {
+  //     const userId = await fetchUserId();  // Obter o userId do visitante da tabela visitors
+
+  //     // Verificar se o usuário já tem um grupo
+  //     if (hasGroup) {
+  //       alert('Você já possui um grupo. Exclua o atual para criar um novo. Obs: benefícios como Animecoins não são transferíveis.');
+  //       return;
+  //     }
+
+  //     const groupId = uuidv4();
+  //     const grupoPath = `grupos/${groupId}`;
+  //     const userPath = `usuarios/${userId}/grupos`;
+
+  //     const groupData: GroupData = {
+  //       name,
+  //       info,
+  //       type,
+  //       background,
+  //       ownerId: userId,  // Usando o userId obtido da tabela visitors
+  //       image,
+  //       groupId,
+  //       createdAt: new Date().toISOString(),
+  //       ...(type === 'private' && { code })
+  //     };
+
+  //     await set(ref(database, grupoPath), groupData);
+  //     await set(ref(database, `${userPath}/${groupId}`), {
+  //       name,
+  //       type,
+  //     });
+
+  //     alert('Grupo criado com sucesso!');
+  //     setHasGroup(true);
+  //   } catch (error) {
+  //     console.error('Erro ao criar grupo:', error);
+  //     alert('Erro ao criar grupo');
+  //   }
+  // };
+
+
 
   return (
     <div className="w-20 bg-[#202225] flex flex-col items-center py-4 space-y-4 overflow-y-auto">
@@ -133,7 +153,7 @@ export default function Sidebar({ selectedItem, onSelect }: SidebarProps) {
                 onChange={(e) => setInfo(e.target.value)}
                 placeholder="Informações sobre o Grupo"
               />
-               <input
+              <input
                 type="text"
                 value={image}
                 onChange={(e) => setImage(e.target.value)}
@@ -157,7 +177,7 @@ export default function Sidebar({ selectedItem, onSelect }: SidebarProps) {
                 onChange={(e) => setBackground(e.target.value)}
                 placeholder="Cor de Fundo"
               />
-              <button onClick={handleCreateGroup}>Criar Grupo</button>
+              {/* <button onClick={() => handleCreateGroup('visitorId1')}>Criar Grupo</button> */}
 
             </>
           ) : <>
@@ -174,9 +194,9 @@ export default function Sidebar({ selectedItem, onSelect }: SidebarProps) {
         }
       </div>
 
-      <div className="mt-auto mb-4">
+      {/* <div className="mt-auto mb-4">
         <button onClick={() => handleCreateGroup()} className="w-12 h-12 bg-green-600 rounded-full hover:rounded-2xl transition-all duration-300">+</button>
-      </div>
+      </div> */}
     </div>
   );
 }
