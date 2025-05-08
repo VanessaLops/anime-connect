@@ -10,8 +10,6 @@ export default function ChatPage() {
   const [isTyping, setIsTyping] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
 
-  console.log(currentUser,'currentUser')
-
 
   useEffect(() => {
     const loadVisitor = async () => {
@@ -26,9 +24,19 @@ export default function ChatPage() {
     loadVisitor();
   }, []);
 
+  console.log(currentUser, 'currentUsercurrentUser')
+
   return (
     <div className="flex h-screen">
-      <Sidebar selectedItem={selectedItem} onSelect={setSelectedItem} />
+      <Sidebar
+        selectedItem={selectedItem}
+        onSelect={setSelectedItem}
+        currentUser={{
+          id: currentUser?.id ?? '',
+          type: currentUser?.type ?? 'Visitante'
+        }}
+      />
+
       {selectedItem === 'direct' ? (
         <>
           {/* Aqui você pode adicionar o componente de chat direto, caso necessário */}
@@ -36,7 +44,14 @@ export default function ChatPage() {
         </>
       ) : (
         <div className="flex flex-col flex-1">
-          <ChatWindow isTyping={isTyping}  setIsTyping={setIsTyping} groupName={selectedItem} />
+          <ChatWindow isTyping={isTyping} setIsTyping={setIsTyping} groupName={selectedItem}
+            currentUser={{
+              id: currentUser?.id ?? '',
+              type: currentUser?.type ?? 'Visitante',
+              image: currentUser?.image ?? '',
+              username: currentUser?.username ?? ''
+            }}
+          />
         </div>
       )}
     </div>

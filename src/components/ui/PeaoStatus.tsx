@@ -112,6 +112,7 @@ const PeaoAvatar: React.FC<AvatarProps> = ({
                     objectFit: "contain",
                 }}
             />
+            
             <div
                 style={{
                     display: "flex",

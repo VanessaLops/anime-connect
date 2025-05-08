@@ -2,10 +2,16 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { database } from '../../../firebase';
 import { ref, get } from 'firebase/database';
+import GroupCreateModal from '../ModalGroup';
+import membro_digitando from "../../utils/icons/Membro/menbro_digitando.gif";
 
 interface SidebarProps {
   selectedItem: string;
   onSelect: (item: string) => void;
+  currentUser: {
+    id: string;
+    type: "Dono_Geral" | "Admin_mod" | "Dono_Sala" | "Staff" | "Membro" | "Visitante";
+  };
 }
 
 export interface GroupData {
@@ -18,173 +24,135 @@ export interface GroupData {
   createdAt: string;
   image: string;
   groupId: string;
+  members: { id: string; username: string }[];  
 }
 
-export default function Sidebar({ selectedItem, onSelect }: SidebarProps) {
-  const [grupos, setGrupos] = useState<Record<string, GroupData> | null>(null); // Updated type here
-  const [loading, setLoading] = useState<boolean>(false);
-  const [name, setName] = useState('');
-  const [info, setInfo] = useState('');
-  const [type, setType] = useState<'public' | 'private'>('public');
-  const [code, setCode] = useState('');
-  const [background, setBackground] = useState('');
-  const [image, setImage] = useState('');
+export default function Sidebar({ selectedItem, onSelect, currentUser }: SidebarProps) {
+  const [grupos, setGrupos] = useState<Record<string, GroupData> | null>(null)
 
-  const gruposArray = grupos ? Object.values(grupos) as GroupData[] : [];
+  console.log(grupos,'gruposaqui')
+  const [loading, setLoading] = useState(false);
+  const [canCreateGroup, setCanCreateGroup] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const gruposArray = grupos ? Object.values(grupos) : [];
 
   const buscarGrupos = async () => {
     setLoading(true);
     try {
       const snapshot = await get(ref(database, 'grupos'));
-      console.log('Grupos recebidos do Firebase:', snapshot.val());
-
       if (snapshot.exists()) {
-        const data = snapshot.val();
-        setGrupos(data);
-        console.log(data, 'dados dos grupos');
+        const gruposData = snapshot.val();
+        
+      
+        const gruposComMembros: Record<string, GroupData> = Object.keys(gruposData).reduce((acc, key) => {
+          acc[key] = {
+            ...gruposData[key],
+            members: gruposData[key].members || [],  
+            groupId: key, 
+          };
+          return acc;
+        }, {} as Record<string, GroupData>);
+  
+        setGrupos(gruposComMembros);
       } else {
-        console.log('Nenhum grupo encontrado.');
         setGrupos(null);
       }
-    } catch (error: unknown) {
+    } catch (error) {
       console.error('Erro ao buscar grupos:', error);
     } finally {
       setLoading(false);
     }
   };
+  
 
   useEffect(() => {
     buscarGrupos();
   }, []);
 
+  useEffect(() => {
+    if (!grupos || !currentUser || currentUser.type === 'Visitante') {
+      setCanCreateGroup(false);
+      return;
+    }
+
+    const usuarioJaTemGrupo = Object.values(grupos).some(
+      (grupo) => grupo.ownerId === currentUser.id && grupo.type === 'public'
+    );
+
+    setCanCreateGroup(!usuarioJaTemGrupo && currentUser.type === 'Membro');
+  }, [grupos, currentUser]);
 
   const handleEnterGroup = (groupName: string) => {
     onSelect(groupName);
   };
 
+  const handleCreateGroupClick = () => {
+    const grupoExistente = Object.values(grupos || {}).find(
+      (grupo) => grupo.ownerId === currentUser.id && grupo.type === 'public'
+    );
 
+    if (grupoExistente) {
+      const confirmacao = window.confirm(
+        `Você já criou o grupo "${grupoExistente.name}".\n\n⚠️ Só é permitido criar 1 grupo por membro.\n\nDeseja excluir o grupo atual?\n\n⚠️ Atenção: Ao excluir, você perderá tudo o que adicionou ao grupo (membros, moedas AnimeMoney, upgrades de Nitro no futuro etc.)`
+      );
 
-  // let fetchUsers = async () => {
-  //   const usersFromFirebase = await getUsersFromFirebase();
-  //   setUsers(usersFromFirebase);
-  // };
+      if (confirmacao) {
+        console.log('Excluir grupo:', grupoExistente.groupId);
+      }
+      return;
+    }
 
-  // useEffect(() => {
-  //   const fetchVisitor = async () => {
-  //     const db = getDatabase();
-  //     const visitorRef = ref(db, `visitors/${visitorId}`);
-  //     const snapshot = await get(visitorRef);
-  //     if (snapshot.exists()) {
-  //       const visitorData = snapshot.val();
-  //       setData(visitorData);
-  //     }
-  //   };
-  //   fetchVisitor();
-  // }, [visitorId]);
-
-
-  // const handleCreateGroup = async () => {
-  //   try {
-
-  //     const groupId = uuidv4();
-  //     const grupoPath = `grupos/${groupId}`;
-  //     const userPath = `usuarios/${1}/grupos`;
-
-  //     const groupData: GroupData = {
-  //       name,
-  //       info,
-  //       type,
-  //       background,
-  //       ownerId: '', 
-  //       image,
-  //       groupId,
-  //       createdAt: new Date().toISOString(),
-  //       ...(type === 'private' && { code })
-  //     };
-
-  //     await set(ref(database, grupoPath), groupData);
-  //     await set(ref(database, `${userPath}/${groupId}`), {
-  //       name,
-  //       type,
-  //     });
-
-  //     alert('Grupo criado com sucesso!');
-  //     // setHasGroup(true);
-  //   } catch (error) {
-  //     console.error('Erro ao criar grupo:', error);
-  //     alert('Erro ao criar grupo');
-  //   }
-  // };
-
-
+    setIsModalOpen(true);
+  };
 
   return (
-    <div className="w-20 bg-[#202225] flex flex-col items-center py-4 space-y-4 overflow-y-auto">
-      <button onClick={() => onSelect('direct')} className={`w-12 h-12 rounded-full hover:rounded-2xl transition-all duration-300 ${selectedItem === 'direct' ? 'bg-[#5865F2]' : 'bg-gray-700'}`}>
-        <Image src="https://cdn-icons-png.flaticon.com/512/201/201623.png" alt="Chat Direto" width={24} height={24} />
-      </button>
+    <>
+      {isModalOpen && (
+        <GroupCreateModal
+          currentUserId={currentUser.id}
+          setIsOpen={setIsModalOpen}
+        />
+      )}
+      <div className="w-20 bg-[#202225] flex flex-col items-center py-4 space-y-4 overflow-y-auto">
+        <button onClick={() => onSelect('direct')} className={`w-12 h-12 rounded-full hover:rounded-2xl transition-all duration-300 ${selectedItem === 'direct' ? 'bg-[#5865F2]' : 'bg-gray-700'}`}>
+          <Image src="https://cdn-icons-png.flaticon.com/512/201/201623.png" alt="Chat Direto" width={24} height={24} />
+        </button>
 
-      <div className="flex-grow space-y-2 flex flex-col items-center">
-        {
-          loading ? (
-            <>
-              <h1>LENDO</h1>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Nome do Grupo"
-              />
-              <input
-                type="text"
-                value={info}
-                onChange={(e) => setInfo(e.target.value)}
-                placeholder="Informações sobre o Grupo"
-              />
-              <input
-                type="text"
-                value={image}
-                onChange={(e) => setImage(e.target.value)}
-                placeholder="Informações sobre o Grupo"
-              />
-              <select value={type} onChange={(e) => setType(e.target.value as 'public' | 'private')}>
-                <option value="public">Público</option>
-                <option value="private">Privado</option>
-              </select>
-              {type === 'private' && (
-                <input
-                  type="text"
-                  value={code}
-                  onChange={(e) => setCode(e.target.value)}
-                  placeholder="Código do Grupo"
-                />
-              )}
-              <input
-                type="text"
-                value={background}
-                onChange={(e) => setBackground(e.target.value)}
-                placeholder="Cor de Fundo"
-              />
-              {/* <button onClick={() => handleCreateGroup('visitorId1')}>Criar Grupo</button> */}
-
-            </>
-          ) : <>
-            {gruposArray.map((grupo) => (
+        <div className="flex-grow space-y-2 flex flex-col items-center">
+          {loading ? (
+            <h1 className="text-white">Carregando...</h1>
+          ) : (
+            gruposArray.map((grupo) => (
               <button
                 key={grupo.createdAt}
                 onClick={() => handleEnterGroup(grupo.name)}
                 className={`w-12 h-12 rounded-full hover:rounded-2xl transition-all duration-300 ${selectedItem === grupo.name ? 'bg-[#5865F2]' : 'bg-gray-700'}`}
               >
-                <Image src={grupo.image} alt={grupo.name} width={24} height={24} />
+
+                <Image
+                  src={grupo?.image || membro_digitando}
+                  alt={grupo.name}
+                  width={24}
+                  height={24}
+                />
+
               </button>
-            ))}
-          </>
-        }
+            ))
+          )}
+        </div>
+
+        {canCreateGroup && (
+          <div className="mt-auto mb-4">
+            <button
+              onClick={handleCreateGroupClick}
+              className="w-12 h-12 bg-green-600 rounded-full hover:rounded-2xl transition-all duration-300"
+            >
+              +
+            </button>
+          </div>
+        )}
       </div>
-      {/* 
-      <div className="mt-auto mb-4">
-        <button onClick={() => handleCreateGroup()} className="w-12 h-12 bg-green-600 rounded-full hover:rounded-2xl transition-all duration-300">+</button>
-      </div> */}
-    </div>
+    </>
   );
 }

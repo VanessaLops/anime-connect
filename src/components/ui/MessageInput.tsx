@@ -9,13 +9,21 @@ interface MessageInputProps {
     setIsTyping: (typing: boolean) => void;
     userId: string
     groupName: string;
+    currentUser: {
+        id: string;
+        type: "Dono_Geral" | "Admin_mod" | "Dono_Sala" | "Staff" | "Membro" | "Visitante";
+        image: string;
+        username: string;
+    };
+
 }
 
-export default function MessageInput({ setIsTyping, userId, groupName }: MessageInputProps) {
+export default function MessageInput({ setIsTyping, userId, groupName, currentUser }: MessageInputProps) {
     const [message, setMessage] = useState('');
     const [typingTimeout, setTypingTimeout] = useState<NodeJS.Timeout | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
+    console.log(userId, 'MessageInput userId')
     const emojis = [
         { code: '(happy)', src: 'https://www.free-smileys.com/files/happy-smileys/572.gif' },
         { code: '(wink)', src: 'https://www.free-smileys.com/files/happy-smileys/573.gif' },
@@ -46,6 +54,8 @@ export default function MessageInput({ setIsTyping, userId, groupName }: Message
         }, 1000);
         setTypingTimeout(timeout);
     };
+
+
 
     return (
         <div className="">
@@ -102,6 +112,7 @@ export default function MessageInput({ setIsTyping, userId, groupName }: Message
                     visitorId={userId}
                     setIsOpen={setIsModalOpen}
                     groupName={groupName}
+                    currentUser={currentUser}
                 />
             )}
         </div>

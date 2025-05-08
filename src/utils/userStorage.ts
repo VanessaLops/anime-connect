@@ -1,5 +1,5 @@
 import { database } from "../../firebase";
-import { ref, set, get } from "firebase/database";
+import { ref, set, get, onDisconnect } from "firebase/database";
 
 export type UserType =
   | "Dono_Geral"
@@ -19,9 +19,10 @@ export interface User {
   image: string;
   userNameAcess: string;
   password: string;
+  status?: string;
 }
 
-const AJUDA_GROUP_ID = "d03330f1-834a-4535-af18-6a805642c962";
+const AJUDA_GROUP_ID = "c5456b27-a0cd-4191-aa25-9014898359b8";
 
 const generateUsername = () => {
   const animeNames = ["Naruto", "Sasuke", "Goku", "Luffy", "Saitama", "Hinata", "Kakashi", "Mikasa", "Yuno", "Light"];
@@ -63,32 +64,45 @@ function getVisitorIdFromCookie(): string | null {
   const match = document.cookie.match(/(^| )visitor_id=([^;]+)/);
   return match ? match[2] : null;
 }
-
+// ... (código existente acima mantido)
 
 export const saveUserAsVisitor = async (): Promise<User> => {
-
-  const existingId = getVisitorIdFromCookie();
+  const existingId = getVisitorIdFromCookie() || localStorage.getItem('visitor_id');
 
   if (existingId) {
     const snapshot = await get(ref(database, `visitors/${existingId}`));
     if (snapshot.exists()) {
+      const existingUser = snapshot.val();
+      const isAlreadyInGroup = existingUser.group.includes(AJUDA_GROUP_ID);
+      const isOnline = existingUser.status === 'online';
 
-      console.log("Visitante já existe no Firebase:", snapshot.val());
-      return snapshot.val();
-    } else {
-      document.cookie = "visitor_id=; path=/; max-age=0";
+      if (isAlreadyInGroup && isOnline) {
+        console.log("Visitante já está no grupo e online. Nada a alterar.");
+        return existingUser;
+      }
+
+      const userStatusRef = ref(database, `visitors/${existingId}/status`);
+      await set(userStatusRef, 'online');
+      onDisconnect(userStatusRef).set('offline');
+
+      if (!isAlreadyInGroup) {
+        const groupMemberRef = ref(database, `grupos/${AJUDA_GROUP_ID}/members/${existingId}`);
+        await set(groupMemberRef, { status: 'online' });
+      }
+
+      return existingUser;
     }
   }
+
   const ip = await getUserIP();
   const device = isMobileDevice() ? "mobile" : "desktop";
   const uuid = crypto.randomUUID();
-
   const username = generateUsername();
   const avatar = generateAvatar();
 
   const visitante: User = {
     id: uuid,
-    username: ip ? `${username}` : `${username}`,
+    username,
     type: "Visitante",
     power: 0,
     group: [AJUDA_GROUP_ID],
@@ -98,18 +112,53 @@ export const saveUserAsVisitor = async (): Promise<User> => {
     password: ''
   };
 
-
   await set(ref(database, `visitors/${uuid}`), {
     ...visitante,
     ip: ip ?? "unknown",
     device,
     timestamp: new Date().toISOString(),
+    status: 'online'
   });
 
-  document.cookie = `visitor_id=${uuid}; path=/; max-age=31536000`;
+  document.cookie = `visitor_id=${uuid}; path=/; max-age=86400`;
+  localStorage.setItem('visitor_id', uuid);
 
-  console.log("Novo visitante criado e salvo:", visitante);
+  const groupMemberRef = ref(database, `grupos/${AJUDA_GROUP_ID}/members/${uuid}`);
+  await set(groupMemberRef, { status: 'online' });
+  onDisconnect(groupMemberRef).set({ id: uuid, status: 'offline' });
+  onDisconnect(groupMemberRef).remove();
+
   return visitante;
 };
 
+// ✅ NOVA FUNÇÃO PARA SALVAR MEMBRO
+export const saveUserAsMember = async (user: User): Promise<void> => {
+  const ip = await getUserIP();
+  const device = isMobileDevice() ? "mobile" : "desktop";
 
+  const updatedUser = {
+    ...user,
+    ip: ip ?? "unknown",
+    device,
+    timestamp: new Date().toISOString(),
+    status: 'online',
+  };
+
+  const userRef = ref(database, `members/${user.id}`);
+  const statusRef = ref(database, `members/${user.id}/status`);
+
+  // ⚠️ onDisconnect precisa ser vinculado ao statusRef enquanto a conexão está ativa
+  onDisconnect(statusRef).set('offline');
+
+  await set(userRef, updatedUser);
+  await set(statusRef, 'online');
+
+  // Atualiza entrada nos grupos
+  for (const groupId of user.group) {
+    const groupMemberRef = ref(database, `grupos/${groupId}/members/${user.id}`);
+    await set(groupMemberRef, { status: 'online' });
+
+    const disconnectGroupRef = ref(database, `grupos/${groupId}/members/${user.id}`);
+    onDisconnect(disconnectGroupRef).set({ id: user.id, status: 'offline' });
+  }
+};
