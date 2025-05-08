@@ -13,7 +13,7 @@ export default function Hero() {
 
                 <div className="max-w-xl">
                     <h1 className="text-white text-4xl md:text-5xl font-semibold leading-tight mb-3">
-                        Bem-vindo ao
+                        TESTE DEVELOPMENT
                     </h1>
                     <h2 className="text-pink-500 text-[52px] md:text-[70px] leading-tight font-extrabold font-orbitron mb-6">
                         Anime <br /> Connect
