@@ -7,6 +7,7 @@ import Image from 'next/image';
 interface ChatModalProps {
     visitorId: string;
     setIsOpen: (open: boolean) => void;
+    groupName: string;
 }
 
 export interface VisitorData {
@@ -15,7 +16,7 @@ export interface VisitorData {
     image?: string;
 }
 
-export default function ChatModal({ visitorId, setIsOpen }: ChatModalProps) {
+export default function ChatModal({ visitorId, setIsOpen, groupName }: ChatModalProps) {
     const [data, setData] = useState<VisitorData | null>(null);
     const [userNameAcess, setUserNameAcess] = useState('');
     const [password, setPassword] = useState('');
@@ -62,9 +63,9 @@ export default function ChatModal({ visitorId, setIsOpen }: ChatModalProps) {
             if (snapshot.exists()) {
                 const groupsData = snapshot.val();
 
-             
+
                 const groupEntry = Object.entries(groupsData).find(
-                    ([_, group]: any) => group.type === 'public'
+                    ([_, group]: any) => group.name?.toLowerCase() === groupName.toLowerCase()
                 );
 
                 if (groupEntry) {

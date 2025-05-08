@@ -143,7 +143,7 @@ export default function ChatWindow({ isTyping, groupName, setIsTyping }: ChatWin
                     )}
                 </div>
                 <div className="p-4 border-t border-gray-700">
-                    <MessageInput setIsTyping={setIsTyping} userId={users[0]?.id || '' } />
+                    <MessageInput setIsTyping={setIsTyping} userId={users[0]?.id || '' } groupName={groupName}/>
                 </div>
             </div>
 

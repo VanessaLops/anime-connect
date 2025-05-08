@@ -8,10 +8,10 @@ import ChatModal from './Modal';
 interface MessageInputProps {
     setIsTyping: (typing: boolean) => void;
     userId: string
-
+    groupName: string;
 }
 
-export default function MessageInput({ setIsTyping, userId }: MessageInputProps) {
+export default function MessageInput({ setIsTyping, userId, groupName }: MessageInputProps) {
     const [message, setMessage] = useState('');
     const [typingTimeout, setTypingTimeout] = useState<NodeJS.Timeout | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -101,6 +101,7 @@ export default function MessageInput({ setIsTyping, userId }: MessageInputProps)
                 <ChatModal
                     visitorId={userId}
                     setIsOpen={setIsModalOpen}
+                    groupName={groupName}
                 />
             )}
         </div>
