@@ -67,10 +67,22 @@ function getVisitorIdFromCookie(): string | null {
 // ... (código existente acima mantido)
 
 export const saveUserAsVisitor = async (): Promise<User> => {
-  const existingId = getVisitorIdFromCookie() || localStorage.getItem('visitor_id');
+  const cookieVisitorId = getVisitorIdFromCookie();
+  const localVisitorId = localStorage.getItem('visitor_id');
 
-  if (existingId) {
-    const snapshot = await get(ref(database, `visitors/${existingId}`));
+  if (!cookieVisitorId && !localVisitorId) {
+    console.log('Primeira visita detectada. Limpando cookies antigos...');
+    document.cookie
+      .split(";")
+      .forEach((cookie) => {
+        const eqPos = cookie.indexOf("=");
+        const name = eqPos > -1 ? cookie.substring(0, eqPos) : cookie;
+        document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
+      });
+  }
+
+  if (cookieVisitorId) {
+    const snapshot = await get(ref(database, `visitors/${cookieVisitorId}`));
     if (snapshot.exists()) {
       const existingUser = snapshot.val();
       const isAlreadyInGroup = existingUser.group.includes(AJUDA_GROUP_ID);
@@ -81,12 +93,12 @@ export const saveUserAsVisitor = async (): Promise<User> => {
         return existingUser;
       }
 
-      const userStatusRef = ref(database, `visitors/${existingId}/status`);
+      const userStatusRef = ref(database, `visitors/${cookieVisitorId}/status`);
       await set(userStatusRef, 'online');
       onDisconnect(userStatusRef).set('offline');
 
       if (!isAlreadyInGroup) {
-        const groupMemberRef = ref(database, `grupos/${AJUDA_GROUP_ID}/members/${existingId}`);
+        const groupMemberRef = ref(database, `grupos/${AJUDA_GROUP_ID}/members/${cookieVisitorId}`);
         await set(groupMemberRef, { status: 'online' });
       }
 
@@ -111,6 +123,8 @@ export const saveUserAsVisitor = async (): Promise<User> => {
     userNameAcess: '',
     password: ''
   };
+
+  console.log("Usuário visitante:", visitante);
 
   await set(ref(database, `visitors/${uuid}`), {
     ...visitante,

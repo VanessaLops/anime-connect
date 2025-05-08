@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Sidebar from '../../components/ui/SideBar';
 import ChatWindow from '../../components/ui/ChatWindow';
 import { saveUserAsVisitor, User } from '@/utils/userStorage';
+import CookieConsent from '@/components/ui/CookieConsent';
 
 export default function ChatPage() {
   const [selectedItem, setSelectedItem] = useState<'direct' | string>('direct');
@@ -54,6 +55,7 @@ export default function ChatPage() {
           />
         </div>
       )}
+      <CookieConsent />
     </div>
   );
 }
