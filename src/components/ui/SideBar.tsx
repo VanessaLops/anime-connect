@@ -1,11 +1,7 @@
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { database } from '../../../firebase';
-import { ref, set, get, getDatabase } from 'firebase/database';
-import { v4 as uuidv4 } from 'uuid';
-import { User } from '@/utils/userStorage';
-import { VisitorData } from './Modal';
-import { getUsersFromFirebase } from './ChatWindow';
+import { ref, get } from 'firebase/database';
 
 interface SidebarProps {
   selectedItem: string;
@@ -33,7 +29,6 @@ export default function Sidebar({ selectedItem, onSelect }: SidebarProps) {
   const [code, setCode] = useState('');
   const [background, setBackground] = useState('');
   const [image, setImage] = useState('');
-  const [users, setUsers] = useState<User[]>([]);
 
   const gruposArray = grupos ? Object.values(grupos) as GroupData[] : [];
 
@@ -69,11 +64,11 @@ export default function Sidebar({ selectedItem, onSelect }: SidebarProps) {
 
 
 
-  let fetchUsers = async () => {
-    const usersFromFirebase = await getUsersFromFirebase();
-    setUsers(usersFromFirebase);
-  };
-console.log(fetchUsers,'fetchUsers')
+  // let fetchUsers = async () => {
+  //   const usersFromFirebase = await getUsersFromFirebase();
+  //   setUsers(usersFromFirebase);
+  // };
+
   // useEffect(() => {
   //   const fetchVisitor = async () => {
   //     const db = getDatabase();
@@ -88,38 +83,38 @@ console.log(fetchUsers,'fetchUsers')
   // }, [visitorId]);
 
 
-  const handleCreateGroup = async () => {
-    try {
+  // const handleCreateGroup = async () => {
+  //   try {
 
-      const groupId = uuidv4();
-      const grupoPath = `grupos/${groupId}`;
-      const userPath = `usuarios/${1}/grupos`;
+  //     const groupId = uuidv4();
+  //     const grupoPath = `grupos/${groupId}`;
+  //     const userPath = `usuarios/${1}/grupos`;
 
-      const groupData: GroupData = {
-        name,
-        info,
-        type,
-        background,
-        ownerId: '', 
-        image,
-        groupId,
-        createdAt: new Date().toISOString(),
-        ...(type === 'private' && { code })
-      };
+  //     const groupData: GroupData = {
+  //       name,
+  //       info,
+  //       type,
+  //       background,
+  //       ownerId: '', 
+  //       image,
+  //       groupId,
+  //       createdAt: new Date().toISOString(),
+  //       ...(type === 'private' && { code })
+  //     };
 
-      await set(ref(database, grupoPath), groupData);
-      await set(ref(database, `${userPath}/${groupId}`), {
-        name,
-        type,
-      });
+  //     await set(ref(database, grupoPath), groupData);
+  //     await set(ref(database, `${userPath}/${groupId}`), {
+  //       name,
+  //       type,
+  //     });
 
-      alert('Grupo criado com sucesso!');
-      // setHasGroup(true);
-    } catch (error) {
-      console.error('Erro ao criar grupo:', error);
-      alert('Erro ao criar grupo');
-    }
-  };
+  //     alert('Grupo criado com sucesso!');
+  //     // setHasGroup(true);
+  //   } catch (error) {
+  //     console.error('Erro ao criar grupo:', error);
+  //     alert('Erro ao criar grupo');
+  //   }
+  // };
 
 
 
@@ -186,7 +181,7 @@ console.log(fetchUsers,'fetchUsers')
           </>
         }
       </div>
-{/* 
+      {/* 
       <div className="mt-auto mb-4">
         <button onClick={() => handleCreateGroup()} className="w-12 h-12 bg-green-600 rounded-full hover:rounded-2xl transition-all duration-300">+</button>
       </div> */}

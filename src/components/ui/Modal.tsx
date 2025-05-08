@@ -23,7 +23,7 @@ export default function ChatModal({ visitorId, setIsOpen, groupName }: ChatModal
 
     const [username, setUsername] = useState('');
     const [image, setImage] = useState('');
-
+    console.log(image)
     useEffect(() => {
         const fetchVisitor = async () => {
             const db = getDatabase();
@@ -63,10 +63,12 @@ export default function ChatModal({ visitorId, setIsOpen, groupName }: ChatModal
             if (snapshot.exists()) {
                 const groupsData = snapshot.val();
 
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const groupEntry = Object.entries(groupsData).find((entry: any) => {
+                    const group = entry[1];
+                    return group.name?.toLowerCase() === groupName.toLowerCase();
+                });
 
-                const groupEntry = Object.entries(groupsData).find(
-                    ([_, group]: any) => group.name?.toLowerCase() === groupName.toLowerCase()
-                );
 
                 if (groupEntry) {
                     const [groupId] = groupEntry;

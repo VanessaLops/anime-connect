@@ -15,9 +15,7 @@ interface ChatWindowProps {
 }
 
 
-interface Users {
-    users: User[];
-}
+
 
 export const getUsersFromFirebase = async (): Promise<User[]> => {
     try {
