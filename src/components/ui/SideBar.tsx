@@ -1,3 +1,6 @@
+'use client'
+
+
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { database } from '../../../firebase';
@@ -115,10 +118,7 @@ export default function Sidebar({ selectedItem, onSelect, currentUser }: Sidebar
         />
       )}
       <div className="w-20 bg-[#202225] flex flex-col items-center py-4 space-y-4 overflow-y-auto">
-        <button onClick={() => onSelect('direct')} className={`w-12 h-12 rounded-full hover:rounded-2xl transition-all duration-300 ${selectedItem === 'direct' ? 'bg-[#5865F2]' : 'bg-gray-700'}`}>
-          <Image src="https://cdn-icons-png.flaticon.com/512/201/201623.png" alt="Chat Direto" width={24} height={24} />
-        </button>
-
+  
         <div className="flex-grow space-y-2 flex flex-col items-center">
           {loading ? (
             <h1 className="text-white">Carregando...</h1>

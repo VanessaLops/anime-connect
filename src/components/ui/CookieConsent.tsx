@@ -1,35 +1,16 @@
-'use client'
+interface CookieConsentProps {
+  onAccept: () => void;
+}
 
-import { useEffect, useState } from 'react';
-
-export default function CookieConsent() {
-  const [showBanner, setShowBanner] = useState(false);
-
-  useEffect(() => {
-    const acceptedCookies = localStorage.getItem('acceptedCookies');
-    if (!acceptedCookies) {
-      setShowBanner(true);
-    }
-  }, []);
-
-  const handleAccept = () => {
-    localStorage.setItem('acceptedCookies', 'true');
-    setShowBanner(false);
-  };
-
-  if (!showBanner) return null;
-
+const CookieConsent: React.FC<CookieConsentProps> = ({ onAccept }) => {
   return (
-    <div className="fixed bottom-4 left-4 z-50 bg-white border border-gray-300 shadow-md rounded-lg p-4 w-[300px] text-sm">
-      <p className="mb-2 text-gray-700">
-        Utilizamos cookies para melhorar sua experiência. Ao continuar, você concorda com nossa política de privacidade.
-      </p>
-      <button
-        className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition"
-        onClick={handleAccept}
-      >
+    <div className="cookie-consent fixed bottom-0 left-0 w-full bg-gray-800 text-white p-4 text-center z-50">
+      <p>Este site usa cookies para melhorar a sua experiência. Ao continuar, você aceita nossa política de cookies.</p>
+      <button onClick={onAccept} className="bg-blue-500 text-white px-4 py-2 rounded">
         Aceitar
       </button>
     </div>
   );
-}
+};
+
+export default CookieConsent;

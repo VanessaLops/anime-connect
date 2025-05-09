@@ -1,4 +1,4 @@
-'use client'
+'use client';
 
 import { useEffect, useState } from 'react';
 import Sidebar from '../../components/ui/SideBar';
@@ -7,12 +7,14 @@ import { saveUserAsVisitor, User } from '@/utils/userStorage';
 import CookieConsent from '@/components/ui/CookieConsent';
 
 export default function ChatPage() {
+  
   const [selectedItem, setSelectedItem] = useState<'direct' | string>('direct');
   const [isTyping, setIsTyping] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-
+  const [cookiesAccepted, setCookiesAccepted] = useState<boolean | null>(null); // Inicializa como null
 
   useEffect(() => {
+    // Carregar o visitante
     const loadVisitor = async () => {
       try {
         const user = await saveUserAsVisitor();
@@ -23,9 +25,24 @@ export default function ChatPage() {
     };
 
     loadVisitor();
+    const accepted = localStorage.getItem('cookiesAccepted');
+    if (accepted === 'true') {
+      setCookiesAccepted(true);
+    } else {
+      setCookiesAccepted(false); 
+    }
   }, []);
 
-  console.log(currentUser, 'currentUsercurrentUser')
+  const handleCookiesAcceptance = () => {
+    setCookiesAccepted(true);
+
+    localStorage.setItem('cookiesAccepted', 'true');
+  };
+
+  
+  if (cookiesAccepted === null) {
+    return null; 
+  }
 
   return (
     <div className="flex h-screen">
@@ -38,24 +55,21 @@ export default function ChatPage() {
         }}
       />
 
-      {selectedItem === 'direct' ? (
-        <>
-          {/* Aqui você pode adicionar o componente de chat direto, caso necessário */}
-          <h1>DESATIVADO</h1>
-        </>
-      ) : (
-        <div className="flex flex-col flex-1">
-          <ChatWindow isTyping={isTyping} setIsTyping={setIsTyping} groupName={selectedItem}
-            currentUser={{
-              id: currentUser?.id ?? '',
-              type: currentUser?.type ?? 'Visitante',
-              image: currentUser?.image ?? '',
-              username: currentUser?.username ?? ''
-            }}
-          />
-        </div>
-      )}
-      <CookieConsent />
+      <div className="flex flex-col flex-1">
+        <ChatWindow
+          isTyping={isTyping}
+          setIsTyping={setIsTyping}
+          groupName={selectedItem}
+          currentUser={{
+            id: currentUser?.id ?? '',
+            type: currentUser?.type ?? 'Visitante',
+            image: currentUser?.image ?? '',
+            username: currentUser?.username ?? ''
+          }}
+          isChatEnabled={cookiesAccepted}
+        />
+      </div>
+      {!cookiesAccepted && <CookieConsent onAccept={handleCookiesAcceptance} />}
     </div>
   );
 }
