@@ -64,7 +64,7 @@ export default function ChatPage() {
         const userStatusRef = ref(database, `grupos/${groupId}/members/${user.id}/status`);
         set(userStatusRef, 'Online');
         onDisconnect(userStatusRef).set('Offline');
-      } 
+      }
       //Outros Tipos Membros, Owner etc a  logica é aqui
       else {
 
@@ -113,7 +113,7 @@ export default function ChatPage() {
 
   return (
     <div className="flex h-screen">
-      {/* <Sidebar
+      <Sidebar
         selectedItem={selectedItem}
         onSelect={setSelectedItem}
         currentUser={{
@@ -121,15 +121,15 @@ export default function ChatPage() {
           type: currentUser?.type ?? 'Visitante',
         }}
         groupData={grupos!}
-      /> */}
+      />
 
       <div className="flex flex-col flex-1">
-        {/* {grupos && <ChatWindow groupData={grupos}
+        {grupos && <ChatWindow groupData={grupos}
           currentUser={{
             id: currentUser?.id ?? '',
             type: currentUser?.type ?? 'Visitante',
             status: currentUser?.status ?? ''
-          }} />} */}
+          }} />}
       </div>
       {/* {!cookiesAccepted && <CookieConsent onAccept={handleCookiesAcceptance} />} */}
     </div>

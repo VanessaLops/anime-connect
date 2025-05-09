@@ -5,8 +5,7 @@ import PeaoAvatar from "./PeaoStatus";
 import { database } from '../../../firebase';
 import { GroupData } from "./SideBar";
 import MessageInput from "./MessageInput";
-import ChatModal from './Modal';
-import { onDisconnect, ref, set } from "firebase/database";
+import { onValue, ref, onDisconnect, set } from "firebase/database";
 
 interface ChatWindowProps {
     groupData: GroupData;
@@ -18,48 +17,38 @@ interface ChatWindowProps {
 }
 
 export default function ChatWindow({ groupData, currentUser }: ChatWindowProps) {
-
-
+    const [grupos, setGrupos] = useState<GroupData | null>(null);
     const [onlineMembers, setOnlineMembers] = useState<any[]>([]);
-    const [isModalOpen, setIsModalOpen] = useState(false);
-
-    console.log(groupData.groupId, 'onlineMembers')
-
 
     useEffect(() => {
-        const firebaseOnlineMembers = groupData?.members
-            ? Object.values(groupData.members).filter((user: any) => user.status === "Online")
-            : [];
+        if (groupData.groupId) {
+            const grupoRef = ref(database, 'grupos');
 
-        const currentUserOnline = currentUser && currentUser.status === "Online"
-            ? [currentUser]
-            : [];
+            const unsubscribe = onValue(grupoRef, snapshot => {
+                if (snapshot.exists()) {
+                    const grupos: Record<string, GroupData> = snapshot.val();
+                    const grupoEncontrado = Object.entries(grupos).find(([id]) => id.startsWith(groupData.groupId!));
 
-        // Evita duplicação: garante que currentUser não está já em firebaseOnlineMembers
-        const allOnlineMembers = [
-            ...firebaseOnlineMembers.filter(u => u.id !== currentUser.id),
-            ...currentUserOnline
-        ];
+                    if (grupoEncontrado) {
+                        const [, grupoData] = grupoEncontrado;
+                        setGrupos(grupoData);
+                    }
+                }
+            });
 
-        setOnlineMembers(allOnlineMembers);
-    }, [groupData, currentUser]);
-
-
-    function registerVisitor(groupId: string, user: any) {
-        const userRef = ref(database, `grupos/${groupId}/members/${user.id}`);
-        set(userRef, currentUser);
-        onDisconnect(userRef).remove();
-        console.log("Visitante registrado no Firebase:", currentUser);
-    }
-
-
-
-    useEffect(() => {
-        if (currentUser?.type === "Visitante" && groupData?.groupId) {
-            registerVisitor(groupData.groupId, currentUser);
+            return () => unsubscribe();
         }
-    }, [currentUser, groupData]);
+    }, [groupData.groupId]);
 
+    useEffect(() => {
+        if (grupos?.members) {
+            const onlineUsers = Object.values(grupos.members).filter((user: any) => user.status === 'Online');
+            setOnlineMembers(onlineUsers);
+        }
+        const userStatusRef = ref(database, `grupos/${grupos?.groupId}/members/${currentUser.id}/status`);
+        set(userStatusRef, 'Online');
+        onDisconnect(userStatusRef).set('Offline');
+    }, [grupos]);
 
 
     return (
@@ -82,7 +71,6 @@ export default function ChatWindow({ groupData, currentUser }: ChatWindowProps) 
                             username: currentUser?.id ?? 'Visitante'
                         }}
                     />
-
                 </div>
             </div>
 
@@ -95,7 +83,7 @@ export default function ChatWindow({ groupData, currentUser }: ChatWindowProps) 
                     {/* Online */}
                     <div className="mb-3">
                         <h3 className="text-md font-semibold text-green-400 mb-1">🟢 Online</h3>
-                        {onlineMembers.map((user, index) => (
+                        {onlineMembers?.map((user, index) => (
                             <div
                                 key={`online-${index}`}
                                 className="flex items-center gap-2 px-1 py-1 hover:bg-[#2e2e3a] rounded-sm transition-all"
@@ -109,8 +97,8 @@ export default function ChatWindow({ groupData, currentUser }: ChatWindowProps) 
                                     group={user.group}
                                     id={user.id}
                                     image={user.image}
-                                    password=""
-                                    userNameAcess=""
+                                    password=" "
+                                    userNameAcess=" "
                                     status="online"
                                 />
                             </div>
@@ -120,7 +108,6 @@ export default function ChatWindow({ groupData, currentUser }: ChatWindowProps) 
                     {/* Offline */}
                     <div>
                         <h3 className="text-md font-semibold text-gray-400 mb-1">⚪ Membros Offline</h3>
-
                     </div>
                 </div>
             </div>
