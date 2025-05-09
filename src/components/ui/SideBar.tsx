@@ -28,6 +28,7 @@ export interface GroupData {
   image: string;
   groupId: string;
   members: { id: string; username: string }[];  
+  category:string;
 }
 
 export default function Sidebar({ selectedItem, onSelect, currentUser }: SidebarProps) {

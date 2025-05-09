@@ -1,9 +1,11 @@
 'use client'
+import { useRouter } from 'next/router';
+
 
 import { useState } from 'react';
 import Image from 'next/image';
 import ChatModal from './Modal';
-
+import { Button } from './Button';
 
 interface MessageInputProps {
     setIsTyping: (typing: boolean) => void;
@@ -22,6 +24,7 @@ export default function MessageInput({ setIsTyping, userId, groupName, currentUs
     const [message, setMessage] = useState('');
     const [typingTimeout, setTypingTimeout] = useState<NodeJS.Timeout | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
+
 
     console.log(userId, 'MessageInput userId')
     const emojis = [
@@ -91,18 +94,15 @@ export default function MessageInput({ setIsTyping, userId, groupName, currentUs
                     </button>
 
                     <div className="flex flex-col space-y-2 flex-1">
-                        <button
-                            onClick={() => setIsModalOpen(true)}
-                            className="bg-[#34b7f1] text-white p-3 rounded-full hover:bg-[#29a3cc] transition-all duration-200"
-                        >
-                            Entrar
-                        </button>
+                        <Button
+                            variant="primary" href="/registro">   Entrar</Button>
                         <button
                             onClick={() => console.log('Sair do chat')}
                             className="bg-[#f14c4c] text-white p-3 rounded-full hover:bg-[#e03c3c] transition-all duration-200"
                         >
                             Sair
                         </button>
+
                     </div>
                 </div>
             </div>

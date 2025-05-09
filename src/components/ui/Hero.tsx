@@ -1,17 +1,23 @@
 'use client';
 import Image from "next/image";
 import { Button } from "./Button";
-
-
+import { motion } from "framer-motion";
 
 export default function Hero() {
-
-    
     return (
         <section className="px-6 md:px-20 pt-16 pb-20 bg-gradient-to-b from-[#1a1a1a] to-black">
-            <div className="flex flex-col lg:flex-row items-center justify-between gap-10">
-
-                <div className="max-w-xl">
+            <motion.div
+                className="mt-[80px] flex flex-col lg:flex-row items-center justify-between gap-10"
+                initial={{ opacity: 0, y: 50 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, ease: "easeOut" }}
+            >
+                <motion.div
+                    className="max-w-xl"
+                    initial={{ opacity: 0, x: -50 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.3, duration: 0.8 }}
+                >
                     <h1 className="text-white text-4xl md:text-5xl font-semibold leading-tight mb-3">
                         TESTE DEVELOPMENT
                     </h1>
@@ -25,19 +31,8 @@ export default function Hero() {
                         <Button variant="primary" href="/comunidade">Entrar nas Comunidade</Button>
                         <Button variant="outline" href="/funcionalidades">Ver Funcionalidades</Button>
                     </div>
-                </div>
-
-
-                <div className="w-full lg:w-[400px] drop-shadow-[0_0_80px_rgba(236,72,153,0.8)]">
-                    <Image
-                        src="/avatar.png"
-                        alt="Avatar"
-                        width={500}
-                        height={500}
-                        className="w-full h-auto"
-                    />
-                </div>
-            </div>
+                </motion.div>
+            </motion.div>
         </section>
     );
 }

@@ -1,7 +1,4 @@
 'use client'
-
-
-
 import { useState, useEffect } from "react";
 import '../../app/globals.css';
 import PeaoAvatar from "./PeaoStatus";
