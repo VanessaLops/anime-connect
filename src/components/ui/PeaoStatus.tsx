@@ -69,7 +69,7 @@ const PeaoAvatar: React.FC<AvatarProps> = ({
 
     switch (type) {
         case "Visitante":
-            avatarSrc = isTyping ? visitante_lapis.src : visitante.src;
+            avatarSrc = isTyping ? visitante.src : visitante.src;
             break;
         case "Dono_Geral":
             avatarSrc = dono_geral.src;

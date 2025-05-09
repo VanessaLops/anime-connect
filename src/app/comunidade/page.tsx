@@ -1,4 +1,7 @@
 'use client';
+
+import { useRouter } from "next/navigation";
+
 import { useState, useEffect } from "react";
 import Header from "@/components/ui/Header";
 import Footer from "@/components/ui/Footer";
@@ -11,6 +14,8 @@ import { database } from "../../../firebase";
 import { GroupData } from "@/components/ui/SideBar";
 
 export default function ComunidadePage() {
+  const router = useRouter();
+
   const [selectedCategory, setSelectedCategory] = useState<string>("Comunidade Naruto");
   const [groupChats, setGroupChats] = useState<any[]>([]);
   const [grupos, setGrupos] = useState<Record<string, GroupData> | null>(null);
@@ -59,9 +64,13 @@ export default function ComunidadePage() {
     }
   }, [selectedCategory, grupos]);
 
-
   const handleCategoryChange = (categoria: string) => {
     setSelectedCategory(categoria);
+  };
+
+
+  const handleClick = (groupId: GroupData) => {
+    router.push(`/chat?group=${groupId?.groupId}`);
   };
 
 
@@ -124,8 +133,9 @@ export default function ComunidadePage() {
           >
             {groupChats.map((chat, i) => (
               <SwiperSlide key={i}>
-                <div className="bg-[#1f1f1f] rounded-2xl p-4 m-2 shadow-lg hover:scale-105 transition-transform duration-300">
-                  {chat?.background.endsWith(".mp4") ? (
+                <div onClick={() => handleClick(chat)}
+                  className="cursor-pointer bg-[#1f1f1f] rounded-2xl p-4 m-2 shadow-lg hover:scale-105 transition-transform duration-300">
+                  {chat?.background?.endsWith(".mp4") ? (
                     <video
                       src={chat?.background}
                       autoPlay

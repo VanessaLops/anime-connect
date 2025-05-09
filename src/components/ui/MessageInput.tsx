@@ -1,6 +1,4 @@
 'use client'
-import { useRouter } from 'next/router';
-
 
 import { useState } from 'react';
 import Image from 'next/image';
@@ -8,7 +6,6 @@ import ChatModal from './Modal';
 import { Button } from './Button';
 
 interface MessageInputProps {
-    setIsTyping: (typing: boolean) => void;
     userId: string
     groupName: string;
     currentUser: {
@@ -20,13 +17,11 @@ interface MessageInputProps {
 
 }
 
-export default function MessageInput({ setIsTyping, userId, groupName, currentUser }: MessageInputProps) {
+export default function MessageInput({ userId, groupName, currentUser }: MessageInputProps) {
     const [message, setMessage] = useState('');
     const [typingTimeout, setTypingTimeout] = useState<NodeJS.Timeout | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
-
-    console.log(userId, 'MessageInput userId')
     const emojis = [
         { code: '(happy)', src: 'https://www.free-smileys.com/files/happy-smileys/572.gif' },
         { code: '(wink)', src: 'https://www.free-smileys.com/files/happy-smileys/573.gif' },
@@ -44,21 +39,6 @@ export default function MessageInput({ setIsTyping, userId, groupName, currentUs
         setMessage((prev) => prev + ` ${emoji}`);
     };
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = e.target.value;
-        setMessage(value);
-
-        setIsTyping(true);
-
-        if (typingTimeout) clearTimeout(typingTimeout);
-
-        const timeout = setTimeout(() => {
-            setIsTyping(false);
-        }, 1000);
-        setTypingTimeout(timeout);
-    };
-
-
 
     return (
         <div className="">
@@ -75,36 +55,40 @@ export default function MessageInput({ setIsTyping, userId, groupName, currentUs
                     </button>
                 ))}
             </div>
+            <div className="flex items-center justify-between space-x-4 mt-4">
+                <div className="flex items-center w-full space-x-2">
+                    <input
 
-            <div className="items-center space-x-1 mt-1">
-                <input
-                    type="text"
-                    value={message}
-                    onChange={handleChange}
-                    placeholder="Digite sua mensagem..."
-                    className="w-162 p-4 rounded-lg bg-[#2f3136] text-white placeholder-gray-400 focus:outline-none h-25"
-                />
-
-                <div className="flex items-center space-x-4 mt-4">
+                        placeholder="Digite sua mensagem..."
+                        className="flex-1 p-3 rounded-lg bg-[#2f3136] text-white placeholder-gray-400 focus:outline-none resize-none h-24 w-120 transition-all"
+                    />
                     <button
-                        onClick={() => console.log('Entrar no chat')}
-                        className="bg-[#34b7f1] text-white p-3 rounded-full hover:bg-[#29a3cc] transition-all duration-200"
+                        onClick={() => console.log('Enviar mensagem')}
+                        className="bg-[#34b7f1] text-white p-3 rounded-lg w-8 h-24 flex items-center justify-center hover:bg-[#29a3cc] transition-all duration-200"
                     >
-                        Enviar
+                        <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 transform rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path d="M15 19l-7-7 7-7" />
+                        </svg>
                     </button>
-
-                    <div className="flex flex-col space-y-2 flex-1">
-                        <Button
-                            variant="primary" href="/registro">   Entrar</Button>
-                        <button
-                            onClick={() => console.log('Sair do chat')}
-                            className="bg-[#f14c4c] text-white p-3 rounded-full hover:bg-[#e03c3c] transition-all duration-200"
-                        >
-                            Sair
-                        </button>
-
-                    </div>
                 </div>
+
+                <div className="flex flex-col space-y-3 w-auto">
+                    <Button
+                        variant="primary"
+                        href="/registro"
+
+                    >
+                        Entrar
+                    </Button>
+                    <Button
+                        onClick={() => console.log('Sair do chat')}
+                        variant="outline"
+
+                    >
+                        Sair
+                    </Button>
+                </div>
+
             </div>
 
             {isModalOpen && (

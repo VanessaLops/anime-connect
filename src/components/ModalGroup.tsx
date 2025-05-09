@@ -146,13 +146,12 @@ export default function GroupCreateModal({ currentUserId, setIsOpen }: GroupCrea
                                 <label htmlFor="description" className="block text-sm font-medium text-gray-700">
                                     Descrição (opcional)
                                 </label>
-                                <textarea
+                                <input
                                     id="description"
                                     value={description}
-                                    onChange={(e) => setDescription(e.target.value)}
                                     className="mt-1 p-2 w-full border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     placeholder="Fale um pouco sobre o grupo..."
-                                    rows={3}
+                                  
                                 />
                             </div>
 
