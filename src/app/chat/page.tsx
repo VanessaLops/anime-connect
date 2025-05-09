@@ -7,8 +7,8 @@ import { saveUserAsVisitor, User } from '@/utils/userStorage';
 import CookieConsent from '@/components/ui/CookieConsent';
 
 export default function ChatPage() {
-  
-  const [selectedItem, setSelectedItem] = useState<'direct' | string>('direct');
+
+  const [selectedItem, setSelectedItem] = useState('Ajuda');
   const [isTyping, setIsTyping] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [cookiesAccepted, setCookiesAccepted] = useState<boolean | null>(null); // Inicializa como null
