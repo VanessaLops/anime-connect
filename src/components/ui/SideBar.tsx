@@ -30,87 +30,87 @@ export interface GroupData {
   image: string;
   groupId: string;
   category: string;
-  members: User[];
+  members: Record<string, User>;
 }
 
 export default function Sidebar({ selectedItem, onSelect, currentUser, groupData }: SidebarProps) {
   const [grupos, setGrupos] = useState<Record<string, GroupData> | null>(null)
-
-  console.log(grupos, 'gruposaqui')
   const [loading, setLoading] = useState(false);
   const [canCreateGroup, setCanCreateGroup] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const gruposArray = grupos ? Object.values(grupos) : [];
 
-  const buscarGrupos = async () => {
-    setLoading(true);
-    try {
-      const snapshot = await get(ref(database, 'grupos'));
-      if (snapshot.exists()) {
-        const gruposData = snapshot.val();
+  console.log(gruposArray, 'canCreateGroup')
+
+  // const buscarGrupos = async () => {
+  //   setLoading(true);
+  //   try {
+  //     const snapshot = await get(ref(database, 'grupos'));
+  //     if (snapshot.exists()) {
+  //       const gruposData = snapshot.val();
 
 
-        const gruposComMembros: Record<string, GroupData> = Object.keys(gruposData).reduce((acc, key) => {
-          acc[key] = {
-            ...gruposData[key],
-            members: gruposData[key].members || [],
-            groupId: key,
-          };
-          return acc;
-        }, {} as Record<string, GroupData>);
+  //       const groupData: Record<string, GroupData> = Object.keys(gruposData).reduce((acc, key) => {
+  //         acc[key] = {
+  //           ...gruposData[key],
+  //           members: gruposData[key].members || [],
+  //           groupId: key,
+  //         };
+  //         return acc;
+  //       }, {} as Record<string, GroupData>);
 
-        setGrupos(gruposComMembros);
-      } else {
-        setGrupos(null);
-      }
-    } catch (error) {
-      console.error('Erro ao buscar grupos:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  //       setGrupos(groupData);
+  //     } else {
+  //       setGrupos(null);
+  //     }
+  //   } catch (error) {
+  //     console.error('Erro ao buscar grupos:', error);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
 
-  useEffect(() => {
-    buscarGrupos();
-  }, []);
+  // useEffect(() => {
+  //   buscarGrupos();
+  // }, []);
 
-  useEffect(() => {
-    if (!grupos || !currentUser || currentUser.type === 'Visitante') {
-      setCanCreateGroup(false);
-      return;
-    }
+  // useEffect(() => {
+  //   if (!grupos || !currentUser || currentUser.type === 'Visitante') {
+  //     setCanCreateGroup(false);
+  //     return;
+  //   }
 
-    const usuarioJaTemGrupo = Object.values(grupos).some(
-      (grupo) => grupo.ownerId === currentUser.id && grupo.type === 'public'
-    );
+  //   const usuarioJaTemGrupo = Object.values(grupos).some(
+  //     (grupo) => grupo.ownerId === currentUser.id && grupo.type === 'public'
+  //   );
 
-    setCanCreateGroup(!usuarioJaTemGrupo && currentUser.type === 'Membro');
-  }, [grupos, currentUser]);
+  //   setCanCreateGroup(!usuarioJaTemGrupo && currentUser.type === 'Membro');
+  // }, [grupos, currentUser]);
 
-  const handleEnterGroup = (groupName: string) => {
-    onSelect(groupName);
-  };
+  // const handleEnterGroup = (groupName: string) => {
+  //   onSelect(groupName);
+  // };
 
-  const handleCreateGroupClick = () => {
-    const grupoExistente = Object.values(grupos || {}).find(
-      (grupo) => grupo.ownerId === currentUser.id && grupo.type === 'public'
-    );
+  // const handleCreateGroupClick = () => {
+  //   const grupoExistente = Object.values(grupos || {}).find(
+  //     (grupo) => grupo.ownerId === currentUser.id && grupo.type === 'public'
+  //   );
 
-    if (grupoExistente) {
-      const confirmacao = window.confirm(
-        `Você já criou o grupo "${grupoExistente.name}".\n\n⚠️ Só é permitido criar 1 grupo por membro.\n\nDeseja excluir o grupo atual?\n\n⚠️ Atenção: Ao excluir, você perderá tudo o que adicionou ao grupo (membros, moedas AnimeMoney, upgrades de Nitro no futuro etc.)`
-      );
+  //   if (grupoExistente) {
+  //     const confirmacao = window.confirm(
+  //       `Você já criou o grupo "${grupoExistente.name}".\n\n⚠️ Só é permitido criar 1 grupo por membro.\n\nDeseja excluir o grupo atual?\n\n⚠️ Atenção: Ao excluir, você perderá tudo o que adicionou ao grupo (membros, moedas AnimeMoney, upgrades de Nitro no futuro etc.)`
+  //     );
 
-      if (confirmacao) {
-        console.log('Excluir grupo:', grupoExistente.groupId);
-      }
-      return;
-    }
+  //     if (confirmacao) {
+  //       console.log('Excluir grupo:', grupoExistente.groupId);
+  //     }
+  //     return;
+  //   }
 
-    setIsModalOpen(true);
-  };
+  //   setIsModalOpen(true);
+  // };
 
   return (
     <>
@@ -120,7 +120,7 @@ export default function Sidebar({ selectedItem, onSelect, currentUser, groupData
           setIsOpen={setIsModalOpen}
         />
       )}
-      <div className="w-20 bg-[#202225] flex flex-col items-center py-4 space-y-4 overflow-y-auto">
+      {/* <div className="w-20 bg-[#202225] flex flex-col items-center py-4 space-y-4 overflow-y-auto">
         <div className="flex-grow space-y-2 flex flex-col items-center">
           {loading ? (
             <h1 className="text-white">Carregando...</h1>
@@ -179,7 +179,7 @@ export default function Sidebar({ selectedItem, onSelect, currentUser, groupData
             </button>
           </div>
         )}
-      </div>
+      </div> */}
     </>
   );
 }

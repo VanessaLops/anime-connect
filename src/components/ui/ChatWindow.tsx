@@ -1,11 +1,12 @@
 'use client'
 import { useState, useEffect } from "react";
 import '../../app/globals.css';
-import PeaoAvatar from "./PeaoStatus";
+import PeaoAvatar from "./PeaoMembro";
 import { database } from '../../../firebase';
 import { GroupData } from "./SideBar";
 import MessageInput from "./MessageInput";
 import { onValue, ref, onDisconnect, set } from "firebase/database";
+import PeaoVisitante from "./PeaoVisitante";
 
 interface ChatWindowProps {
     groupData: GroupData;
@@ -16,10 +17,12 @@ interface ChatWindowProps {
     };
 }
 
+
+
 export default function ChatWindow({ groupData, currentUser }: ChatWindowProps) {
     const [grupos, setGrupos] = useState<GroupData | null>(null);
     const [onlineMembers, setOnlineMembers] = useState<any[]>([]);
-
+    const [offlineMembers, setOfflineMembers] = useState<any[]>([]);
     useEffect(() => {
         if (groupData.groupId) {
             const grupoRef = ref(database, 'grupos');
@@ -40,17 +43,39 @@ export default function ChatWindow({ groupData, currentUser }: ChatWindowProps) 
         }
     }, [groupData.groupId]);
 
+
+    //Deixa online e offline apenas o usuário conectado
     useEffect(() => {
-        if (grupos?.members) {
-            const onlineUsers = Object.values(grupos.members).filter((user: any) => user.status === 'Online');
-            setOnlineMembers(onlineUsers);
+
+        const userExists = !!grupos?.members[currentUser.id];
+        if (userExists) {
+            const userStatusRef = ref(database, `grupos/${grupos?.groupId}/members/${currentUser.id}/status`);
+            set(userStatusRef, 'Online');
+            onDisconnect(userStatusRef).set('Offline');
         }
-        const userStatusRef = ref(database, `grupos/${grupos?.groupId}/members/${currentUser.id}/status`);
-        set(userStatusRef, 'Online');
-        onDisconnect(userStatusRef).set('Offline');
     }, [grupos]);
 
 
+
+    // Monitorando alterações de status e movendo para a lista de Offline
+    useEffect(() => {
+        const gruposRef = ref(database, `grupos/${groupData.groupId}/members`);
+
+        const unsubscribe = onValue(gruposRef, (snapshot) => {
+            if (snapshot.exists()) {
+                const members = snapshot.val();
+                const updatedOnlineUsers = Object.values(members).filter((user: any) => user.status === 'Online');
+                const updatedOfflineUsers = Object.values(members).filter((user: any) => user.status !== 'Online');
+
+                // Atualizar os estados de membros online e offline
+                setOnlineMembers(updatedOnlineUsers);
+                // Aqui você pode definir o estado para os offlineMembers, por exemplo:
+                setOfflineMembers(updatedOfflineUsers);
+            }
+        });
+
+        return () => unsubscribe();
+    }, [groupData.groupId]);
     return (
         <div className="flex h-screen bg-[#36393f] text-white">
             <div className="flex-1 flex flex-col">
@@ -97,10 +122,11 @@ export default function ChatWindow({ groupData, currentUser }: ChatWindowProps) 
                                     group={user.group}
                                     id={user.id}
                                     image={user.image}
-                                    password=" "
-                                    userNameAcess=" "
-                                    status="online"
+                                    password={user.user}
+                                    userNameAcess={user.userNameAcess}
+                                    status={user.status?.toLowerCase()}
                                 />
+
                             </div>
                         ))}
                     </div>
@@ -108,6 +134,27 @@ export default function ChatWindow({ groupData, currentUser }: ChatWindowProps) 
                     {/* Offline */}
                     <div>
                         <h3 className="text-md font-semibold text-gray-400 mb-1">⚪ Membros Offline</h3>
+                        {offlineMembers?.map((user, index) => (
+                            <div
+                                key={`online-${index}`}
+                                className="flex items-center gap-2 px-1 py-1 hover:bg-[#2e2e3a] rounded-sm transition-all"
+                            >
+                                <PeaoAvatar
+                                    username={user.username || "Visitante"}
+                                    type={user.type}
+                                    power={user.power}
+                                    relacionamento={user.relacionamento}
+                                    isTyping={false}
+                                    group={user.group}
+                                    id={user.id}
+                                    image={user.image}
+                                    password={user.user}
+                                    userNameAcess={user.userNameAcess}
+                                    status={user.status?.toLowerCase()}
+                                />
+
+                            </div>
+                        ))}
                     </div>
                 </div>
             </div>
