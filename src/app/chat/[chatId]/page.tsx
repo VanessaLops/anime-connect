@@ -1,15 +1,18 @@
 'use client';
-import { useEffect, useState } from 'react';
-import Sidebar, { GroupData } from '../../components/ui/SideBar';
-import ChatWindow from '../../components/ui/ChatWindow';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { database } from '../../../firebase';
+
 import { ref, get, set, onDisconnect } from 'firebase/database';
 import { User } from '@/utils/userStorage';
+import Sidebar, { GroupData } from '@/components/ui/SideBar';
+import { database } from '../../../../firebase';
+import ChatWindow from '@/components/ui/ChatWindow';
 
-export default function ChatPage() {
-  const searchParams = useSearchParams();
-  const groupId = searchParams.get('group');
+export default async function ChatPage({params}: {params: Promise<{ chatId: string }>}) {
+
+
+  const { chatId } = await params;
+
   const [selectedItem, setSelectedItem] = useState('Ajuda');
   const [isTyping, setIsTyping] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -80,12 +83,12 @@ export default function ChatPage() {
 
 
   useEffect(() => {
-    if (groupId) {
+    if (chatId) {
       const buscarGrupo = async () => {
         const snapshot = await get(ref(database, 'grupos'));
         if (snapshot.exists()) {
           const grupos: Record<string, GroupData> = snapshot.val();
-          const grupoEncontrado = Object.entries(grupos).find(([id]) => id.startsWith(groupId!));
+          const grupoEncontrado = Object.entries(grupos).find(([id]) => id.startsWith(chatId!));
           if (grupoEncontrado) {
             const [, grupoData] = grupoEncontrado;
             setGrupos(grupoData);
@@ -95,7 +98,7 @@ export default function ChatPage() {
       buscarGrupo();
     }
     configureUser();
-  }, [groupId]);
+  }, [chatId]);
 
 
   const handleCookiesAcceptance = () => {
@@ -104,10 +107,10 @@ export default function ChatPage() {
   };
 
   useEffect(() => {
-    if (groupId && currentUser && grupos) {
-      registerVisitor(groupId, currentUser, grupos);
+    if (chatId && currentUser && grupos) {
+      registerVisitor(chatId, currentUser, grupos);
     }
-  }, [groupId, currentUser, grupos]);
+  }, [chatId, currentUser, grupos]);
 
   const gruposArray = grupos ? Object.values(grupos) : [];
 
@@ -147,6 +150,8 @@ export default function ChatPage() {
           }} />}
       </div>
       {/* {!cookiesAccepted && <CookieConsent onAccept={handleCookiesAcceptance} />} */}
+
+
     </div>
   );
 }

@@ -16,7 +16,7 @@ const nextConfig = {
       'img.myloview.com.br',
       'api.dicebear.com'
     ],
-  },
+  }
 };
 
 module.exports = nextConfig;

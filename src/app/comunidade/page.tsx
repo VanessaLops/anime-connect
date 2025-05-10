@@ -1,6 +1,5 @@
 'use client';
 
-import { useRouter } from "next/navigation";
 
 import { useState, useEffect } from "react";
 import Header from "@/components/ui/Header";
@@ -12,11 +11,10 @@ import "swiper/css/navigation";
 import { ref, get } from "firebase/database";
 import { database } from "../../../firebase";
 import { GroupData } from "@/components/ui/SideBar";
-
+import Link from "next/link";
 export default function ComunidadePage() {
-  const router = useRouter();
 
-  const [selectedCategory, setSelectedCategory] = useState<string>("Comunidade Naruto");
+  const [selectedCategory, setSelectedCategory] = useState<string>("ComunidadE");
   const [groupChats, setGroupChats] = useState<any[]>([]);
   const [grupos, setGrupos] = useState<Record<string, GroupData> | null>(null);
   const [loading, setLoading] = useState(false);
@@ -69,11 +67,7 @@ export default function ComunidadePage() {
   };
 
 
-  const handleClick = (groupId: GroupData) => {
-    router.push(`/chat?group=${groupId?.groupId}`);
-  };
-
-
+console.log(grupos,'gruposgrupos')
   return (
     <div className="min-h-screen bg-black text-white">
       <Header />
@@ -133,27 +127,30 @@ export default function ComunidadePage() {
           >
             {groupChats.map((chat, i) => (
               <SwiperSlide key={i}>
-                <div onClick={() => handleClick(chat)}
-                  className="cursor-pointer bg-[#1f1f1f] rounded-2xl p-4 m-2 shadow-lg hover:scale-105 transition-transform duration-300">
-                  {chat?.background?.endsWith(".mp4") ? (
-                    <video
-                      src={chat?.background}
-                      autoPlay
-                      loop
-                      muted
-                      className="w-full h-full object-cover rounded-xl"
-                    />
-                  ) : (
-                    <img
-                      src={chat?.background}
-                      alt="background"
-                      className="w-full h-full object-cover rounded-xl"
-                    />
-                  )}
+                <Link href={`/chat/${chat?.groupId}`}>
+                  <div
+                    className="cursor-pointer bg-[#1f1f1f] rounded-2xl p-4 m-2 shadow-lg hover:scale-105 transition-transform duration-300">
+                    {chat?.background?.endsWith(".mp4") ? (
+                      <video
+                        src={chat?.background}
+                        autoPlay
+                        loop
+                        muted
+                        className="w-full h-full object-cover rounded-xl"
+                      />
+                    ) : (
+                      <img
+                        src={chat?.background}
+                        alt="background"
+                        className="w-full h-full object-cover rounded-xl"
+                      />
+                    )}
 
-                  <h3 className="text-xl font-semibold mb-2">{chat.name}</h3>
-                  <p className="text-pink-500">{chat.members ? Object.keys(chat.members).length : 0} membros ativos</p>
-                </div>
+                    <h3 className="text-xl font-semibold mb-2">{chat.name}</h3>
+                    <p className="text-pink-500">{chat.members ? Object.keys(chat.members).length : 0} membros ativos</p>
+                  </div>
+                </Link>
+
               </SwiperSlide>
             ))}
           </Swiper>

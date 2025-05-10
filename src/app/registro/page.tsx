@@ -29,84 +29,12 @@ export interface VisitorData {
     password: string;
 }
 
-export default function Registro({ visitorId, setIsOpen, groupName, currentUser }: ChatModalProps) {
-    const [data, setData] = useState<ChatModalProps | null>(null);
-    
-    const [userNameAcess, setUserNameAcess] = useState('');
-    const [password, setPassword] = useState('');
-    const [username, setUsername] = useState('');
-    const [image, setImage] = useState('');
-    const [userError, setUserError] = useState('');
-    const [passwordError, setPasswordError] = useState('');
-
-    console.log(visitorId,'visitorId')
-    useEffect(() => {
-        const fetchVisitor = async () => {
-            const db = getDatabase();
-            const visitorRef = ref(db, `visitors/${visitorId}`);
-            const snapshot = await get(visitorRef);
-            if (snapshot.exists()) {
-                const visitorData = snapshot.val();
-                setData(visitorData);
-                setUsername(visitorData.username || '');
-                setImage(visitorData.image || '');
-                const { userNameAcess, password, ...safeVisitorData } = visitorData;
-                localStorage.setItem('visitorData', JSON.stringify(safeVisitorData));
-            }
-        };
-
-        if (visitorId) fetchVisitor();
-    }, [visitorId]);
-
-    const handleAccess = async () => {
-        setUserError('');
-        setPasswordError('');
-
-        if (!userNameAcess || !password) {
-            alert('Por favor, preencha todos os campos.');
-            return;
-        }
-
-        const db = getDatabase();
-        const visitorRef = ref(db, `visitors/${visitorId}`);
-
-        try {
-            const snapshot = await get(visitorRef);
-
-            if (!snapshot.exists()) {
-                alert('Visitante não encontrado.');
-                return;
-            }
-            const groupsRef = ref(db, 'grupos');
-            const groupsSnap = await get(groupsRef);
-
-            if (groupsSnap.exists()) {
-                const userData = snapshot.val();
-                const groupsData = groupsSnap.val();
-                const groupEntry = Object.entries(groupsData).find((entry: any) =>
-                    entry[1].name?.toLowerCase() === groupName.toLowerCase()
-                );
-                if (groupEntry) {
-                    const [groupId] = groupEntry;
-                    await update(visitorRef, {
-                        userNameAcess,
-                        password,
-                        type: 'Membro',
-                        group: [groupId]
-                    });
-                    const groupMemberRef = ref(db, `grupos/${groupId}/members/${visitorId}`);
-                    await set(groupMemberRef, userData);
-                    setIsOpen(false);
-                }
-            }
-        } catch (error) {
-            console.error(error);
-        }
-    };
+export default function Registro() {
+   
 
     return (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-60">
-            <div className="bg-white rounded-lg shadow-lg p-8 w-96 relative text-black max-w-sm mx-auto">
+            {/* <div className="bg-white rounded-lg shadow-lg p-8 w-96 relative text-black max-w-sm mx-auto">
                 <button
                     onClick={() => setIsOpen(false)}
                     className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-2xl"
@@ -194,7 +122,7 @@ export default function Registro({ visitorId, setIsOpen, groupName, currentUser 
                         </span>
                     </p>
                 </div>
-            </div>
+            </div> */}
         </div>
     );
 }
