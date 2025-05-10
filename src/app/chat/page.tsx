@@ -118,7 +118,15 @@ export default function ChatPage() {
         onSelect={setSelectedItem}
         currentUser={{
           id: currentUser?.id ?? '',
+          username: currentUser?.username ?? '',
           type: currentUser?.type ?? 'Visitante',
+          power: currentUser?.power ?? 0,
+          group: currentUser?.group ?? [],
+          relacionamento: currentUser?.relacionamento ?? undefined,
+          image: currentUser?.image ?? 'default.jpg',
+          userNameAcess: currentUser?.userNameAcess ?? 'visitante',
+          password: currentUser?.password ?? '',
+          status: currentUser?.status ?? 'Offline'
         }}
         groupData={grupos!}
       />
@@ -127,8 +135,15 @@ export default function ChatPage() {
         {grupos && <ChatWindow groupData={grupos}
           currentUser={{
             id: currentUser?.id ?? '',
+            username: currentUser?.username ?? 'Visitante',
             type: currentUser?.type ?? 'Visitante',
-            status: currentUser?.status ?? ''
+            power: currentUser?.power ?? 0,
+            group: currentUser?.group ?? [],
+            relacionamento: currentUser?.relacionamento ?? undefined,
+            image: currentUser?.image ?? 'default.jpg',
+            userNameAcess: currentUser?.userNameAcess ?? 'visitante',
+            password: currentUser?.password ?? '',
+            status: currentUser?.status ?? 'Offline'
           }} />}
       </div>
       {/* {!cookiesAccepted && <CookieConsent onAccept={handleCookiesAcceptance} />} */}

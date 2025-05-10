@@ -6,108 +6,95 @@ import Image from 'next/image';
 import { UserType } from '@/utils/userStorage';
 
 interface ChatModalProps {
-    visitorId: string;
     setIsOpen: (open: boolean) => void;
-    groupName: string;
     currentUser: {
         id: string;
-        type: "Dono_Geral" | "Admin_mod" | "Dono_Sala" | "Staff" | "Membro" | "Visitante";
-        image: string;
         username: string;
-    };
+        type: UserType;
+        power: number;
+        group: string[];
+        relacionamento?: string;
+        image: string;
+        userNameAcess: string;
+        password: string;
+        status?: string;
+    }
 }
 
-export interface VisitorData {
-    id: string;
-    username: string;
-    type: UserType;
-    power: number;
-    group: string[];
-    relacionamento?: string;
-    image: string;
-    userNameAcess: string;
-    password: string;
-}
-
-export default function ChatModal({ visitorId, setIsOpen, groupName, currentUser }: ChatModalProps) {
-    const [data, setData] = useState<ChatModalProps | null>(null);
-    
-    const [userNameAcess, setUserNameAcess] = useState('');
-    const [password, setPassword] = useState('');
-    const [username, setUsername] = useState('');
-    const [image, setImage] = useState('');
-    const [userError, setUserError] = useState('');
-    const [passwordError, setPasswordError] = useState('');
-
-    console.log(currentUser, data,image, 'visitorIdvisitorId')
-
-    useEffect(() => {
-        const fetchVisitor = async () => {
-            const db = getDatabase();
-            const visitorRef = ref(db, `visitors/${visitorId}`);
-            const snapshot = await get(visitorRef);
-            if (snapshot.exists()) {
-                const visitorData = snapshot.val();
-                setData(visitorData);
-                setUsername(visitorData.username || '');
-                setImage(visitorData.image || '');
-                const { userNameAcess, password, ...safeVisitorData } = visitorData;
-                localStorage.setItem('visitorData', JSON.stringify(safeVisitorData));
-            }
-        };
-
-        if (visitorId) fetchVisitor();
-    }, [visitorId]);
-
-    const handleAccess = async () => {
-        setUserError('');
-        setPasswordError('');
-
-        if (!userNameAcess || !password) {
-            alert('Por favor, preencha todos os campos.');
-            return;
-        }
-
-        const db = getDatabase();
-        const visitorRef = ref(db, `visitors/${visitorId}`);
 
 
-        try {
-            const snapshot = await get(visitorRef);
+export default function ChatModal({ currentUser, setIsOpen }: ChatModalProps) {
+    // const [data, setData] = useState<VisitorData | null>(null);
+    // const [userNameAcess, setUserNameAcess] = useState('');
+    // const [password, setPassword] = useState('');
 
-            if (!snapshot.exists()) {
-                alert('Visitante não encontrado.');
-                return;
-            }
-            const groupsRef = ref(db, 'grupos');
-            const groupsSnap = await get(groupsRef);
+    // const [username, setUsername] = useState('');
+    // const [image, setImage] = useState('');
+    // console.log(image)
+    // useEffect(() => {
+    //     const fetchVisitor = async () => {
+    //         const db = getDatabase();
+    //         const visitorRef = ref(db, `visitors/${visitorId}`);
+    //         const snapshot = await get(visitorRef);
+    //         if (snapshot.exists()) {
+    //             const visitorData = snapshot.val();
+    //             setData(visitorData);
+    //             setUsername(visitorData.username || '');
+    //             setImage(visitorData.image || '');
+    //         }
+    //     };
+    //     fetchVisitor();
+    // }, [visitorId]);
 
-            //caso exista tabela grupos
-            if (groupsSnap.exists()) {
-                const userData = snapshot.val();
-                const groupsData = groupsSnap.val();
-                const groupEntry = Object.entries(groupsData).find((entry: any) =>
-                    entry[1].name?.toLowerCase() === groupName.toLowerCase()
-                );
-                if (groupEntry) {
-                    const [groupId] = groupEntry;
-                    // Criação ou atualização do visitante com nome de usuário e senha
-                    await update(visitorRef, {
-                        userNameAcess,
-                        password,
-                        type: 'Membro',
-                        group: [groupId]
-                    });
-                    const groupMemberRef = ref(db, `grupos/${groupId}/members/${visitorId}`);
-                    await set(groupMemberRef, userData);
-                    setIsOpen(false);
-                }
-            }
-        } catch (error) {
 
-        }
-    };
+    // const handleAccess = async () => {
+    //     if (!userNameAcess || !password) {
+    //         alert('Por favor, preencha todos os campos.');
+    //         return;
+    //     }
 
+    //     const db = getDatabase();
+    //     const visitorRef = ref(db, `visitors/${visitorId}`);
+
+    //     try {
+    //         await update(visitorRef, {
+    //             userNameAcess,
+    //             password,
+    //             type: 'Membro',
+    //         });
+
+
+    //         const groupsRef = ref(db, 'grupos');
+    //         const snapshot = await get(groupsRef);
+
+    //         if (snapshot.exists()) {
+    //             const groupsData = snapshot.val();
+
+    //             // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    //             const groupEntry = Object.entries(groupsData).find((entry: any) => {
+    //                 const group = entry[1];
+    //                 return group.name?.toLowerCase() === groupName.toLowerCase();
+    //             });
+
+
+    //             if (groupEntry) {
+    //                 const [groupId] = groupEntry;
+    //                 const groupMemberRef = ref(db, `grupos/${groupId}/members/${visitorId}`);
+    //                 await set(groupMemberRef, {
+    //                     name: username,
+    //                     type: 'Membro',
+    //                 });
+
+    //             } else {
+    //                 console.warn('Nenhum grupo público encontrado.');
+    //             }
+    //         }
+    //         setIsOpen(false);
+    //     } catch (error) {
+    //         console.error('Erro ao conceder acesso:', error);
+    //         alert('Erro ao conceder acesso.');
+    //     }
+    // };
 
 
     return (
@@ -120,11 +107,11 @@ export default function ChatModal({ visitorId, setIsOpen, groupName, currentUser
                     ×
                 </button>
 
-                {currentUser ? (
+                {/* {data ? (
                     <div className="flex items-center space-x-4 mb-4">
-                        {currentUser.image && (
+                        {data.image && (
                             <Image
-                                src={currentUser.image}
+                                src={data.image}
                                 alt="Foto do visitante"
                                 width={100}
                                 height={100}
@@ -133,8 +120,8 @@ export default function ChatModal({ visitorId, setIsOpen, groupName, currentUser
                             />
                         )}
                         <div className="flex flex-col text-left">
-                            <span className="text-sm text-gray-500">ID: {currentUser.id?.split('-')[0]}</span>
-                            <h3 className="text-xl font-semibold">{currentUser.username}</h3>
+                            <span className="text-sm text-gray-500">ID: {data.id?.split('-')[0]}</span>
+                            <h3 className="text-xl font-semibold">{data.username}</h3>
                         </div>
                     </div>
                 ) : (
@@ -144,6 +131,7 @@ export default function ChatModal({ visitorId, setIsOpen, groupName, currentUser
                 <div className="mt-6 space-y-4">
 
                     <div>
+
                         <input
                             type="text"
                             id="username"
@@ -153,7 +141,6 @@ export default function ChatModal({ visitorId, setIsOpen, groupName, currentUser
                             placeholder="Seu nome"
                         />
                     </div>
-
                     <div>
                         <label htmlFor="userNameAcess" className="block text-sm font-medium text-gray-700">
                             Nome de Usuário
@@ -166,7 +153,6 @@ export default function ChatModal({ visitorId, setIsOpen, groupName, currentUser
                             className="mt-1 p-2 w-full border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                             placeholder="aninha"
                         />
-                        {userError && <p className="text-red-600 text-sm mt-1">{userError}</p>}
                     </div>
 
                     <div>
@@ -181,7 +167,6 @@ export default function ChatModal({ visitorId, setIsOpen, groupName, currentUser
                             className="mt-1 p-2 w-full border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                             placeholder="1234"
                         />
-                        {passwordError && <p className="text-red-600 text-sm mt-1">{passwordError}</p>}
                     </div>
                     <button
                         onClick={handleAccess}
@@ -190,7 +175,7 @@ export default function ChatModal({ visitorId, setIsOpen, groupName, currentUser
                         Acessar
                     </button>
 
-                </div>
+                </div> */}
             </div>
         </div>
     );

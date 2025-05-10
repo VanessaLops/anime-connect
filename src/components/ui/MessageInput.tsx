@@ -4,20 +4,26 @@ import { useState } from 'react';
 import Image from 'next/image';
 import ChatModal from './Modal';
 import { Button } from './Button';
+import { UserType } from '@/utils/userStorage';
 
 interface MessageInputProps {
-    userId: string
     groupName: string;
     currentUser: {
         id: string;
-        type: "Dono_Geral" | "Admin_mod" | "Dono_Sala" | "Staff" | "Membro" | "Visitante";
-        image: string;
         username: string;
+        type: UserType;
+        power: number;
+        group: string[];
+        relacionamento?: string;
+        image: string;
+        userNameAcess: string;
+        password: string;
+        status?: string;
     };
 
 }
 
-export default function MessageInput({ userId, groupName, currentUser }: MessageInputProps) {
+export default function MessageInput({ groupName, currentUser }: MessageInputProps) {
     const [message, setMessage] = useState('');
     const [typingTimeout, setTypingTimeout] = useState<NodeJS.Timeout | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -93,10 +99,10 @@ export default function MessageInput({ userId, groupName, currentUser }: Message
 
             {isModalOpen && (
                 <ChatModal
-                    visitorId={userId}
-                    setIsOpen={setIsModalOpen}
-                    groupName={groupName}
                     currentUser={currentUser}
+                    setIsOpen={setIsModalOpen}
+                // groupName={groupName}
+
                 />
             )}
         </div>

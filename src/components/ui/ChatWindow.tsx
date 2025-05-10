@@ -7,13 +7,21 @@ import { GroupData } from "./SideBar";
 import MessageInput from "./MessageInput";
 import { onValue, ref, onDisconnect, set } from "firebase/database";
 import PeaoVisitante from "./PeaoVisitante";
+import { UserType } from "@/utils/userStorage";
 
 interface ChatWindowProps {
     groupData: GroupData;
     currentUser: {
         id: string;
-        type: "Dono_Geral" | "Admin_mod" | "Dono_Sala" | "Staff" | "Membro" | "Visitante";
-        status: string;
+        username: string;
+        type: UserType;
+        power: number;
+        group: string[];
+        relacionamento?: string;
+        image: string;
+        userNameAcess: string;
+        password: string;
+        status?: string;
     };
 }
 
@@ -46,7 +54,6 @@ export default function ChatWindow({ groupData, currentUser }: ChatWindowProps) 
 
     //Deixa online e offline apenas o usuário conectado
     useEffect(() => {
-
         const userExists = !!grupos?.members[currentUser.id];
         if (userExists) {
             const userStatusRef = ref(database, `grupos/${grupos?.groupId}/members/${currentUser.id}/status`);
@@ -54,7 +61,6 @@ export default function ChatWindow({ groupData, currentUser }: ChatWindowProps) 
             onDisconnect(userStatusRef).set('Offline');
         }
     }, [grupos]);
-
 
 
     // Monitorando alterações de status e movendo para a lista de Offline
@@ -76,6 +82,8 @@ export default function ChatWindow({ groupData, currentUser }: ChatWindowProps) 
 
         return () => unsubscribe();
     }, [groupData.groupId]);
+
+
     return (
         <div className="flex h-screen bg-[#36393f] text-white">
             <div className="flex-1 flex flex-col">
@@ -87,13 +95,18 @@ export default function ChatWindow({ groupData, currentUser }: ChatWindowProps) 
                 </div>
                 <div className="p-4 border-t border-gray-700">
                     <MessageInput
-                        userId={currentUser?.id ?? ''}
-                        groupName={groupData?.name ?? ''}
+                        groupName={groupData?.name}
                         currentUser={{
-                            id: currentUser?.id ?? '',
-                            type: currentUser?.type ?? 'Visitante',
-                            image: currentUser?.id ?? 'default.jpg',
-                            username: currentUser?.id ?? 'Visitante'
+                            id: currentUser?.id,
+                            username: currentUser?.username,
+                            type: currentUser?.type,
+                            power: currentUser?.power,
+                            group: currentUser?.group,
+                            relacionamento: currentUser?.relacionamento,
+                            image: currentUser?.image,
+                            userNameAcess: currentUser?.userNameAcess,
+                            password: currentUser?.password,
+                            status: currentUser?.status
                         }}
                     />
                 </div>

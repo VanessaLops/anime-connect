@@ -7,14 +7,22 @@ import { database } from '../../../firebase';
 import { ref, get } from 'firebase/database';
 import GroupCreateModal from '../ModalGroup';
 import membro_digitando from "../../utils/icons/Membro/menbro_digitando.gif";
-import { User } from '@/utils/userStorage';
+import { User, UserType } from '@/utils/userStorage';
 
 interface SidebarProps {
   selectedItem: string;
   onSelect: (item: string) => void;
   currentUser: {
     id: string;
-    type: "Dono_Geral" | "Admin_mod" | "Dono_Sala" | "Staff" | "Membro" | "Visitante";
+    username: string;
+    type: UserType;
+    power: number;
+    group: string[];
+    relacionamento?: string;
+    image: string;
+    userNameAcess: string;
+    password: string;
+    status?: string;
   };
   groupData: GroupData;
 }
@@ -34,47 +42,51 @@ export interface GroupData {
 }
 
 export default function Sidebar({ selectedItem, onSelect, currentUser, groupData }: SidebarProps) {
-  const [grupos, setGrupos] = useState<Record<string, GroupData> | null>(null)
+  const [grupos, setGrupos] = useState<Record<string, GroupData> | null>(null);
   const [loading, setLoading] = useState(false);
   const [canCreateGroup, setCanCreateGroup] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const gruposArray = grupos ? Object.values(grupos) : [];
 
-  console.log(gruposArray, 'canCreateGroup')
+  const userData = grupos?.members;
 
-  // const buscarGrupos = async () => {
-  //   setLoading(true);
-  //   try {
-  //     const snapshot = await get(ref(database, 'grupos'));
-  //     if (snapshot.exists()) {
-  //       const gruposData = snapshot.val();
+  console.log(userData, 'canCreateGroup')
 
 
-  //       const groupData: Record<string, GroupData> = Object.keys(gruposData).reduce((acc, key) => {
-  //         acc[key] = {
-  //           ...gruposData[key],
-  //           members: gruposData[key].members || [],
-  //           groupId: key,
-  //         };
-  //         return acc;
-  //       }, {} as Record<string, GroupData>);
+  const buscarGrupos = async () => {
+    setLoading(true);
+    try {
+      const snapshot = await get(ref(database, "grupos"));
+      if (snapshot.exists()) {
+        const gruposData = snapshot.val();
+        const gruposComMembros: Record<string, GroupData> = Object.keys(gruposData).reduce(
+          (acc, key) => {
+            acc[key] = {
+              ...gruposData[key],
+              members: gruposData[key].members || [],
+              groupId: key,
+            };
+            return acc;
+          },
+          {} as Record<string, GroupData>
+        );
+        setGrupos(gruposComMembros);
+      } else {
+        setGrupos(null);
+      }
+    } catch (error) {
+      console.error("Erro ao buscar grupos:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  //       setGrupos(groupData);
-  //     } else {
-  //       setGrupos(null);
-  //     }
-  //   } catch (error) {
-  //     console.error('Erro ao buscar grupos:', error);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
 
 
-  // useEffect(() => {
-  //   buscarGrupos();
-  // }, []);
+  useEffect(() => {
+    buscarGrupos();
+  }, []);
 
   // useEffect(() => {
   //   if (!grupos || !currentUser || currentUser.type === 'Visitante') {
