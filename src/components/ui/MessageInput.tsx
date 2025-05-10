@@ -20,10 +20,11 @@ interface MessageInputProps {
         password: string;
         status?: string;
     };
+    groupId:string;
 
 }
 
-export default function MessageInput({ groupName, currentUser }: MessageInputProps) {
+export default function MessageInput({ groupId, currentUser }: MessageInputProps) {
     const [message, setMessage] = useState('');
     const [typingTimeout, setTypingTimeout] = useState<NodeJS.Timeout | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -81,8 +82,7 @@ export default function MessageInput({ groupName, currentUser }: MessageInputPro
                 <div className="flex flex-col space-y-3 w-auto">
                     <Button
                         variant="primary"
-                        href="/registro"
-
+                        onClick={() => setIsModalOpen(true)}
                     >
                         Entrar
                     </Button>
@@ -101,8 +101,7 @@ export default function MessageInput({ groupName, currentUser }: MessageInputPro
                 <ChatModal
                     currentUser={currentUser}
                     setIsOpen={setIsModalOpen}
-                // groupName={groupName}
-
+                    groupId={groupId}
                 />
             )}
         </div>

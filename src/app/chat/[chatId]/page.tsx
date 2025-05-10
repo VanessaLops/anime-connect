@@ -19,7 +19,53 @@ export default function ChatPage() {
   const [cookiesAccepted, setCookiesAccepted] = useState<boolean | null>(null);
   const [grupos, setGrupos] = useState<GroupData | null>(null);
 
+
+  
+  useEffect(() => {
+    if (chatId && currentUser && grupos) {
+      registerVisitor(chatId, currentUser, grupos);
+    }
+  }, [chatId, currentUser, grupos]);
+
+  
+  useEffect(() => {
+    if (chatId) {
+      const buscarGrupo = async () => {
+        const snapshot = await get(ref(database, 'grupos'));
+        if (snapshot.exists()) {
+          const grupos: Record<string, GroupData> = snapshot.val();
+          const grupoEncontrado = Object.entries(grupos).find(([id]) => id.startsWith(chatId!));
+          if (grupoEncontrado) {
+            const [, grupoData] = grupoEncontrado;
+            setGrupos(grupoData);
+          }
+        }
+      };
+      buscarGrupo();
+    }
+    configureUser();
+  }, [chatId]);
+
+
   const configureUser = () => {
+
+
+
+
+    function generateRandomUsername(): string {
+      const adjectives = ['Weird', 'Crispy', 'Slippery', 'Funky', 'Rusty', 'Snappy', 'Drippy', 'Wiggly'];
+      const nouns = ['Toaster', 'Cabbage', 'Penguin', 'Banana', 'Wormhole', 'Pickle', 'Moose', 'Dolphin'];
+
+      const randomAdj = adjectives[Math.floor(Math.random() * adjectives.length)];
+      const randomNoun = nouns[Math.floor(Math.random() * nouns.length)];
+
+      return randomAdj + randomNoun;
+    }
+
+
+    function getRandomAvatar(username: string): string {
+      return `https://api.dicebear.com/7.x/adventurer/png?seed=${username}`;
+    }
 
     const userFromLocalStorage = localStorage.getItem('currentUser');
     let user: User | null = userFromLocalStorage ? JSON.parse(userFromLocalStorage) : null;
@@ -28,14 +74,14 @@ export default function ChatPage() {
       // Caso o usuário não tenha sido salvo, cria um usuário "Visitante" temporário
       user = {
         id: crypto.randomUUID(),
-        username: '',
+        username: generateRandomUsername(),
         type: 'Visitante',
         power: 0,
         group: [],
-        image: 'default.jpg',
+        image: getRandomAvatar(generateRandomUsername()),
         userNameAcess: '',
         password: '',
-        status: 'online',
+        status: 'Online',
       };
       // Salva o usuário "Visitante" no localStorage e cookies
       localStorage.setItem('currentUser', JSON.stringify(user));
@@ -56,22 +102,27 @@ export default function ChatPage() {
   };
 
   function registerVisitor(groupId: string, user: any, grupo: GroupData) {
-    //Verifica se está no firebase
-
+    //se existe cadastro no firebase
     const exists = grupos?.members?.hasOwnProperty(user.id) === true;
 
     if (exists) {
       //Se o tipo for Visitante
       const typeMember = grupos?.members ? Object.values(grupos.members).some(member => member.type === 'Visitante') : false;
       if (typeMember) {
-        const userStatusRef = ref(database, `grupos/${groupId}/members/${user.id}/status`);
-        set(userStatusRef, 'Online');
-        onDisconnect(userStatusRef).set('Offline');
+        const UserGroupStatus = ref(database, `grupos/${groupId}/members/${user.id}/status`);
+        set(UserGroupStatus, 'Online');
+        onDisconnect(UserGroupStatus).set('Offline');
+     
       }
+      
       //Outros Tipos Membros, Owner etc a  logica é aqui
       else {
 
       }
+      const userRef = ref(database, `users/${user.id}/status`);
+      set(userRef, 'Online');
+      onDisconnect(userRef).set('Offline');
+
     } else {
       //Não encontrou no firebase SALVA como novo usuário
       const userRef = ref(database, `grupos/${groupId}/members/${user.id}`);
@@ -82,35 +133,11 @@ export default function ChatPage() {
 
 
 
-  useEffect(() => {
-    if (chatId) {
-      const buscarGrupo = async () => {
-        const snapshot = await get(ref(database, 'grupos'));
-        if (snapshot.exists()) {
-          const grupos: Record<string, GroupData> = snapshot.val();
-          const grupoEncontrado = Object.entries(grupos).find(([id]) => id.startsWith(chatId!));
-          if (grupoEncontrado) {
-            const [, grupoData] = grupoEncontrado;
-            setGrupos(grupoData);
-          }
-        }
-      };
-      buscarGrupo();
-    }
-    configureUser();
-  }, [chatId]);
-
 
   const handleCookiesAcceptance = () => {
     setCookiesAccepted(true);
     localStorage.setItem('cookiesAccepted', 'true');
   };
-
-  useEffect(() => {
-    if (chatId && currentUser && grupos) {
-      registerVisitor(chatId, currentUser, grupos);
-    }
-  }, [chatId, currentUser, grupos]);
 
   const gruposArray = grupos ? Object.values(grupos) : [];
 

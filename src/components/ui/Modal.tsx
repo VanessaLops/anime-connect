@@ -1,9 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getDatabase, ref, get, update, set } from 'firebase/database';
+import { get, onDisconnect, ref, set, update } from 'firebase/database';
 import Image from 'next/image';
 import { UserType } from '@/utils/userStorage';
+import { GroupData } from './SideBar';
+import { database } from '../../../firebase';
+import { Button } from './Button';
 
 interface ChatModalProps {
     setIsOpen: (open: boolean) => void;
@@ -13,88 +16,86 @@ interface ChatModalProps {
         type: UserType;
         power: number;
         group: string[];
-        relacionamento?: string;
         image: string;
         userNameAcess: string;
         password: string;
         status?: string;
-    }
+    };
+    groupId: string;
 }
 
+export default function ChatModal({ groupId, currentUser, setIsOpen }: ChatModalProps) {
+    const [userNameAcess, setUserNameAcess] = useState('');
+    const [password, setPassword] = useState('');
+    const [username, setUsername] = useState('');
+
+    const [image, setImage] = useState('');
+    const [isLoginMode, setIsLoginMode] = useState(true);
+    const [loading, setLoading] = useState(false);
+
+    const handleAccess = async () => {
+        setLoading(true);
+
+        try {
+            const snapshotUsers = await get(ref(database, "users"));
+            if (snapshotUsers.exists()) {
+                const usersData = snapshotUsers.val();
+                const matchingUser = Object.values(usersData).find((user: any) =>
+                    user.userNameAcess === userNameAcess && user.password === password
+                );
+                if (matchingUser) {
+                    localStorage.setItem('currentUser', JSON.stringify(matchingUser));
+                    const expires = new Date();
+                    expires.setDate(expires.getDate() + 7);
+                    document.cookie = `user=${JSON.stringify(matchingUser)}; path=/; expires=${expires.toUTCString()};`;
+
+                    setTimeout(() => {
+                        setIsOpen(false);
+                        window.location.reload();
+                    }, 1000);
+
+                } else {
+                    alert("Usuário ou senha inválidos.");
+                }
+            }
+        } catch (error) {
+            console.error("Erro ao realizar login:", error);
+            alert("Erro ao realizar login. Tente novamente.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleRegister = () => {
+
+        const user = {
+            id: currentUser?.id,
+            username: username,
+            type: 'Membro',
+            power: 0,
+            group: [],
+            image: image,
+            userNameAcess: userNameAcess,
+            password: password,
+            status: 'Online'
+        };
+
+        // const expires = new Date();
+        // localStorage.setItem('currentUser', JSON.stringify(user));
+        // document.cookie = `user=${JSON.stringify(userNameAcess)}; path=/; expires=${expires.toUTCString()};`;
+
+        const groupRef = ref(database, `grupos/${groupId}/members/${currentUser.id}`);
+        const userRef = ref(database, `users/${currentUser.id}`);
+        update(userRef, user);
+        update(groupRef, user);
+        setTimeout(() => {
+            setIsOpen(false);
+            window.location.reload();
+        }, 1000);
+
+    };
 
 
-export default function ChatModal({ currentUser, setIsOpen }: ChatModalProps) {
-    // const [data, setData] = useState<VisitorData | null>(null);
-    // const [userNameAcess, setUserNameAcess] = useState('');
-    // const [password, setPassword] = useState('');
-
-    // const [username, setUsername] = useState('');
-    // const [image, setImage] = useState('');
-    // console.log(image)
-    // useEffect(() => {
-    //     const fetchVisitor = async () => {
-    //         const db = getDatabase();
-    //         const visitorRef = ref(db, `visitors/${visitorId}`);
-    //         const snapshot = await get(visitorRef);
-    //         if (snapshot.exists()) {
-    //             const visitorData = snapshot.val();
-    //             setData(visitorData);
-    //             setUsername(visitorData.username || '');
-    //             setImage(visitorData.image || '');
-    //         }
-    //     };
-    //     fetchVisitor();
-    // }, [visitorId]);
-
-
-    // const handleAccess = async () => {
-    //     if (!userNameAcess || !password) {
-    //         alert('Por favor, preencha todos os campos.');
-    //         return;
-    //     }
-
-    //     const db = getDatabase();
-    //     const visitorRef = ref(db, `visitors/${visitorId}`);
-
-    //     try {
-    //         await update(visitorRef, {
-    //             userNameAcess,
-    //             password,
-    //             type: 'Membro',
-    //         });
-
-
-    //         const groupsRef = ref(db, 'grupos');
-    //         const snapshot = await get(groupsRef);
-
-    //         if (snapshot.exists()) {
-    //             const groupsData = snapshot.val();
-
-    //             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    //             const groupEntry = Object.entries(groupsData).find((entry: any) => {
-    //                 const group = entry[1];
-    //                 return group.name?.toLowerCase() === groupName.toLowerCase();
-    //             });
-
-
-    //             if (groupEntry) {
-    //                 const [groupId] = groupEntry;
-    //                 const groupMemberRef = ref(db, `grupos/${groupId}/members/${visitorId}`);
-    //                 await set(groupMemberRef, {
-    //                     name: username,
-    //                     type: 'Membro',
-    //                 });
-
-    //             } else {
-    //                 console.warn('Nenhum grupo público encontrado.');
-    //             }
-    //         }
-    //         setIsOpen(false);
-    //     } catch (error) {
-    //         console.error('Erro ao conceder acesso:', error);
-    //         alert('Erro ao conceder acesso.');
-    //     }
-    // };
 
 
     return (
@@ -107,75 +108,128 @@ export default function ChatModal({ currentUser, setIsOpen }: ChatModalProps) {
                     ×
                 </button>
 
-                {/* {data ? (
-                    <div className="flex items-center space-x-4 mb-4">
-                        {data.image && (
-                            <Image
-                                src={data.image}
-                                alt="Foto do visitante"
-                                width={100}
-                                height={100}
-                                className="rounded-full"
-                                unoptimized={true}
-                            />
-                        )}
-                        <div className="flex flex-col text-left">
-                            <span className="text-sm text-gray-500">ID: {data.id?.split('-')[0]}</span>
-                            <h3 className="text-xl font-semibold">{data.username}</h3>
+                <h2 className="text-xl font-semibold text-center mb-4">
+                    {isLoginMode ? 'Login' : 'Cadastro'}
+                </h2>
+
+                <div className="space-y-4">
+                    {currentUser.type === 'Visitante' && !isLoginMode && (
+                        <div className="flex items-center space-x-4">
+                            <div className="relative">
+                                {image || currentUser.image ? (
+                                    <Image
+                                        src={image || currentUser.image}
+                                        alt="Avatar"
+                                        width={64}
+                                        height={64}
+                                        className="rounded-full"
+                                        unoptimized
+                                    />
+                                ) : (
+                                    <div className="w-16 h-16 bg-gray-200 rounded-full" />
+                                )}
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) => {
+                                        const file = e.target.files?.[0];
+                                        if (file) {
+                                            const reader = new FileReader();
+                                            reader.onloadend = () => {
+                                                if (reader.result) {
+                                                    setImage(reader.result as string);
+                                                }
+                                            };
+                                            reader.readAsDataURL(file);
+                                        }
+                                    }}
+                                    className="absolute top-0 left-0 w-full h-full opacity-0 cursor-pointer"
+                                    title="Clique para trocar a imagem"
+                                />
+                            </div>
+                            <div>
+                                <h3 className="font-semibold">{username || currentUser.username}</h3>
+                                <p className="text-sm text-gray-500">ID: {currentUser.id.split('-')[0]}</p>
+                            </div>
                         </div>
-                    </div>
-                ) : (
-                    <p className="text-center text-gray-500">Carregando visitante...</p>
-                )}
+                    )}
 
-                <div className="mt-6 space-y-4">
+                    {!isLoginMode && (
+                        <>
+                            <div>
+                                <label htmlFor="username" className="block text-sm font-medium text-gray-700">Nome Nick</label>
+                                <input
+                                    type="text"
+                                    id="username"
+                                    value={username}
+                                    onChange={(e) => setUsername(e.target.value)}
+                                    className="mt-1 p-2 w-full border rounded-md"
+                                    placeholder={currentUser?.username}
+                                />
+                            </div>
+                        </>
+                    )}
 
                     <div>
-
-                        <input
-                            type="text"
-                            id="username"
-                            value={username}
-                            onChange={(e) => setUsername(e.target.value)}
-                            className="mt-1 p-2 w-full border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="Seu nome"
-                        />
-                    </div>
-                    <div>
-                        <label htmlFor="userNameAcess" className="block text-sm font-medium text-gray-700">
-                            Nome de Usuário
-                        </label>
+                        <label htmlFor="userNameAcess" className="block text-sm font-medium text-gray-700">Nome de Usuário</label>
                         <input
                             type="text"
                             id="userNameAcess"
                             value={userNameAcess}
                             onChange={(e) => setUserNameAcess(e.target.value)}
-                            className="mt-1 p-2 w-full border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="mt-1 p-2 w-full border rounded-md"
                             placeholder="aninha"
                         />
                     </div>
 
                     <div>
-                        <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                            Senha
-                        </label>
+                        <label htmlFor="password" className="block text-sm font-medium text-gray-700">Senha</label>
                         <input
                             type="password"
                             id="password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className="mt-1 p-2 w-full border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="mt-1 p-2 w-full border rounded-md"
                             placeholder="1234"
                         />
                     </div>
-                    <button
-                        onClick={handleAccess}
-                        className="w-full py-2 mt-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none"
-                    >
-                        Acessar
-                    </button>
 
-                </div> */}
+                    {loading ? (
+                        <div className="text-center text-gray-500 mt-4">Carregando...</div>
+                    ) : (
+                        <Button
+                            onClick={isLoginMode ? handleAccess : handleRegister}
+                            className={`w-full py-2 ${isLoginMode ? 'bg-green-600' : 'bg-blue-600'} text-white rounded-md hover:opacity-90`}
+                        >
+                            {isLoginMode ? 'Acessar' : 'Cadastrar'}
+                        </Button>
+                    )}
+
+                    <div className="text-center mt-4 text-sm text-gray-600">
+                        {isLoginMode ? (
+                            <>
+                                Não tem uma conta?{' '}
+                                <span
+                                    onClick={() => setIsLoginMode(false)}
+                                    className="text-blue-600 hover:underline cursor-pointer"
+                                >
+                                    Cadastre-se
+                                </span>
+                            </>
+                        ) : (
+                            <>
+                                Já tem uma conta?{' '}
+                                <span
+                                    onClick={() => setIsLoginMode(true)}
+                                    className="text-green-600 hover:underline cursor-pointer"
+                                >
+                                    Faça login
+                                </span>
+                            </>
+                        )}
+                    </div>
+                </div>
+
             </div>
         </div>
     );

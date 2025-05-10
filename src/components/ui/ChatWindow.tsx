@@ -31,6 +31,10 @@ export default function ChatWindow({ groupData, currentUser }: ChatWindowProps) 
     const [grupos, setGrupos] = useState<GroupData | null>(null);
     const [onlineMembers, setOnlineMembers] = useState<any[]>([]);
     const [offlineMembers, setOfflineMembers] = useState<any[]>([]);
+
+    console.log(offlineMembers,'offlineMembers')
+
+
     useEffect(() => {
         if (groupData.groupId) {
             const grupoRef = ref(database, 'grupos');
@@ -64,24 +68,27 @@ export default function ChatWindow({ groupData, currentUser }: ChatWindowProps) 
 
 
     // Monitorando alterações de status e movendo para a lista de Offline
-    useEffect(() => {
-        const gruposRef = ref(database, `grupos/${groupData.groupId}/members`);
+  useEffect(() => {
+    const gruposRef = ref(database, `grupos/${groupData.groupId}/members`);
 
-        const unsubscribe = onValue(gruposRef, (snapshot) => {
-            if (snapshot.exists()) {
-                const members = snapshot.val();
-                const updatedOnlineUsers = Object.values(members).filter((user: any) => user.status === 'Online');
-                const updatedOfflineUsers = Object.values(members).filter((user: any) => user.status !== 'Online');
+    const unsubscribe = onValue(gruposRef, (snapshot) => {
+        if (snapshot.exists()) {
+            const members = snapshot.val();
+            const updatedOnlineUsers = Object.values(members).filter(
+                (user: any) => user.status === 'Online'
+            );
+            const updatedOfflineUsers = Object.values(members).filter(
+                (user: any) => user.status !== 'Online' && user.type === 'Membro'
+            );
+            console.log(updatedOfflineUsers,'updatedOfflineUsers')
 
-                // Atualizar os estados de membros online e offline
-                setOnlineMembers(updatedOnlineUsers);
-                // Aqui você pode definir o estado para os offlineMembers, por exemplo:
-                setOfflineMembers(updatedOfflineUsers);
-            }
-        });
+            setOnlineMembers(updatedOnlineUsers);
+            setOfflineMembers(updatedOfflineUsers);
+        }
+    });
 
-        return () => unsubscribe();
-    }, [groupData.groupId]);
+    return () => unsubscribe();
+}, [groupData.groupId]);
 
 
     return (
@@ -96,6 +103,7 @@ export default function ChatWindow({ groupData, currentUser }: ChatWindowProps) 
                 <div className="p-4 border-t border-gray-700">
                     <MessageInput
                         groupName={groupData?.name}
+                        groupId={groupData?.groupId}
                         currentUser={{
                             id: currentUser?.id,
                             username: currentUser?.username,

@@ -14,7 +14,7 @@ import { GroupData } from "@/components/ui/SideBar";
 import Link from "next/link";
 export default function ComunidadePage() {
 
-  const [selectedCategory, setSelectedCategory] = useState<string>("ComunidadE");
+  const [selectedCategory, setSelectedCategory] = useState<string>("Ajuda");
   const [groupChats, setGroupChats] = useState<any[]>([]);
   const [grupos, setGrupos] = useState<Record<string, GroupData> | null>(null);
   const [loading, setLoading] = useState(false);
@@ -67,7 +67,7 @@ export default function ComunidadePage() {
   };
 
 
-console.log(grupos,'gruposgrupos')
+  console.log(grupos, 'gruposgrupos')
   return (
     <div className="min-h-screen bg-black text-white">
       <Header />
@@ -78,7 +78,7 @@ console.log(grupos,'gruposgrupos')
         </h1>
 
         <p className="text-lg text-gray-300 max-w-2xl mb-16">
-          Conecte-se com outros membros, compartilhe conhecimento e evolua junto com uma rede de pessoas engajadas no crescimento pessoal e profissional.
+          Conecte-se com outros otakus e geeks, compartilhe suas paixões por animes, games, filmes e cultura pop. Aqui, você encontra pessoas como você — apaixonadas, criativas e sempre prontas para boas conversas e descobertas épicas!
         </p>
 
 
