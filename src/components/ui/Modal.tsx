@@ -40,8 +40,9 @@ export default function ChatModal({ groupId, currentUser, setIsOpen }: ChatModal
             const snapshotUsers = await get(ref(database, "users"));
             if (snapshotUsers.exists()) {
                 const usersData = snapshotUsers.val();
+
                 const matchingUser = Object.values(usersData).find((user: any) =>
-                    user.userNameAcess === userNameAcess && user.password === password
+                    usersData.userNameAcess === userNameAcess && usersData.password === password
                 );
                 if (matchingUser) {
                     localStorage.setItem('currentUser', JSON.stringify(matchingUser));
