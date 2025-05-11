@@ -5,7 +5,7 @@ import { User } from '@/utils/userStorage';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { database } from '../../../../firebase';
-
+const bcrypt = require('bcrypt');
 import { get, onDisconnect, ref, set } from 'firebase/database';
 import ChatWindow from '@/components/ui/ChatWindow';
 
@@ -20,14 +20,14 @@ export default function ChatPage() {
   const [grupos, setGrupos] = useState<GroupData | null>(null);
 
 
-  
+
   useEffect(() => {
     if (chatId && currentUser && grupos) {
       registerVisitor(chatId, currentUser, grupos);
     }
   }, [chatId, currentUser, grupos]);
 
-  
+
   useEffect(() => {
     if (chatId) {
       const buscarGrupo = async () => {
@@ -50,8 +50,6 @@ export default function ChatPage() {
   const configureUser = () => {
 
 
-
-
     function generateRandomUsername(): string {
       const adjectives = ['Weird', 'Crispy', 'Slippery', 'Funky', 'Rusty', 'Snappy', 'Drippy', 'Wiggly'];
       const nouns = ['Toaster', 'Cabbage', 'Penguin', 'Banana', 'Wormhole', 'Pickle', 'Moose', 'Dolphin'];
@@ -70,6 +68,8 @@ export default function ChatPage() {
     const userFromLocalStorage = localStorage.getItem('currentUser');
     let user: User | null = userFromLocalStorage ? JSON.parse(userFromLocalStorage) : null;
 
+
+ 
     if (!user) {
       // Caso o usuário não tenha sido salvo, cria um usuário "Visitante" temporário
       user = {
@@ -112,9 +112,9 @@ export default function ChatPage() {
         const UserGroupStatus = ref(database, `grupos/${groupId}/members/${user.id}/status`);
         set(UserGroupStatus, 'Online');
         onDisconnect(UserGroupStatus).set('Offline');
-     
+
       }
-      
+
       //Outros Tipos Membros, Owner etc a  logica é aqui
       else {
 

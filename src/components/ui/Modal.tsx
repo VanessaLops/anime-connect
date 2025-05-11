@@ -3,10 +3,11 @@
 import { useEffect, useState } from 'react';
 import { get, onDisconnect, ref, set, update } from 'firebase/database';
 import Image from 'next/image';
-import { UserType } from '@/utils/userStorage';
+import { User, UserType } from '@/utils/userStorage';
 import { GroupData } from './SideBar';
 import { database } from '../../../firebase';
 import { Button } from './Button';
+const bcrypt = require('bcrypt');
 
 interface ChatModalProps {
     setIsOpen: (open: boolean) => void;
@@ -36,29 +37,60 @@ export default function ChatModal({ groupId, currentUser, setIsOpen }: ChatModal
     const handleAccess = async () => {
         setLoading(true);
 
+        if (!userNameAcess.trim() || !password.trim()) {
+            alert('Preencha o nome de usuário e a senha!');
+            return;
+        }
+
+
         try {
+
+
+
+
             const snapshotUsers = await get(ref(database, "users"));
-            if (snapshotUsers.exists()) {
-                const usersData = snapshotUsers.val();
 
-                const matchingUser = Object.values(usersData).find((user: any) =>
-                    usersData.userNameAcess === userNameAcess && usersData.password === password
-                );
-                if (matchingUser) {
-                    localStorage.setItem('currentUser', JSON.stringify(matchingUser));
-                    const expires = new Date();
-                    expires.setDate(expires.getDate() + 7);
-                    document.cookie = `user=${JSON.stringify(matchingUser)}; path=/; expires=${expires.toUTCString()};`;
+            const usersData = snapshotUsers.val();
 
-                    setTimeout(() => {
-                        setIsOpen(false);
-                        window.location.reload();
-                    }, 1000);
+            const usersArray: User[] = Object.values(usersData as Record<string, User>);
 
-                } else {
-                    alert("Usuário ou senha inválidos.");
-                }
+
+            // Verifica se existe algum usuário com o username informado
+            const usuarioPorNome = usersArray.find(user =>
+                user.userNameAcess?.toLowerCase() === userNameAcess.toLowerCase()
+            );
+
+            console.log(usuarioPorNome?.password, 'usuarioPorNome')
+
+            console.log(password, 'usuarioPorNome')
+
+            if (!usuarioPorNome) {
+                alert('Nome de usuário não encontrado!');
+                return;
             }
+
+            if (userNameAcess !== usuarioPorNome.userNameAcess) {
+                alert('Nome de usuário Invalido!');
+                return;
+            }
+            if (password !== usuarioPorNome.password) {
+                alert('Senha incorreta!');
+                return;
+            }
+
+            // Se passou das validações acima, é porque está tudo certo
+            localStorage.setItem('currentUser', JSON.stringify(usuarioPorNome));
+
+            const expires = new Date();
+            expires.setDate(expires.getDate() + 7);
+
+            document.cookie = `user=${JSON.stringify(usuarioPorNome)}; path=/; expires=${expires.toUTCString()};`;
+
+            setTimeout(() => {
+                setIsOpen(false);
+                window.location.reload();
+            }, 1000);
+
         } catch (error) {
             console.error("Erro ao realizar login:", error);
             alert("Erro ao realizar login. Tente novamente.");
@@ -67,7 +99,46 @@ export default function ChatModal({ groupId, currentUser, setIsOpen }: ChatModal
         }
     };
 
-    const handleRegister = () => {
+
+    async function hashPassword(password: string) {
+        try {
+
+            const salt = await bcrypt.genSalt(10);
+            const hashedPassword = await bcrypt.hash(password, salt);
+            return hashedPassword;
+        } catch (error) {
+            console.error('Erro ao hash da senha:', error);
+        }
+    }
+
+
+    const handleRegister = async () => {
+
+        if (!userNameAcess.trim() || !password.trim()) {
+            alert('Preencha o nome de usuário e a senha!');
+            return;
+        }
+
+        const snapshotUsers = await get(ref(database, "users"));
+
+        const usersData = snapshotUsers.val();
+
+
+        const usersArray: User[] = Object.values(usersData as Record<string, User>);
+
+
+        const usuarioPorNome = usersArray.find(user =>
+            user.userNameAcess?.toLowerCase() === userNameAcess.toLowerCase()
+        );
+
+        if (userNameAcess == usuarioPorNome?.userNameAcess) {
+            alert('Escolha um nome de usuário mais forte! Use letras, números e talvez alguns símbolos.');
+            return;
+        }
+
+
+        const hashedPassword = await hashPassword(password);
+
 
         const user = {
             id: currentUser?.id,
@@ -77,7 +148,7 @@ export default function ChatModal({ groupId, currentUser, setIsOpen }: ChatModal
             group: [],
             image: image,
             userNameAcess: userNameAcess,
-            password: password,
+            password: hashedPassword,
             status: 'Online'
         };
 
