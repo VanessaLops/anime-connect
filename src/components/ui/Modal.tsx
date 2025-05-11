@@ -38,16 +38,13 @@ export default function ChatModal({ groupId, currentUser, setIsOpen }: ChatModal
     const handleAccess = async () => {
         setLoading(true);
 
+
         if (!userNameAcess.trim() || !password.trim()) {
             alert('Preencha o nome de usuário e a senha!');
             return;
         }
 
-
         try {
-
-
-
 
             const snapshotUsers = await get(ref(database, "users"));
 
@@ -55,8 +52,9 @@ export default function ChatModal({ groupId, currentUser, setIsOpen }: ChatModal
 
             const usersArray: User[] = Object.values(usersData as Record<string, User>);
 
+            console.log(usersArray, 'usersArray')
 
-            // Verifica se existe algum usuário com o username informado
+            //Verifica se existe algum usuário com o username informado
             const usuarioPorNome = usersArray.find(user =>
                 user.userNameAcess?.toLowerCase() === userNameAcess.toLowerCase()
             );
@@ -126,16 +124,16 @@ export default function ChatModal({ groupId, currentUser, setIsOpen }: ChatModal
 
 
         const usersArray: User[] = Object.values(usersData as Record<string, User>);
-
+        console.log(usersArray, 'usersArray')
 
         const usuarioPorNome = usersArray.find(user =>
             user.userNameAcess?.toLowerCase() === userNameAcess.toLowerCase()
         );
 
-        if (userNameAcess == usuarioPorNome?.userNameAcess) {
-            alert('Escolha um nome de usuário mais forte! Use letras, números e talvez alguns símbolos.');
-            return;
-        }
+        // if (userNameAcess == usuarioPorNome?.userNameAcess) {
+        //     alert('Escolha um nome de usuário mais forte! Use letras, números e talvez alguns símbolos.');
+        //     return;
+        // }
 
 
         const hashedPassword = await hashPassword(password);
@@ -172,7 +170,7 @@ export default function ChatModal({ groupId, currentUser, setIsOpen }: ChatModal
 
 
     return (
-        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-60">
+        <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm bg-black/40">
             <div className="bg-white rounded-lg shadow-lg p-8 w-96 relative text-black">
                 <button
                     onClick={() => setIsOpen(false)}

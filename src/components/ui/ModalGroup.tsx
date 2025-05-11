@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, ChangeEvent } from 'react';
 import { getDatabase, ref, get, push, set, remove, update } from 'firebase/database';
-
+import { v4 as uuidv4 } from 'uuid';
 interface GroupCreateModalProps {
     currentUserId: string;
     setIsOpen: (open: boolean) => void;
@@ -11,22 +11,40 @@ interface GroupCreateModalProps {
 export default function GroupCreateModal({ currentUserId, setIsOpen }: GroupCreateModalProps) {
     const [groupName, setGroupName] = useState('');
     const [description, setDescription] = useState('');
+    const [image, setImage] = useState('');
+    const [backgroundUrl, setBackgroundUrl] = useState('');
+    const [category, setCategory] = useState('');
+
     const [error, setError] = useState('');
     const [existingGroupName, setExistingGroupName] = useState('');
     const [existingGroupId, setExistingGroupId] = useState('');
     const [isLoading, setIsLoading] = useState(true);
 
+
+    //Nem todos os dados estão indo para o banco  ta salvando coom dadosincompletos
+    ///campos Obrigatório
+    //   name: string;
+    //   info: string;
+    //   type: 'public' | 'private';
+    //   code?: string;
+    //   background: string;
+    //   ownerId: string;
+    //   createdAt: string;
+    //   image: string;
+    //   groupId: string;
+    //   category: string;
+
     useEffect(() => {
         const fetchGroupStatus = async () => {
             const db = getDatabase();
-            const visitorRef = ref(db, `visitors/${currentUserId}`);
+            const visitorRef = ref(db, `users/${currentUserId}`);
             const visitorSnap = await get(visitorRef);
             const visitorData = visitorSnap.val();
 
-            console.log(visitorData,'visitorData')
+            console.log(visitorData, 'visitorData')
             if (visitorData?.groupId) {
                 const groupRef = ref(db, `grupos/${visitorData.groupId}`);
-                console.log(groupRef,'groupRef')
+                console.log(groupRef, 'groupRef')
                 const groupSnap = await get(groupRef);
                 const groupData = groupSnap.val();
 
@@ -49,24 +67,53 @@ export default function GroupCreateModal({ currentUserId, setIsOpen }: GroupCrea
             return;
         }
 
+        if (existingGroupId) {
+            setError('Você já pertence a um grupo e não pode criar outro.');
+            return;
+        }
+
         try {
+
             const db = getDatabase();
             const groupsRef = ref(db, 'grupos');
-            const newGroupRef = push(groupsRef);
-            const newGroupId = newGroupRef.key;
+            // const newGroupRef = push(groupsRef);
+            const newGroupId = uuidv4();
+            const newGroupRef = ref(db, `grupos/${newGroupId}`);
+
+            const userSnapshot = await get(ref(db, `users/${currentUserId}`));
+
+            if (!userSnapshot.exists()) {
+                throw new Error("Usuário não encontrado");
+            }
+
+            const userData = userSnapshot.val();
+
 
             const newGroupData = {
                 name: groupName,
-                description,
-                createdBy: currentUserId,
+                info: description,
+                code: currentUserId,
+                type: 'public',
+                background: backgroundUrl,
                 createdAt: Date.now(),
+                image: image,
+                groupId: newGroupId,
+                category: category,
+                ownerId: currentUserId,
+                members: {
+                    [currentUserId]: {
+                        ...userData,
+                        type: 'Dono_Sala'
+                    }
+                }
             };
 
+            console.log(newGroupData, 'newGroupData')
             await set(newGroupRef, newGroupData);
-            await update(ref(db, `visitors/${currentUserId}`), {
+            await update(ref(db, `users/${currentUserId}`), {
                 groupId: newGroupId,
+                type: 'Dono_Sala'
             });
-
             alert('Grupo criado com sucesso!');
             setIsOpen(false);
         } catch (error) {
@@ -74,6 +121,7 @@ export default function GroupCreateModal({ currentUserId, setIsOpen }: GroupCrea
             setError('Erro ao criar o grupo. Tente novamente.');
         }
     };
+
 
     const handleDeleteGroup = async () => {
         const confirm = window.confirm(`Tem certeza que deseja excluir o grupo "${existingGroupName}"? Você perderá todos os benefícios como Nitro, cargos etc.`);
@@ -83,7 +131,7 @@ export default function GroupCreateModal({ currentUserId, setIsOpen }: GroupCrea
         try {
             const db = getDatabase();
             await remove(ref(db, `grupos/${existingGroupId}`));
-            await update(ref(db, `visitors/${currentUserId}`), {
+            await update(ref(db, `users/${currentUserId}`), {
                 groupId: null,
             });
 
@@ -98,8 +146,10 @@ export default function GroupCreateModal({ currentUserId, setIsOpen }: GroupCrea
 
     if (isLoading) return null;
 
+
+
     return (
-        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-60">
+        <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm bg-black/40">
             <div className="bg-white rounded-lg shadow-lg p-8 w-96 relative text-black">
                 <button
                     onClick={() => setIsOpen(false)}
@@ -144,21 +194,61 @@ export default function GroupCreateModal({ currentUserId, setIsOpen }: GroupCrea
 
                             <div>
                                 <label htmlFor="description" className="block text-sm font-medium text-gray-700">
-                                    Descrição (opcional)
+                                    Descrição
                                 </label>
                                 <input
                                     id="description"
                                     value={description}
+                                    onChange={(e) => setDescription(e.target.value)}
                                     className="mt-1 p-2 w-full border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     placeholder="Fale um pouco sobre o grupo..."
-                                  
+                                />
+                            </div>
+                            <div>
+                                <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+                                    Descrição
+                                </label>
+                                <input
+                                    id="description"
+                                    value={image}
+                                    onChange={(e) => setImage(e.target.value)}
+                                    className="mt-1 p-2 w-full border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    placeholder="Fale um pouco sobre o grupo..."
+                                />
+                            </div>
+                            <div>
+                                <label htmlFor="backgroundUrl" className="block text-sm font-medium text-gray-700">
+                                    Ou URL da Imagem de Fundo (opcional)
+                                </label>
+                                <input
+                                    type="url"
+                                    id="backgroundUrl"
+                                    value={backgroundUrl}
+                                    onChange={(e) => setBackgroundUrl(e.target.value)}
+                                    className="mt-1 p-2 w-full border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    placeholder="Cole a URL da imagem de fundo"
+                                />
+                            </div>
+
+
+                            <div>
+                                <label htmlFor="category" className="block text-sm font-medium text-gray-700">
+                                    Categoria
+                                </label>
+                                <input
+                                    type="text"
+                                    id="category"
+                                    value={category}
+                                    onChange={(e) => setCategory(e.target.value)}
+                                    className="mt-1 p-2 w-full border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    placeholder="Defina uma categoria para o grupo"
                                 />
                             </div>
 
                             {error && <p className="text-red-600 text-sm mt-1">{error}</p>}
 
                             <button
-                                onClick={handleCreateGroup}
+                                onClick={() => handleCreateGroup()}
                                 className="w-full py-2 mt-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none"
                             >
                                 Criar Grupo

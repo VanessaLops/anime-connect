@@ -1,13 +1,13 @@
 'use client'
-
-
 import { useEffect, useState } from 'react';
-import Image from 'next/image';
 import { database } from '../../../firebase';
-import { ref, get } from 'firebase/database';
-import GroupCreateModal from '../ModalGroup';
-import membro_digitando from "../../utils/icons/Membro/menbro_digitando.gif";
+import { ref, get, onValue } from 'firebase/database';
+import GroupCreateModal from './ModalGroup';
+
 import { User, UserType } from '@/utils/userStorage';
+import Image from 'next/image';
+import { useRouter } from 'next/router';
+import Link from 'next/link';
 
 interface SidebarProps {
   selectedItem: string;
@@ -42,87 +42,76 @@ export interface GroupData {
 }
 
 export default function Sidebar({ selectedItem, onSelect, currentUser, groupData }: SidebarProps) {
-  const [grupos, setGrupos] = useState<Record<string, GroupData> | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [canCreateGroup, setCanCreateGroup] = useState(false);
+  const [grupos, setGrupos] = useState<GroupData | null>(null);
+  const [user, setUser] = useState<any[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const gruposArray = grupos ? Object.values(grupos) : [];
-
-  const userData = grupos?.members;
-
-  console.log(userData, 'canCreateGroup')
-
-
-  const buscarGrupos = async () => {
-    setLoading(true);
-    try {
-      const snapshot = await get(ref(database, "grupos"));
-      if (snapshot.exists()) {
-        const gruposData = snapshot.val();
-        const gruposComMembros: Record<string, GroupData> = Object.keys(gruposData).reduce(
-          (acc, key) => {
-            acc[key] = {
-              ...gruposData[key],
-              members: gruposData[key].members || [],
-              groupId: key,
-            };
-            return acc;
-          },
-          {} as Record<string, GroupData>
-        );
-        setGrupos(gruposComMembros);
-      } else {
-        setGrupos(null);
-      }
-    } catch (error) {
-      console.error("Erro ao buscar grupos:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-
+  console.log(user, 'onlineMembers')
+  const [grposUsuario, setGruposUsuario] = useState<any[]>([]);
 
   useEffect(() => {
-    buscarGrupos();
-  }, []);
+    if (groupData?.groupId) {
+      const grupoRef = ref(database, 'grupos');
 
-  // useEffect(() => {
-  //   if (!grupos || !currentUser || currentUser.type === 'Visitante') {
-  //     setCanCreateGroup(false);
-  //     return;
-  //   }
+      const unsubscribe = onValue(grupoRef, snapshot => {
+        if (snapshot.exists()) {
+          const grupos: Record<string, GroupData> = snapshot.val();
+          const grupoEncontrado = Object.entries(grupos).find(([id]) =>
+            id.startsWith(groupData.groupId!)
+          );
 
-  //   const usuarioJaTemGrupo = Object.values(grupos).some(
-  //     (grupo) => grupo.ownerId === currentUser.id && grupo.type === 'public'
-  //   );
 
-  //   setCanCreateGroup(!usuarioJaTemGrupo && currentUser.type === 'Membro');
-  // }, [grupos, currentUser]);
 
-  // const handleEnterGroup = (groupName: string) => {
-  //   onSelect(groupName);
-  // };
+          if (grupoEncontrado) {
+            const [, grupoData] = grupoEncontrado;
+            const userLogadoString = localStorage.getItem('currentUser');
+            let dadosUserLogadoAsync = JSON.parse(userLogadoString ?? '{}');
+            const gruposMembro = Object.values(grupos).filter((grupo) =>
+              grupo.members && Object.values(grupo.members).some(
+                (membro) => membro.id === dadosUserLogadoAsync.id
+              )
+            );
+            setGruposUsuario(gruposMembro)
+            setUser(dadosUserLogadoAsync)
+            const membrosGrupo = grupoData?.members
+              ? Object.values(grupoData.members)
+              : [];
 
-  // const handleCreateGroupClick = () => {
-  //   const grupoExistente = Object.values(grupos || {}).find(
-  //     (grupo) => grupo.ownerId === currentUser.id && grupo.type === 'public'
-  //   );
+            const localizaUser = membrosGrupo.find(
+              (item) => item.id === dadosUserLogadoAsync?.id
+            );
 
-  //   if (grupoExistente) {
-  //     const confirmacao = window.confirm(
-  //       `Você já criou o grupo "${grupoExistente.name}".\n\n⚠️ Só é permitido criar 1 grupo por membro.\n\nDeseja excluir o grupo atual?\n\n⚠️ Atenção: Ao excluir, você perderá tudo o que adicionou ao grupo (membros, moedas AnimeMoney, upgrades de Nitro no futuro etc.)`
-  //     );
+            const precisaAtualizarStatus =
+              dadosUserLogadoAsync?.status === 'Offline' &&
+              localizaUser?.status === 'Online';
 
-  //     if (confirmacao) {
-  //       console.log('Excluir grupo:', grupoExistente.groupId);
-  //     }
-  //     return;
-  //   }
+            if (precisaAtualizarStatus) {
+              dadosUserLogadoAsync = {
+                ...dadosUserLogadoAsync,
+                status: 'Online',
+              };
+              localStorage.setItem(
+                'currentUser',
+                JSON.stringify(dadosUserLogadoAsync)
+              );
+              document.cookie = `user=${JSON.stringify(dadosUserLogadoAsync)}; path=/;`;
+              console.log('Status do usuário atualizado para Online!');
+            }
 
-  //   setIsModalOpen(true);
-  // };
+            setGrupos(grupoData);
+            //Primeiro Compara esse User Logado
+            //Verifica o status dele na tabela do firebase se no firebase estiver Online  e no Async e Cokies Offiline
+            //Altera o Status dele pra Online no async e no cookie
+            //Depois Habilita o SIdeBar de Cadastro de Grupos e Lista todos os grupos que ele faz parte.
+            //Verifica se ele já tem um grupo criado (Cada membro só pode criar 1 grupo)
+            //Ao criar grupo ele recebe o status de owner na tabela de grupo.
+          }
+        }
+      });
+
+      return () => unsubscribe();
+    }
+  }, [groupData?.groupId]);
+
 
   return (
     <>
@@ -132,66 +121,80 @@ export default function Sidebar({ selectedItem, onSelect, currentUser, groupData
           setIsOpen={setIsModalOpen}
         />
       )}
-      {/* <div className="w-20 bg-[#202225] flex flex-col items-center py-4 space-y-4 overflow-y-auto">
+
+      <div className="w-20 bg-[#202225] flex flex-col items-center py-4 space-y-4 overflow-y-auto">
+
         <div className="flex-grow space-y-2 flex flex-col items-center">
-          {loading ? (
-            <h1 className="text-white">Carregando...</h1>
+
+          {
+            user[0]?.type !== "Visitante" ? (
+              <div className="mt-6 mb-4">
+                <button
+                  onClick={() => setIsModalOpen(true)}  
+                  className="w-12 h-12 bg-green-600 rounded-full hover:rounded-2xl transition-all duration-300"
+                >
+                  +
+                </button>
+              </div>
+            ) : null
+          }
+
+          {currentUser?.type === 'Visitante' ? (
+            groupData && (
+              <Link
+                key={groupData.createdAt}
+                href={`/chat/${groupData?.groupId}`}
+                className={`w-12 h-12 rounded-full hover:rounded-2xl transition-all duration-300 ${selectedItem === groupData.name ? 'bg-[#5865F2]' : 'bg-gray-700'}`}
+              >
+
+                <Image
+              src={groupData?.image && groupData.image.trim() !== '' ? groupData.image : '/default-group.png'}
+
+                  alt={groupData.name}
+                  width={24}
+                  height={24}
+                />
+
+              </Link>
+            )
           ) : (
-            <>
-              {currentUser.type === 'Visitante' ? (
-                groupData && (
-                  <button
-                    key={groupData.createdAt}
-                    onClick={() => handleEnterGroup(groupData.name)}
-                    className={`w-12 h-12 rounded-full hover:rounded-2xl transition-all duration-300 ${selectedItem === groupData.name ? 'bg-[#5865F2]' : 'bg-gray-700'}`}
-                  >
-
-                    <Image
-                      src={groupData?.image || membro_digitando}
-                      alt={groupData.name}
-                      width={24}
-                      height={24}
-                    />
-
-                  </button>
+            grposUsuario
+              .filter((grupo) =>
+                Object.values(grupo.members || {}).some(
+                  (membro: any) => membro.id === user[0]?.id
                 )
-              ) : (
-                gruposArray
-                  .filter((grupo) =>
-                    grupo.members?.some((m) => m.id === currentUser.id)
-                  )
-                  .map((grupo) => (
-                    <button
-                      key={grupo.createdAt}
-                      onClick={() => handleEnterGroup(grupo.name)}
-                      className={`w-12 h-12 rounded-full hover:rounded-2xl transition-all duration-300 ${selectedItem === grupo.name ? 'bg-[#5865F2]' : 'bg-gray-700'}`}
-                    >
 
-                      <Image
-                        src={grupo?.image || membro_digitando}
-                        alt={grupo.name}
-                        width={24}
-                        height={24}
-                      />
+              )
+              .map((grupo) => (
+                <Link
+                  href={`/chat/${grupo?.groupId}`}
+                  key={grupo?.createdAt}
+                  className={`w-12 h-12 rounded-full hover:rounded-2xl transition-all duration-300 ${selectedItem === grupo.name ? 'bg-[#5865F2]' : 'bg-gray-700'}`}
+                >
 
-                    </button>
-                  ))
-              )}
+                  <Image
 
-            </>
+                    src={grupo?.image || '/default-group.png'}
+                    alt={grupo.name}
+                    width={24}
+                    height={24}
+                  />
+
+                </Link>
+              ))
           )}
+
         </div>
-        {canCreateGroup && (
-          <div className="mt-auto mb-4">
-            <button
-              onClick={handleCreateGroupClick}
-              className="w-12 h-12 bg-green-600 rounded-full hover:rounded-2xl transition-all duration-300"
-            >
-              +
-            </button>
-          </div>
-        )}
-      </div> */}
+
+      </div>
+
+      {isModalOpen && (
+        <GroupCreateModal
+          currentUserId={currentUser.id}
+          setIsOpen={setIsModalOpen}
+        />
+      )}
+
     </>
   );
 }

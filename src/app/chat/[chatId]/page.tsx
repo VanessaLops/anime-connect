@@ -139,23 +139,7 @@ export default function ChatPage() {
     localStorage.setItem('cookiesAccepted', 'true');
   };
 
-  const gruposArray = grupos ? Object.values(grupos) : [];
-
-
-
-
-
-
-
-
-
-
-
-
   return (
-
-
-
     <div className="flex h-screen">
       <Sidebar
         selectedItem={selectedItem}

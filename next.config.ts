@@ -14,7 +14,8 @@ const nextConfig = {
       'cdn-icons-png.flaticon.com',
       'img.myloview.com.br',
       'img.myloview.com.br',
-      'api.dicebear.com'
+      'api.dicebear.com',
+      'media2.giphy.com'
     ],
   },
   webpack(config: { resolve: { fallback: any; }; }) {

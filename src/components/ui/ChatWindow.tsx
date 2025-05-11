@@ -32,7 +32,7 @@ export default function ChatWindow({ groupData, currentUser }: ChatWindowProps) 
     const [onlineMembers, setOnlineMembers] = useState<any[]>([]);
     const [offlineMembers, setOfflineMembers] = useState<any[]>([]);
 
-    console.log(offlineMembers,'offlineMembers')
+    console.log(onlineMembers,'offlineMembers')
 
 
     useEffect(() => {
@@ -71,6 +71,7 @@ export default function ChatWindow({ groupData, currentUser }: ChatWindowProps) 
   useEffect(() => {
     const gruposRef = ref(database, `grupos/${groupData.groupId}/members`);
 
+    console.log(gruposRef,'gruposRef')
     const unsubscribe = onValue(gruposRef, (snapshot) => {
         if (snapshot.exists()) {
             const members = snapshot.val();
