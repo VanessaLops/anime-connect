@@ -5,7 +5,7 @@ import { User } from '@/utils/userStorage';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { database } from '../../../../firebase';
-const bcrypt = require('bcrypt');
+
 import { get, onDisconnect, ref, set } from 'firebase/database';
 import ChatWindow from '@/components/ui/ChatWindow';
 

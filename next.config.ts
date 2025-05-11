@@ -16,7 +16,18 @@ const nextConfig = {
       'img.myloview.com.br',
       'api.dicebear.com'
     ],
-  }
+  },
+  webpack(config: { resolve: { fallback: any; }; }) {
+    config.resolve.fallback = {
+      // if you miss it, all the other options in fallback, specified
+      // by next.js will be dropped.
+      ...config.resolve.fallback,
+
+      fs: false, // the solution
+    };
+
+    return config;
+  },
 };
 
 module.exports = nextConfig;

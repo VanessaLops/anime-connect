@@ -7,7 +7,8 @@ import { User, UserType } from '@/utils/userStorage';
 import { GroupData } from './SideBar';
 import { database } from '../../../firebase';
 import { Button } from './Button';
-const bcrypt = require('bcrypt');
+import bcrypt from 'bcryptjs';
+
 
 interface ChatModalProps {
     setIsOpen: (open: boolean) => void;
