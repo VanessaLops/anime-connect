@@ -52,16 +52,13 @@ export default function ChatModal({ groupId, currentUser, setIsOpen }: ChatModal
 
             const usersArray: User[] = Object.values(usersData as Record<string, User>);
 
-            console.log(usersArray, 'usersArray')
 
             //Verifica se existe algum usuário com o username informado
-            const usuarioPorNome = usersArray.find(user =>
-                user.userNameAcess?.toLowerCase() === userNameAcess.toLowerCase()
-            );
+            const usuarioPorNome = usersArray.find(function getName(dados: User) {
+                return dados.userNameAcess === userNameAcess
+            });
 
-            console.log(usuarioPorNome?.password, 'usuarioPorNome')
 
-            console.log(password, 'usuarioPorNome')
 
             if (!usuarioPorNome) {
                 alert('Nome de usuário não encontrado!');
@@ -72,9 +69,12 @@ export default function ChatModal({ groupId, currentUser, setIsOpen }: ChatModal
                 alert('Nome de usuário Invalido!');
                 return;
             }
-            if (password !== usuarioPorNome.password) {
+            const isMatch = await bcrypt.compare(password, usuarioPorNome.password);
+
+
+            if (!isMatch) {
                 alert('Senha incorreta!');
-                return;
+                return false;
             }
 
             // Se passou das validações acima, é porque está tudo certo
@@ -152,7 +152,7 @@ export default function ChatModal({ groupId, currentUser, setIsOpen }: ChatModal
         };
 
 
-      
+
         const expires = new Date();
         const groupRef = ref(database, `grupos/${groupId}/members/${currentUser.id}`);
         const userRef = ref(database, `users/${currentUser.id}`);
