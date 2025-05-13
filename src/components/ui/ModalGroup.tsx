@@ -21,6 +21,8 @@ export default function GroupCreateModal({ currentUserId, setIsOpen }: GroupCrea
     const [isLoading, setIsLoading] = useState(true);
 
 
+
+
     //Nem todos os dados estão indo para o banco  ta salvando coom dadosincompletos
     ///campos Obrigatório
     //   name: string;
@@ -62,6 +64,7 @@ export default function GroupCreateModal({ currentUserId, setIsOpen }: GroupCrea
 
     const handleCreateGroup = async () => {
         setError('');
+
         if (!groupName.trim()) {
             setError('O nome do grupo é obrigatório.');
             return;
@@ -73,21 +76,22 @@ export default function GroupCreateModal({ currentUserId, setIsOpen }: GroupCrea
         }
 
         try {
-
             const db = getDatabase();
-            const groupsRef = ref(db, 'grupos');
-            // const newGroupRef = push(groupsRef);
             const newGroupId = uuidv4();
-            const newGroupRef = ref(db, `grupos/${newGroupId}`);
 
-            const userSnapshot = await get(ref(db, `users/${currentUserId}`));
+            const newGroupRef = ref(db, `grupos/${newGroupId}`);
+            const userRef = ref(db, `users/${currentUserId}`);
+
+            // // Executa as duas promessas em paralelo
+            const [userSnapshot] = await Promise.all([
+                get(userRef),
+            ]);
 
             if (!userSnapshot.exists()) {
                 throw new Error("Usuário não encontrado");
             }
 
             const userData = userSnapshot.val();
-
 
             const newGroupData = {
                 name: groupName,
@@ -108,14 +112,19 @@ export default function GroupCreateModal({ currentUserId, setIsOpen }: GroupCrea
                 }
             };
 
+
             console.log(newGroupData, 'newGroupData')
-            await set(newGroupRef, newGroupData);
-            await update(ref(db, `users/${currentUserId}`), {
-                groupId: newGroupId,
-                type: 'Dono_Sala'
-            });
+            await Promise.all([
+                set(newGroupRef, newGroupData),
+                update(userRef, {
+                    groupId: newGroupId,
+                    type: 'Dono_Sala'
+                })
+            ]);
+
             alert('Grupo criado com sucesso!');
             setIsOpen(false);
+
         } catch (error) {
             console.error('Erro ao criar grupo:', error);
             setError('Erro ao criar o grupo. Tente novamente.');

@@ -15,7 +15,7 @@ import Link from "next/link";
 export default function ComunidadePage() {
 
   const [selectedCategory, setSelectedCategory] = useState<string>("Ajuda");
-  const [groupChats, setGroupChats] = useState<any[]>([]);
+  const [groupChats, setGroupChats] = useState<GroupData[]>([]);
   const [grupos, setGrupos] = useState<Record<string, GroupData> | null>(null);
   const [loading, setLoading] = useState(false);
 

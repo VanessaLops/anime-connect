@@ -56,7 +56,7 @@ export default function ChatWindow({ groupData, currentUser }: ChatWindowProps) 
     }, [groupData.groupId]);
 
 
-    //Deixa online e offline apenas o usuário conectado
+    //Deixa online e offline apenas o usuário cadastrados
     useEffect(() => {
         const userExists = !!grupos?.members[currentUser.id];
         if (userExists) {

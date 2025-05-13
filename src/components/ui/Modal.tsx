@@ -151,14 +151,17 @@ export default function ChatModal({ groupId, currentUser, setIsOpen }: ChatModal
             status: 'Online'
         };
 
-        // const expires = new Date();
-        // localStorage.setItem('currentUser', JSON.stringify(user));
-        // document.cookie = `user=${JSON.stringify(userNameAcess)}; path=/; expires=${expires.toUTCString()};`;
 
+      
+        const expires = new Date();
         const groupRef = ref(database, `grupos/${groupId}/members/${currentUser.id}`);
         const userRef = ref(database, `users/${currentUser.id}`);
         update(userRef, user);
         update(groupRef, user);
+        //Assim que criar eu devo atualizar esse usuario
+        localStorage.setItem('currentUser', JSON.stringify(user));
+        document.cookie = `user=${JSON.stringify(userNameAcess)}; path=/; expires=${expires.toUTCString()};`;
+
         setTimeout(() => {
             setIsOpen(false);
             window.location.reload();

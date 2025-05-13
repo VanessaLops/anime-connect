@@ -20,13 +20,50 @@ export default function ChatPage() {
   const [grupos, setGrupos] = useState<GroupData | null>(null);
 
 
+  const configureUser = () => {
 
-  useEffect(() => {
-    if (chatId && currentUser && grupos) {
-      registerVisitor(chatId, currentUser, grupos);
+
+    function generateRandomUsername(): string {
+      const adjectives = ['Weird', 'Crispy', 'Slippery', 'Funky', 'Rusty', 'Snappy', 'Drippy', 'Wiggly'];
+      const nouns = ['Toaster', 'Cabbage', 'Penguin', 'Banana', 'Wormhole', 'Pickle', 'Moose', 'Dolphin'];
+
+      const randomAdj = adjectives[Math.floor(Math.random() * adjectives.length)];
+      const randomNoun = nouns[Math.floor(Math.random() * nouns.length)];
+
+      return randomAdj + randomNoun;
     }
-  }, [chatId, currentUser, grupos]);
 
+
+    function getRandomAvatar(username: string): string {
+      return `https://api.dicebear.com/7.x/adventurer/png?seed=${username}`;
+    }
+
+    const userFromLocalStorage = localStorage.getItem('currentUser');
+    let user: User | undefined = userFromLocalStorage ? JSON.parse(userFromLocalStorage) : null;
+
+
+
+    if (!user) {
+      // Caso o usuário não tenha sido salvo, cria um usuário "Visitante" temporário
+      user = {
+        id: crypto.randomUUID(),
+        username: generateRandomUsername(),
+        type: 'Visitante',
+        power: 0,
+        group: [],
+        image: getRandomAvatar(generateRandomUsername()),
+        userNameAcess: '',
+        password: '',
+        status: 'Online',
+      };
+      // Salva o usuário "Visitante" no localStorage e cookies
+      localStorage.setItem('currentUser', JSON.stringify(user));
+      document.cookie = `user=${JSON.stringify(user)}; path=/;`;
+      setCurrentUser(user);
+    } else {
+      setCurrentUser(user);
+    }
+  };
 
   useEffect(() => {
     if (chatId) {
@@ -47,51 +84,7 @@ export default function ChatPage() {
   }, [chatId]);
 
 
-  const configureUser = () => {
 
-
-    function generateRandomUsername(): string {
-      const adjectives = ['Weird', 'Crispy', 'Slippery', 'Funky', 'Rusty', 'Snappy', 'Drippy', 'Wiggly'];
-      const nouns = ['Toaster', 'Cabbage', 'Penguin', 'Banana', 'Wormhole', 'Pickle', 'Moose', 'Dolphin'];
-
-      const randomAdj = adjectives[Math.floor(Math.random() * adjectives.length)];
-      const randomNoun = nouns[Math.floor(Math.random() * nouns.length)];
-
-      return randomAdj + randomNoun;
-    }
-
-
-    function getRandomAvatar(username: string): string {
-      return `https://api.dicebear.com/7.x/adventurer/png?seed=${username}`;
-    }
-
-    const userFromLocalStorage = localStorage.getItem('currentUser');
-    let user: User | null = userFromLocalStorage ? JSON.parse(userFromLocalStorage) : null;
-
-
- 
-    if (!user) {
-      // Caso o usuário não tenha sido salvo, cria um usuário "Visitante" temporário
-      user = {
-        id: crypto.randomUUID(),
-        username: generateRandomUsername(),
-        type: 'Visitante',
-        power: 0,
-        group: [],
-        image: getRandomAvatar(generateRandomUsername()),
-        userNameAcess: '',
-        password: '',
-        status: 'Online',
-      };
-      // Salva o usuário "Visitante" no localStorage e cookies
-      localStorage.setItem('currentUser', JSON.stringify(user));
-      document.cookie = `user=${JSON.stringify(user)}; path=/;`;
-      setCurrentUser(user);
-      saveUserToFirebase(user);
-    } else {
-      setCurrentUser(user);
-    }
-  };
 
   const saveUserToFirebase = async (user: User) => {
     const userRef = ref(database, `users/${user.id}`);
@@ -112,7 +105,7 @@ export default function ChatPage() {
         const UserGroupStatus = ref(database, `grupos/${groupId}/members/${user.id}/status`);
         set(UserGroupStatus, 'Online');
         onDisconnect(UserGroupStatus).set('Offline');
-
+        saveUserToFirebase(user);
       }
 
       //Outros Tipos Membros, Owner etc a  logica é aqui
@@ -128,10 +121,17 @@ export default function ChatPage() {
       const userRef = ref(database, `grupos/${groupId}/members/${user.id}`);
       const newUser = { ...currentUser, status: 'Online' };
       set(userRef, newUser);
+      saveUserToFirebase(user);
     }
   }
 
 
+
+  useEffect(() => {
+    if (chatId && currentUser && grupos) {
+      registerVisitor(chatId, currentUser, grupos);
+    }
+  }, [chatId, currentUser, grupos]);
 
 
   const handleCookiesAcceptance = () => {

@@ -20,7 +20,7 @@ interface MessageInputProps {
         password: string;
         status?: string;
     };
-    groupId:string;
+    groupId: string;
 
 }
 
@@ -47,6 +47,10 @@ export default function MessageInput({ groupId, currentUser }: MessageInputProps
     };
 
 
+    function logout() {
+        localStorage.removeItem('currentUser')
+        window.location.reload();
+    }
     return (
         <div className="">
             <div className="emoji-picker flex gap-2 mb-2">
@@ -87,7 +91,7 @@ export default function MessageInput({ groupId, currentUser }: MessageInputProps
                         Entrar
                     </Button>
                     <Button
-                        onClick={() => console.log('Sair do chat')}
+                        onClick={() => logout()}
                         variant="outline"
 
                     >

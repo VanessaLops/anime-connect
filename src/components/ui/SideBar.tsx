@@ -43,10 +43,11 @@ export interface GroupData {
 
 export default function Sidebar({ selectedItem, onSelect, currentUser, groupData }: SidebarProps) {
   const [grupos, setGrupos] = useState<GroupData | null>(null);
-  const [user, setUser] = useState<any[]>([]);
+  const [user, setUser] = useState<User[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  console.log(user, 'onlineMembers')
+
   const [grposUsuario, setGruposUsuario] = useState<any[]>([]);
+
 
   useEffect(() => {
     if (groupData?.groupId) {
@@ -127,10 +128,10 @@ export default function Sidebar({ selectedItem, onSelect, currentUser, groupData
         <div className="flex-grow space-y-2 flex flex-col items-center">
 
           {
-            user[0]?.type !== "Visitante" ? (
+            currentUser?.type !== "Visitante" ? (
               <div className="mt-6 mb-4">
                 <button
-                  onClick={() => setIsModalOpen(true)}  
+                  onClick={() => setIsModalOpen(true)}
                   className="w-12 h-12 bg-green-600 rounded-full hover:rounded-2xl transition-all duration-300"
                 >
                   +
@@ -148,7 +149,7 @@ export default function Sidebar({ selectedItem, onSelect, currentUser, groupData
               >
 
                 <Image
-              src={groupData?.image && groupData.image.trim() !== '' ? groupData.image : '/default-group.png'}
+                  src={groupData?.image && groupData.image.trim() !== '' ? groupData.image : '/default-group.png'}
 
                   alt={groupData.name}
                   width={24}
@@ -158,14 +159,8 @@ export default function Sidebar({ selectedItem, onSelect, currentUser, groupData
               </Link>
             )
           ) : (
-            grposUsuario
-              .filter((grupo) =>
-                Object.values(grupo.members || {}).some(
-                  (membro: any) => membro.id === user[0]?.id
-                )
-
-              )
-              .map((grupo) => (
+            grposUsuario?.map((grupo) => {
+              return (
                 <Link
                   href={`/chat/${grupo?.groupId}`}
                   key={grupo?.createdAt}
@@ -181,7 +176,8 @@ export default function Sidebar({ selectedItem, onSelect, currentUser, groupData
                   />
 
                 </Link>
-              ))
+              )
+            })
           )}
 
         </div>
