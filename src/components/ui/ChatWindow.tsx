@@ -8,6 +8,7 @@ import MessageInput from "./MessageInput";
 import { onValue, ref, onDisconnect, set } from "firebase/database";
 import PeaoVisitante from "./PeaoVisitante";
 import { UserType } from "@/utils/userStorage";
+import ModalProfile from "./ModalProfile";
 
 interface ChatWindowProps {
     groupData: GroupData;
@@ -31,8 +32,9 @@ export default function ChatWindow({ groupData, currentUser }: ChatWindowProps) 
     const [grupos, setGrupos] = useState<GroupData | null>(null);
     const [onlineMembers, setOnlineMembers] = useState<any[]>([]);
     const [offlineMembers, setOfflineMembers] = useState<any[]>([]);
-
-    console.log(onlineMembers,'offlineMembers')
+    const [selectedUser, setSelectedUser] = useState<any | null>(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    console.log(onlineMembers, 'offlineMembers')
 
 
     useEffect(() => {
@@ -68,30 +70,36 @@ export default function ChatWindow({ groupData, currentUser }: ChatWindowProps) 
 
 
     // Monitorando alterações de status e movendo para a lista de Offline
-  useEffect(() => {
-    const gruposRef = ref(database, `grupos/${groupData.groupId}/members`);
+    useEffect(() => {
+        const gruposRef = ref(database, `grupos/${groupData.groupId}/members`);
 
-    console.log(gruposRef,'gruposRef')
-    const unsubscribe = onValue(gruposRef, (snapshot) => {
-        if (snapshot.exists()) {
-            const members = snapshot.val();
-            const updatedOnlineUsers = Object.values(members).filter(
-                (user: any) => user.status === 'Online'
-            );
-            const updatedOfflineUsers = Object.values(members).filter(
-                (user: any) => user.status !== 'Online' && user.type === 'Membro'
-            );
-            console.log(updatedOfflineUsers,'updatedOfflineUsers')
+        console.log(gruposRef, 'gruposRef')
+        const unsubscribe = onValue(gruposRef, (snapshot) => {
+            if (snapshot.exists()) {
+                const members = snapshot.val();
+                const updatedOnlineUsers = Object.values(members).filter(
+                    (user: any) => user.status === 'Online'
+                );
+                const updatedOfflineUsers = Object.values(members).filter(
+                    (user: any) => user.status !== 'Online' && user.type === 'Membro'
+                );
+                console.log(updatedOfflineUsers, 'updatedOfflineUsers')
 
-            setOnlineMembers(updatedOnlineUsers);
-            setOfflineMembers(updatedOfflineUsers);
+                setOnlineMembers(updatedOnlineUsers);
+                setOfflineMembers(updatedOfflineUsers);
+            }
+        });
+
+        return () => unsubscribe();
+    }, [groupData.groupId]);
+
+
+    const handleUserClick = (user: any) => {
+        if (user.type !== 'Visitante') {
+            setSelectedUser(user);
+            setIsModalOpen(true);
         }
-    });
-
-    return () => unsubscribe();
-}, [groupData.groupId]);
-
-
+    };
     return (
         <div className="flex h-screen bg-[#36393f] text-white">
             <div className="flex-1 flex flex-col">
@@ -134,7 +142,9 @@ export default function ChatWindow({ groupData, currentUser }: ChatWindowProps) 
                             <div
                                 key={`online-${index}`}
                                 className="flex items-center gap-2 px-1 py-1 hover:bg-[#2e2e3a] rounded-sm transition-all"
+                                onClick={() => handleUserClick(user)}
                             >
+
                                 <PeaoAvatar
                                     username={user.username || "Visitante"}
                                     type={user.type}
@@ -143,7 +153,7 @@ export default function ChatWindow({ groupData, currentUser }: ChatWindowProps) 
                                     isTyping={false}
                                     group={user.group}
                                     id={user.id}
-                                    image={user.image}
+                                    image={user?.image}
                                     password={user.user}
                                     userNameAcess={user.userNameAcess}
                                     status={user.status?.toLowerCase()}
@@ -160,6 +170,7 @@ export default function ChatWindow({ groupData, currentUser }: ChatWindowProps) 
                             <div
                                 key={`online-${index}`}
                                 className="flex items-center gap-2 px-1 py-1 hover:bg-[#2e2e3a] rounded-sm transition-all"
+
                             >
                                 <PeaoAvatar
                                     username={user.username || "Visitante"}
@@ -169,7 +180,7 @@ export default function ChatWindow({ groupData, currentUser }: ChatWindowProps) 
                                     isTyping={false}
                                     group={user.group}
                                     id={user.id}
-                                    image={user.image}
+                                    image={user?.image}
                                     password={user.user}
                                     userNameAcess={user.userNameAcess}
                                     status={user.status?.toLowerCase()}
@@ -180,6 +191,17 @@ export default function ChatWindow({ groupData, currentUser }: ChatWindowProps) 
                     </div>
                 </div>
             </div>
+
+            {selectedUser && (
+                <ModalProfile
+                    isOpen={isModalOpen}
+                    onClose={() => setIsModalOpen(false)}
+                    user={selectedUser}
+                    currentUserType={currentUser.type}
+                    groupId={groupData.groupId}
+                />
+            )}
+
         </div>
     );
 }

@@ -1,7 +1,7 @@
 export type UserType =
   | "Dono_Geral"
-  | "Admin_mod"
   | "Dono_Sala"
+  | "Sub_Dono"
   | "Staff"
   | "Membro"
   | "Visitante";

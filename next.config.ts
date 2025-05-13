@@ -15,7 +15,8 @@ const nextConfig = {
       'img.myloview.com.br',
       'img.myloview.com.br',
       'api.dicebear.com',
-      'media2.giphy.com'
+      'media2.giphy.com',
+      'fastly.picsum.photos'
     ],
   },
   webpack(config: { resolve: { fallback: any; }; }) {
