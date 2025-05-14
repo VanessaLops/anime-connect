@@ -46,12 +46,12 @@ export default function MessageInput({ groupId, currentUser }: MessageInputProps
         setMessage((prev) => prev + ` ${emoji}`);
     };
 
-
     function logout() {
-        localStorage.removeItem('currentUser')
-        window.location.reload();
+        localStorage.removeItem('currentUser');
         document.cookie = "user=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
+        window.location.href = '/';
     }
+
     return (
         <div className="">
             <div className="emoji-picker flex gap-2 mb-2">
