@@ -57,9 +57,8 @@ export default function ChatPage() {
         status: 'Online',
       };
       // Salva o usuário "Visitante" no localStorage e cookies
-      localStorage.setItem('currentUser', JSON.stringify(user));
-      document.cookie = `user=${JSON.stringify(user)}; path=/;`;
-      setCurrentUser(user);
+      sessionStorage.setItem('currentUser', JSON.stringify(user));
+     setCurrentUser(user);
     } else {
       setCurrentUser(user);
     }
