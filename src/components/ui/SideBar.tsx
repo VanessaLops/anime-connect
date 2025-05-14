@@ -49,6 +49,7 @@ export default function Sidebar({ selectedItem, onSelect, currentUser, groupData
   const [grposUsuario, setGruposUsuario] = useState<any[]>([]);
 
 
+  console.log(currentUser,'currentUser')
   useEffect(() => {
     if (groupData?.groupId) {
       const grupoRef = ref(database, 'grupos');
