@@ -58,6 +58,8 @@ export default function ChatPage() {
       };
       // Salva o usuário "Visitante" no localStorage e cookies
       sessionStorage.setItem('currentUser', JSON.stringify(user));
+     setCurrentUser(user);
+      sessionStorage.setItem('currentUser', JSON.stringify(user));
       document.cookie = `user=${JSON.stringify(user)}; path=/;`;
       setCurrentUser(user);
     } else {
