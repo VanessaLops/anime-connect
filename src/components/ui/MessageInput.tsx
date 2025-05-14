@@ -47,7 +47,7 @@ export default function MessageInput({ groupId, currentUser }: MessageInputProps
     };
 
     function logout() {
-        localStorage.removeItem('currentUser');
+        sessionStorage.removeItem('currentUser');
         document.cookie = "user=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
         window.location.href = '/';
     }

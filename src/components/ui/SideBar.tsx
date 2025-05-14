@@ -65,7 +65,7 @@ export default function Sidebar({ selectedItem, onSelect, currentUser, groupData
 
           if (grupoEncontrado) {
             const [, grupoData] = grupoEncontrado;
-            const userLogadoString = localStorage.getItem('currentUser');
+            const userLogadoString = sessionStorage.getItem('currentUser');
             let dadosUserLogadoAsync = JSON.parse(userLogadoString ?? '{}');
             const gruposMembro = Object.values(grupos).filter((grupo) =>
               grupo.members && Object.values(grupo.members).some(
@@ -91,7 +91,7 @@ export default function Sidebar({ selectedItem, onSelect, currentUser, groupData
                 ...dadosUserLogadoAsync,
                 status: 'Online',
               };
-              localStorage.setItem(
+              sessionStorage.setItem(
                 'currentUser',
                 JSON.stringify(dadosUserLogadoAsync)
               );

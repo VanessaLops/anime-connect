@@ -38,7 +38,7 @@ export default function ChatPage() {
       return `https://api.dicebear.com/7.x/adventurer/png?seed=${username}`;
     }
 
-    const userFromLocalStorage = localStorage.getItem('currentUser');
+    const userFromLocalStorage = sessionStorage.getItem('currentUser');
     let user: User | undefined = userFromLocalStorage ? JSON.parse(userFromLocalStorage) : null;
 
 
@@ -57,7 +57,7 @@ export default function ChatPage() {
         status: 'Online',
       };
       // Salva o usuário "Visitante" no localStorage e cookies
-      localStorage.setItem('currentUser', JSON.stringify(user));
+      sessionStorage.setItem('currentUser', JSON.stringify(user));
       document.cookie = `user=${JSON.stringify(user)}; path=/;`;
       setCurrentUser(user);
     } else {
@@ -136,7 +136,7 @@ export default function ChatPage() {
 
   const handleCookiesAcceptance = () => {
     setCookiesAccepted(true);
-    localStorage.setItem('cookiesAccepted', 'true');
+    sessionStorage.setItem('cookiesAccepted', 'true');
   };
 
   return (

@@ -72,7 +72,7 @@ const ModalProfile: React.FC<ModalProfileProps> = ({
         })
             .then(() => {
                 const updatedUser = { ...user, type: newStatus };
-                localStorage.setItem('userStatus', newStatus);
+                sessionStorage.setItem('userStatus', newStatus);
                 document.cookie = `user=${JSON.stringify(updatedUser)}; path=/;`;
             })
             .catch((error) => {

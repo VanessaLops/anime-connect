@@ -78,7 +78,7 @@ export default function ChatModal({ groupId, currentUser, setIsOpen }: ChatModal
             }
 
             // Se passou das validações acima, é porque está tudo certo
-            localStorage.setItem('currentUser', JSON.stringify(usuarioPorNome));
+            sessionStorage.setItem('currentUser', JSON.stringify(usuarioPorNome));
 
             const expires = new Date();
             expires.setDate(expires.getDate() + 7);
@@ -159,7 +159,7 @@ export default function ChatModal({ groupId, currentUser, setIsOpen }: ChatModal
         update(userRef, user);
         update(groupRef, user);
         //Assim que criar eu devo atualizar esse usuario
-        localStorage.setItem('currentUser', JSON.stringify(user));
+        sessionStorage.setItem('currentUser', JSON.stringify(user));
         document.cookie = `user=${JSON.stringify(userNameAcess)}; path=/; expires=${expires.toUTCString()};`;
 
         setTimeout(() => {
