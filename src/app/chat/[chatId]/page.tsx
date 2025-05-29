@@ -4,10 +4,11 @@ import Sidebar, { GroupData } from '@/components/ui/SideBar';
 import { User } from '@/utils/userStorage';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { database } from '../../../../firebase';
+
 
 import { get, onDisconnect, ref, set } from 'firebase/database';
 import ChatWindow from '@/components/ui/ChatWindow';
+import { database } from '@/pages/api/lib/firebase';
 
 export default function ChatPage() {
   const params = useParams();
@@ -42,7 +43,6 @@ export default function ChatPage() {
     let user: User | undefined = userFromLocalStorage ? JSON.parse(userFromLocalStorage) : null;
 
 
-
     if (!user) {
       // Caso o usuário não tenha sido salvo, cria um usuário "Visitante" temporário
       user = {
@@ -58,9 +58,8 @@ export default function ChatPage() {
       };
       // Salva o usuário "Visitante" no localStorage e cookies
       sessionStorage.setItem('currentUser', JSON.stringify(user));
-     setCurrentUser(user);
-      sessionStorage.setItem('currentUser', JSON.stringify(user));
-      document.cookie = `user=${JSON.stringify(user)}; path=/;`;
+      setCurrentUser(user);
+      // document.cookie = `user=${JSON.stringify(user)}; path=/;`;
       setCurrentUser(user);
     } else {
       setCurrentUser(user);

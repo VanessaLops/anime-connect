@@ -3,8 +3,29 @@ import React from 'react';
 import { Dialog } from '@headlessui/react';
 import { UserType } from '@/utils/userStorage';
 import { getDatabase, ref, update } from 'firebase/database';
-import { database } from '../../../firebase';
+import { database } from '../../pages/api/lib/firebase';
+import { group } from 'console';
 
+
+export interface GroupDataType {
+    name: string;
+    info: string;
+    type: 'public' | 'private';
+    code?: string;
+    background: string;
+    ownerId: string;
+    createdAt: string;
+    image: string;
+    groupId: string;
+    category: string;
+    members: {
+        [userId: string]: {
+            type: UserType;
+            power: number;
+            status?: string;
+        };
+    };
+}
 
 interface ModalProfileProps {
     isOpen: boolean;
@@ -21,51 +42,62 @@ interface ModalProfileProps {
         password: string;
         status?: string;
     };
-    currentUserType: UserType;
+
     groupId: string;
+    grupos: GroupDataType | null;
+
 }
 
 const ModalProfile: React.FC<ModalProfileProps> = ({
     isOpen,
     onClose,
     user,
-    currentUserType,
-    groupId
+    groupId,
+    grupos
 }) => {
+
+    console.log(user, 'user')
+
+    console.log(groupId, 'groupId')
     if (!user) return null;
-
     const handlePromotion = () => {
-        if (currentUserType === 'Dono_Sala') {
-            if (user.type === 'Membro') {
+        if (!grupos || !grupos.members[user.id]) return;
 
+        const userGroupType = grupos.members[user.id].type;
+        const getSessionString = sessionStorage.getItem('currentUser')
+
+        const getSession = getSessionString ? JSON.parse(getSessionString) : null;
+
+        if (getSession?.type === 'Dono_Sala') {
+            if (userGroupType === 'Membro') {
                 updateUserStatus('Staff');
-            } else if (user.type === 'Staff') {
-
+            }
+            else if (userGroupType === 'Staff') {
                 updateUserStatus('Sub_Dono');
-            } else if (user.type === 'Sub_Dono') {
-
+            }
+            else if (userGroupType === 'Sub_Dono') {
                 updateUserStatus('Staff');
             }
-        } else if (currentUserType === 'Staff') {
-            if (user.type === 'Membro') {
-
+        } else if (getSession.type === 'Staff') {
+            if (userGroupType === 'Membro') {
                 updateUserStatus('Staff');
             }
-        } else if (currentUserType === 'Sub_Dono') {
-            if (user.type === 'Membro') {
-
+        } else if (getSession.type === 'Sub_Dono') {
+            if (userGroupType === 'Membro') {
                 updateUserStatus('Staff');
-            } else if (user.type === 'Staff') {
-
+            } else if (userGroupType === 'Staff') {
                 updateUserStatus('Staff');
             }
         }
+
         onClose();
     };
+
 
     const updateUserStatus = (newStatus: UserType) => {
         const db = getDatabase();
         const userRef = ref(database, `grupos/${groupId}/members/${user.id}`);
+
 
         update(userRef, {
             type: newStatus
@@ -73,7 +105,6 @@ const ModalProfile: React.FC<ModalProfileProps> = ({
             .then(() => {
                 const updatedUser = { ...user, type: newStatus };
                 sessionStorage.setItem('userStatus', newStatus);
-                document.cookie = `user=${JSON.stringify(updatedUser)}; path=/;`;
             })
             .catch((error) => {
                 console.error('Erro ao atualizar o tipo do usuário:', error);
@@ -81,19 +112,49 @@ const ModalProfile: React.FC<ModalProfileProps> = ({
     };
 
 
+
     const getPromotionLabel = () => {
-        if (currentUserType === 'Dono_Sala') {
-            if (user.type === 'Membro') return 'Promover a Moderador';
-            if (user.type === 'Staff') return 'Promover a SubDono';
-            if (user.type === 'Sub_Dono') return 'Promover a Dono';
-        } else if (currentUserType === 'Staff' && user.type === 'Membro') {
-            return 'Promover a Moderador';
-        } else if (currentUserType === 'Sub_Dono') {
-            if (user.type === 'Membro') return 'Promover a Moderador';
-            if (user.type === 'Staff') return 'Promover a Dono';
+
+        const getSessionString = sessionStorage.getItem('currentUser')
+
+        const getSession = getSessionString ? JSON.parse(getSessionString) : null;
+
+        const userGroupType = grupos?.members?.[getSession.id]?.type;
+
+        const ownerId = grupos?.ownerId;
+
+        console.log(userGroupType, 'userGroupType')
+
+        if (!userGroupType) return null;
+        console.log(userGroupType === 'Membro', 'a')
+        console.log(userGroupType == 'Dono_Sala', 'b')
+
+
+        console.log(user.type, 'user.type')
+
+        console.log(ownerId, 'ownerId')
+        console.log(grupos, 'getSession')
+
+        if (getSession?.type === 'Dono_Sala' && getSession.id === ownerId) {
+            if (user.type === 'Visitante') return 'Promover a Membro';
+            if (user.type === 'Membro') return 'Promover a Staff';
+            if (user.type === 'Staff') return 'Promover a Dono Ajudante';
         }
+
+        // if (user.type === 'Dono_Sala' && userGroupType === 'Membro') {
+
+        //     // 
+        //     // if (userGroupType === 'Sub_Dono') return 'Promover a Dono';
+        // } else if (user.type === 'Staff' && userGroupType === 'Membro') {
+        //     return 'Promover a Moderador';
+        // } else if (user.type === 'Sub_Dono') {
+        //     if (userGroupType === 'Membro') return 'Promover a Moderador';
+        //     if (userGroupType === 'Staff') return 'Promover a Dono';
+        // }
+
         return null;
     };
+
 
     const promotionLabel = getPromotionLabel();
 

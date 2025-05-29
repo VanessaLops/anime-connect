@@ -8,10 +8,11 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, Navigation } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/navigation";
-import { ref, get } from "firebase/database";
-import { database } from "../../../firebase";
+import { ref, get, onValue, off } from "firebase/database";
+
 import { GroupData } from "@/components/ui/SideBar";
 import Link from "next/link";
+import { database } from "../../pages/api/lib/firebase";
 export default function ComunidadePage() {
 
   const [selectedCategory, setSelectedCategory] = useState<string>("Ajuda");
@@ -21,37 +22,53 @@ export default function ComunidadePage() {
 
   const gruposArray = grupos ? Object.values(grupos) : [];
 
-
-  const buscarGrupos = async () => {
+  const buscarGruposEmTempoReal = () => {
     setLoading(true);
-    try {
-      const snapshot = await get(ref(database, "grupos"));
-      if (snapshot.exists()) {
-        const gruposData = snapshot.val();
-        const gruposComMembros: Record<string, GroupData> = Object.keys(gruposData).reduce(
-          (acc, key) => {
-            acc[key] = {
-              ...gruposData[key],
-              members: gruposData[key].members || [],
-              groupId: key,
-            };
-            return acc;
-          },
-          {} as Record<string, GroupData>
-        );
-        setGrupos(gruposComMembros);
-      } else {
-        setGrupos(null);
+    const gruposRef = ref(database, "grupos");
+
+    // Adiciona o listener para mudanças em tempo real
+    onValue(
+      gruposRef,
+      (snapshot) => {
+        if (snapshot.exists()) {
+          const gruposData = snapshot.val();
+          const gruposComMembros: Record<string, GroupData> = Object.keys(gruposData).reduce(
+            (acc, key) => {
+              acc[key] = {
+                ...gruposData[key],
+                members: gruposData[key].members || [],
+                groupId: key,
+              };
+              return acc;
+            },
+            {} as Record<string, GroupData>
+          );
+          setGrupos(gruposComMembros);
+        } else {
+          setGrupos(null);
+        }
+        setLoading(false);
+      },
+      (error) => {
+        console.error("Erro ao buscar grupos:", error);
+        setLoading(false);
       }
-    } catch (error) {
-      console.error("Erro ao buscar grupos:", error);
-    } finally {
-      setLoading(false);
-    }
+    );
+
+    // Retorna a função para desinscrever o listener
+    return () => {
+      off(gruposRef);
+    };
   };
 
   useEffect(() => {
-    buscarGrupos();
+    // Ativa o listener e obtém a função para remover o listener
+    const unsubscribe = buscarGruposEmTempoReal();
+
+    // Limpa o listener quando o componente desmontar
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
 
@@ -147,7 +164,7 @@ export default function ComunidadePage() {
                     )}
 
                     <h3 className="text-xl font-semibold mb-2">{chat.name}</h3>
-                    <p className="text-pink-500">{chat.members ? Object.keys(chat.members).length : 0} membros ativos</p>
+                    <p className="text-pink-500">{chat.members ? Object.keys(chat.members).length : 0} pessoas visitaram</p>
                   </div>
                 </Link>
 

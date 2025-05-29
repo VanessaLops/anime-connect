@@ -5,7 +5,7 @@ import { get, onDisconnect, ref, set, update } from 'firebase/database';
 import Image from 'next/image';
 import { User, UserType } from '@/utils/userStorage';
 import { GroupData } from './SideBar';
-import { database } from '../../../firebase';
+import { database } from '../../pages/api/lib/firebase';
 import { Button } from './Button';
 import bcrypt from 'bcryptjs';
 
@@ -83,7 +83,7 @@ export default function ChatModal({ groupId, currentUser, setIsOpen }: ChatModal
             const expires = new Date();
             expires.setDate(expires.getDate() + 7);
 
-            document.cookie = `user=${JSON.stringify(usuarioPorNome)}; path=/; expires=${expires.toUTCString()};`;
+            ///document.cookie = `user=${JSON.stringify(usuarioPorNome)}; path=/; expires=${expires.toUTCString()};`;
 
             setTimeout(() => {
                 setIsOpen(false);
@@ -160,7 +160,7 @@ export default function ChatModal({ groupId, currentUser, setIsOpen }: ChatModal
         update(groupRef, user);
         //Assim que criar eu devo atualizar esse usuario
         sessionStorage.setItem('currentUser', JSON.stringify(user));
-        document.cookie = `user=${JSON.stringify(userNameAcess)}; path=/; expires=${expires.toUTCString()};`;
+        ///document.cookie = `user=${JSON.stringify(userNameAcess)}; path=/; expires=${expires.toUTCString()};`;
 
         setTimeout(() => {
             setIsOpen(false);

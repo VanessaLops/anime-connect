@@ -41,7 +41,7 @@ const PeaoAvatar: React.FC<AvatarProps> = ({
     let avatarSrc: string = "";
 
     const isOffline = status === "offline";
-    console.log(isOffline,'isOfflineisOffline')
+    console.log(isOffline, 'isOfflineisOffline')
     const avatarStyle = {
         objectFit: "contain" as const,
         opacity: isOffline ? 0.4 : 1,
@@ -104,6 +104,8 @@ const PeaoAvatar: React.FC<AvatarProps> = ({
             avatarSrc = moderador_sala.src;
             break;
         case "Dono_Sala":
+            avatarSrc = dono_sala.src;
+        case "Sub_Dono":
             avatarSrc = dono_sala.src;
             break;
         case "Membro":

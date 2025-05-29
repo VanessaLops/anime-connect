@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react';
-import { database } from '../../../firebase';
+import { database } from '../../pages/api/lib/firebase';
 import { ref, get, onValue } from 'firebase/database';
 import GroupCreateModal from './ModalGroup';
 
@@ -95,7 +95,7 @@ export default function Sidebar({ selectedItem, onSelect, currentUser, groupData
                 'currentUser',
                 JSON.stringify(dadosUserLogadoAsync)
               );
-              document.cookie = `user=${JSON.stringify(dadosUserLogadoAsync)}; path=/;`;
+              //document.cookie = `user=${JSON.stringify(dadosUserLogadoAsync)}; path=/;`;
               console.log('Status do usuário atualizado para Online!');
             }
 
@@ -150,7 +150,7 @@ export default function Sidebar({ selectedItem, onSelect, currentUser, groupData
               >
 
                 <Image
-                  src={groupData?.image && groupData.image.trim() !== '' ? groupData.image : '/default-group.png'}
+                  src={groupData?.image && groupData?.image.trim() !== '' ? groupData?.image : ''}
 
                   alt={groupData.name}
                   width={24}

@@ -121,8 +121,10 @@ export default function GroupCreateModal({ currentUserId, setIsOpen }: GroupCrea
                     type: 'Dono_Sala'
                 })
             ]);
+            sessionStorage.clear()
 
-            alert('Grupo criado com sucesso!');
+            window.location.reload()
+            alert('Façã Login Novamente!')
             setIsOpen(false);
 
         } catch (error) {
@@ -215,7 +217,7 @@ export default function GroupCreateModal({ currentUserId, setIsOpen }: GroupCrea
                             </div>
                             <div>
                                 <label htmlFor="description" className="block text-sm font-medium text-gray-700">
-                                    Descrição
+                                    Ou URL da Imagem  (Obrigatório)
                                 </label>
                                 <input
                                     id="description"
@@ -227,7 +229,7 @@ export default function GroupCreateModal({ currentUserId, setIsOpen }: GroupCrea
                             </div>
                             <div>
                                 <label htmlFor="backgroundUrl" className="block text-sm font-medium text-gray-700">
-                                    Ou URL da Imagem de Fundo (opcional)
+                                    URL do Banner (Obrigatório)
                                 </label>
                                 <input
                                     type="url"
