@@ -3,17 +3,30 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import ChatModal from './Modal';
-
+import { Button } from './Button';
+import { ref, push } from 'firebase/database';
+import { database } from '@/pages/api/lib/firebase'; // ajuste esse path se necessário
+import { UserType } from '@/utils/userStorage';
 
 interface MessageInputProps {
-    setIsTyping: (typing: boolean) => void;
-    userId: string
     groupName: string;
+    groupId: string;
+    currentUser: {
+        id: string;
+        username: string;
+        type: UserType;
+        power: number;
+        group: string[];
+        relacionamento?: string;
+        image: string;
+        userNameAcess: string;
+        password: string;
+        status?: string;
+    };
 }
 
-export default function MessageInput({ setIsTyping, userId, groupName }: MessageInputProps) {
+export default function MessageInput({ groupId, groupName, currentUser }: MessageInputProps) {
     const [message, setMessage] = useState('');
-    const [typingTimeout, setTypingTimeout] = useState<NodeJS.Timeout | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     const emojis = [
@@ -33,75 +46,68 @@ export default function MessageInput({ setIsTyping, userId, groupName }: Message
         setMessage((prev) => prev + ` ${emoji}`);
     };
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = e.target.value;
-        setMessage(value);
+    const sendMessage = async () => {
+        if (!message.trim()) return;
 
-        setIsTyping(true);
+        const messageRef = ref(database, `grupos/${groupId}/messages`);
+        const newMessage = {
+            text: message,
+            timestamp: Date.now(),
+            userId: currentUser.id,
+            username: currentUser.username,
+            image: currentUser.image,
+            status: currentUser.status || 'Online',
+        };
 
-        if (typingTimeout) clearTimeout(typingTimeout);
-
-        const timeout = setTimeout(() => {
-            setIsTyping(false);
-        }, 1000);
-        setTypingTimeout(timeout);
+        await push(messageRef, newMessage);
+        setMessage('');
     };
 
+    function logout() {
+        sessionStorage.removeItem('currentUser');
+        window.location.href = '/';
+    }
+
     return (
-        <div className="">
+        <div>
             <div className="emoji-picker flex gap-2 mb-2">
                 {emojis.map((emoji) => (
                     <button key={emoji.code} onClick={() => handleEmojiClick(emoji.code)}>
-                        <Image
-                            src={emoji.src}
-                            alt={emoji.code}
-                            width={32}
-                            height={32}
-                            className="h-8 w-8"
-                        />
+                        <Image src={emoji.src} alt={emoji.code} width={32} height={32} className="h-8 w-8" />
                     </button>
                 ))}
             </div>
 
-            <div className="items-center space-x-1 mt-1">
-                <input
-                    type="text"
-                    value={message}
-                    onChange={handleChange}
-                    placeholder="Digite sua mensagem..."
-                    className="w-162 p-4 rounded-lg bg-[#2f3136] text-white placeholder-gray-400 focus:outline-none h-25"
-                />
-
-                <div className="flex items-center space-x-4 mt-4">
+            <div className="flex items-center justify-between space-x-4 mt-4">
+                <div className="flex items-center w-full space-x-2">
+                    <input
+                        placeholder="Digite sua mensagem..."
+                        className="flex-1 p-3 rounded-lg bg-[#2f3136] text-white placeholder-gray-400 focus:outline-none resize-none h-24 w-120 transition-all"
+                        value={message}
+                        onChange={(e) => setMessage(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
+                    />
                     <button
-                        onClick={() => console.log('Entrar no chat')}
-                        className="bg-[#34b7f1] text-white p-3 rounded-full hover:bg-[#29a3cc] transition-all duration-200"
+                        onClick={sendMessage}
+                        className="bg-[#34b7f1] text-white p-3 rounded-lg w-8 h-24 flex items-center justify-center hover:bg-[#29a3cc] transition-all duration-200"
                     >
-                        Enviar
+                        <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 transform rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path d="M15 19l-7-7 7-7" />
+                        </svg>
                     </button>
+                </div>
 
-                    <div className="flex flex-col space-y-2 flex-1">
-                        <button
-                            onClick={() => setIsModalOpen(true)}
-                            className="bg-[#34b7f1] text-white p-3 rounded-full hover:bg-[#29a3cc] transition-all duration-200"
-                        >
-                            Entrar
-                        </button>
-                        <button
-                            onClick={() => console.log('Sair do chat')}
-                            className="bg-[#f14c4c] text-white p-3 rounded-full hover:bg-[#e03c3c] transition-all duration-200"
-                        >
-                            Sair
-                        </button>
-                    </div>
+                <div className="flex flex-col space-y-3 w-auto">
+                    <Button variant="primary" onClick={() => setIsModalOpen(true)}>Entrar</Button>
+                    <Button onClick={logout} variant="outline">Sair</Button>
                 </div>
             </div>
 
             {isModalOpen && (
                 <ChatModal
-                    visitorId={userId}
+                    currentUser={currentUser}
                     setIsOpen={setIsModalOpen}
-                    groupName={groupName}
+                    groupId={groupId}
                 />
             )}
         </div>

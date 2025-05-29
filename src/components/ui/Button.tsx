@@ -1,3 +1,5 @@
+'use client';
+
 import Link from "next/link";
 import { clsx } from "clsx";
 
@@ -6,9 +8,16 @@ interface ButtonProps {
   href?: string;
   variant?: "primary" | "outline";
   onClick?: () => void;
+  className?: string; // ✅ permite customização externa
 }
 
-export function Button({ children, href, variant = "primary", onClick }: ButtonProps) {
+export function Button({
+  children,
+  href,
+  variant = "primary",
+  onClick,
+  className = "", // ✅ valor padrão
+}: ButtonProps) {
   const baseClasses =
     "px-6 py-3 rounded-lg text-base font-semibold transition duration-200";
   const variantClasses = {
@@ -16,8 +25,7 @@ export function Button({ children, href, variant = "primary", onClick }: ButtonP
     outline: "border border-white text-white hover:bg-white hover:text-black",
   };
 
-  const classes = clsx(baseClasses, variantClasses[variant]);
-
+  const classes = clsx(baseClasses, variantClasses[variant], className); // ✅ merge das classes
 
   if (href) {
     return (

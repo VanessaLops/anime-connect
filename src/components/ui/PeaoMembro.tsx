@@ -1,3 +1,7 @@
+'use client'
+
+
+
 import React from "react";
 import Image from "next/image";
 import "../../styles/animations.css";
@@ -21,7 +25,9 @@ import { User } from "@/utils/userStorage";
 
 interface AvatarProps extends User {
     isTyping: boolean;
+    status?: "online" | "offline";
 }
+
 
 const PeaoAvatar: React.FC<AvatarProps> = ({
     isTyping,
@@ -29,9 +35,30 @@ const PeaoAvatar: React.FC<AvatarProps> = ({
     type,
     power,
     relacionamento,
+    status
 }) => {
 
     let avatarSrc: string = "";
+
+    const isOffline = status === "offline";
+    console.log(isOffline, 'isOfflineisOffline')
+    const avatarStyle = {
+        objectFit: "contain" as const,
+        opacity: isOffline ? 0.4 : 1,
+        filter: isOffline ? "grayscale(100%)" : "none",
+    };
+
+    const usernameStyle = {
+        fontWeight: "bold",
+        fontSize: "16px",
+        color: isOffline ? "#777" : "#fff",
+    };
+
+    const relacionamentoStyle = {
+        fontSize: "12px",
+        color: isOffline ? "#666" : "gray",
+    };
+
 
     //POWER AVATAR COLORIDO
     if (power === 8) {
@@ -65,7 +92,7 @@ const PeaoAvatar: React.FC<AvatarProps> = ({
 
     switch (type) {
         case "Visitante":
-            avatarSrc = isTyping ? visitante_lapis.src : visitante.src;
+            avatarSrc = isTyping ? visitante.src : visitante.src;
             break;
         case "Dono_Geral":
             avatarSrc = dono_geral.src;
@@ -77,6 +104,8 @@ const PeaoAvatar: React.FC<AvatarProps> = ({
             avatarSrc = moderador_sala.src;
             break;
         case "Dono_Sala":
+            avatarSrc = dono_sala.src;
+        case "Sub_Dono":
             avatarSrc = dono_sala.src;
             break;
         case "Membro":
@@ -108,9 +137,7 @@ const PeaoAvatar: React.FC<AvatarProps> = ({
                 alt="Avatar"
                 width={10}
                 height={10}
-                style={{
-                    objectFit: "contain",
-                }}
+                style={avatarStyle}
             />
             <div
                 style={{
@@ -120,13 +147,9 @@ const PeaoAvatar: React.FC<AvatarProps> = ({
                     marginLeft: 6,
                 }}
             >
-                <span style={{ fontWeight: "bold", fontSize: "16px" }}>
-                    {username}
-                </span>
+                <span style={usernameStyle}>{username}</span>
                 {relacionamento && (
-                    <span style={{ fontSize: "12px", color: "gray" }}>
-                        {relacionamento}
-                    </span>
+                    <span style={relacionamentoStyle}>{relacionamento}</span>
                 )}
             </div>
         </div>

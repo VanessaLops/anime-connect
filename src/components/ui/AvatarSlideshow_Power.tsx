@@ -1,5 +1,9 @@
+'use client'
+
+
+
 import React, { useEffect, useState } from "react";
-import Image from "next/image"; // Import the Image component from next/image
+import Image from "next/image"; 
 
 interface AvatarSlideshowProps {
   images: string[];

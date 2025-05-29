@@ -1,10 +1,90 @@
-'use client'
+'use client';
 
-import Header from "@/components/ui/Header"
-import Footer from "@/components/ui/Footer"
-import Link from "next/link"
 
+import { useState, useEffect } from "react";
+import Header from "@/components/ui/Header";
+import Footer from "@/components/ui/Footer";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Autoplay, Navigation } from "swiper/modules";
+import "swiper/css";
+import "swiper/css/navigation";
+import { ref, get, onValue, off } from "firebase/database";
+
+import { GroupData } from "@/components/ui/SideBar";
+import Link from "next/link";
+import { database } from "../../pages/api/lib/firebase";
 export default function ComunidadePage() {
+
+  const [selectedCategory, setSelectedCategory] = useState<string>("Ajuda");
+  const [groupChats, setGroupChats] = useState<GroupData[]>([]);
+  const [grupos, setGrupos] = useState<Record<string, GroupData> | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const gruposArray = grupos ? Object.values(grupos) : [];
+
+  const buscarGruposEmTempoReal = () => {
+    setLoading(true);
+    const gruposRef = ref(database, "grupos");
+
+    // Adiciona o listener para mudanças em tempo real
+    onValue(
+      gruposRef,
+      (snapshot) => {
+        if (snapshot.exists()) {
+          const gruposData = snapshot.val();
+          const gruposComMembros: Record<string, GroupData> = Object.keys(gruposData).reduce(
+            (acc, key) => {
+              acc[key] = {
+                ...gruposData[key],
+                members: gruposData[key].members || [],
+                groupId: key,
+              };
+              return acc;
+            },
+            {} as Record<string, GroupData>
+          );
+          setGrupos(gruposComMembros);
+        } else {
+          setGrupos(null);
+        }
+        setLoading(false);
+      },
+      (error) => {
+        console.error("Erro ao buscar grupos:", error);
+        setLoading(false);
+      }
+    );
+
+    // Retorna a função para desinscrever o listener
+    return () => {
+      off(gruposRef);
+    };
+  };
+
+  useEffect(() => {
+    // Ativa o listener e obtém a função para remover o listener
+    const unsubscribe = buscarGruposEmTempoReal();
+
+    // Limpa o listener quando o componente desmontar
+    return () => {
+      unsubscribe();
+    };
+  }, []);
+
+
+  useEffect(() => {
+    if (grupos) {
+      const filteredGroups = gruposArray.filter((group) => group.category === selectedCategory);
+      setGroupChats(filteredGroups);
+    }
+  }, [selectedCategory, grupos]);
+
+  const handleCategoryChange = (categoria: string) => {
+    setSelectedCategory(categoria);
+  };
+
+
+  console.log(grupos, 'gruposgrupos')
   return (
     <div className="min-h-screen bg-black text-white">
       <Header />
@@ -14,18 +94,86 @@ export default function ComunidadePage() {
           Junte-se à nossa Comunidade
         </h1>
 
-        <p className="text-lg text-gray-300 max-w-2xl mb-10">
-          Conecte-se com outros membros, compartilhe conhecimento e evolua junto com uma rede de pessoas engajadas no crescimento pessoal e profissional.
+        <p className="text-lg text-gray-300 max-w-2xl mb-16">
+          Conecte-se com outros otakus e geeks, compartilhe suas paixões por animes, games, filmes e cultura pop. Aqui, você encontra pessoas como você — apaixonadas, criativas e sempre prontas para boas conversas e descobertas épicas!
         </p>
 
-        <Link
-          href="/chat"
-          className="bg-pink-600 hover:bg-pink-700 transition duration-300 text-white font-semibold py-3 px-8 rounded-full shadow-lg"
+
+        <Swiper
+          modules={[Navigation]}
+          navigation
+          slidesPerView={2}
+          spaceBetween={16}
+          className="mb-8 w-full max-w-3xl"
         >
-          Entrar Agora
-        </Link>
+          {gruposArray.map((group, index) => (
+            <SwiperSlide key={index}>
+              <div className="px-2">
+                <button
+                  onClick={() => handleCategoryChange(group.category)}
+                  className={`w-full text-white py-3 px-6 rounded-md transition-colors duration-300 ${selectedCategory === group.category
+                    ? "bg-pink-600"
+                    : "bg-gray-600 hover:bg-pink-500"
+                    }`}
+                >
+                  {group.category}
+                </button>
+              </div>
+            </SwiperSlide>
+          ))}
+        </Swiper>
+
+
+        <div className="w-full max-w-6xl mb-20">
+          <h2 className="text-2xl md:text-3xl font-semibold text-white mb-6 text-left">
+            {selectedCategory}
+          </h2>
+          <Swiper
+            modules={[Autoplay, Navigation]}
+            slidesPerView={1}
+            breakpoints={{
+              640: { slidesPerView: 2 },
+              768: { slidesPerView: 3 },
+              1024: { slidesPerView: 3 },
+              1280: { slidesPerView: 4 },
+            }}
+            autoplay={{ delay: 4000, disableOnInteraction: false }}
+            navigation
+            loop
+            className="w-full"
+          >
+            {groupChats.map((chat, i) => (
+              <SwiperSlide key={i}>
+                <Link href={`/chat/${chat?.groupId}`}>
+                  <div
+                    className="cursor-pointer bg-[#1f1f1f] rounded-2xl p-4 m-2 shadow-lg hover:scale-105 transition-transform duration-300">
+                    {chat?.background?.endsWith(".mp4") ? (
+                      <video
+                        src={chat?.background}
+                        autoPlay
+                        loop
+                        muted
+                        className="w-full h-full object-cover rounded-xl"
+                      />
+                    ) : (
+                      <img
+                        src={chat?.background}
+                        alt="background"
+                        className="w-full h-full object-cover rounded-xl"
+                      />
+                    )}
+
+                    <h3 className="text-xl font-semibold mb-2">{chat.name}</h3>
+                    <p className="text-pink-500">{chat.members ? Object.keys(chat.members).length : 0} pessoas visitaram</p>
+                  </div>
+                </Link>
+
+              </SwiperSlide>
+            ))}
+          </Swiper>
+        </div>
       </main>
       <Footer />
     </div>
-  )
+  );
 }

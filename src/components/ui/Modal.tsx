@@ -1,97 +1,179 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getDatabase, ref, get, update, set } from 'firebase/database';
+import { get, onDisconnect, ref, set, update } from 'firebase/database';
 import Image from 'next/image';
+import { User, UserType } from '@/utils/userStorage';
+import { GroupData } from './SideBar';
+import { database } from '../../pages/api/lib/firebase';
+import { Button } from './Button';
+import bcrypt from 'bcryptjs';
+
 
 interface ChatModalProps {
-    visitorId: string;
     setIsOpen: (open: boolean) => void;
-    groupName: string;
+    currentUser: {
+        id: string;
+        username: string;
+        type: UserType;
+        power: number;
+        group: string[];
+        image: string;
+        userNameAcess: string;
+        password: string;
+        status?: string;
+    };
+    groupId: string;
 }
 
-export interface VisitorData {
-    username?: string;
-    id?: string;
-    image?: string;
-}
-
-export default function ChatModal({ visitorId, setIsOpen, groupName }: ChatModalProps) {
-    const [data, setData] = useState<VisitorData | null>(null);
+export default function ChatModal({ groupId, currentUser, setIsOpen }: ChatModalProps) {
     const [userNameAcess, setUserNameAcess] = useState('');
     const [password, setPassword] = useState('');
-
     const [username, setUsername] = useState('');
-    const [image, setImage] = useState('');
-    console.log(image)
-    useEffect(() => {
-        const fetchVisitor = async () => {
-            const db = getDatabase();
-            const visitorRef = ref(db, `visitors/${visitorId}`);
-            const snapshot = await get(visitorRef);
-            if (snapshot.exists()) {
-                const visitorData = snapshot.val();
-                setData(visitorData);
-                setUsername(visitorData.username || '');
-                setImage(visitorData.image || '');
-            }
-        };
-        fetchVisitor();
-    }, [visitorId]);
 
+    const [image, setImage] = useState('');
+    const [isLoginMode, setIsLoginMode] = useState(true);
+    const [loading, setLoading] = useState(false);
 
     const handleAccess = async () => {
-        if (!userNameAcess || !password) {
-            alert('Por favor, preencha todos os campos.');
+        setLoading(true);
+
+
+        if (!userNameAcess.trim() || !password.trim()) {
+            alert('Preencha o nome de usuário e a senha!');
             return;
         }
 
-        const db = getDatabase();
-        const visitorRef = ref(db, `visitors/${visitorId}`);
-
         try {
-            await update(visitorRef, {
-                userNameAcess,
-                password,
-                type: 'Membro',
+
+            const snapshotUsers = await get(ref(database, "users"));
+
+            const usersData = snapshotUsers.val();
+
+            const usersArray: User[] = Object.values(usersData as Record<string, User>);
+
+
+            //Verifica se existe algum usuário com o username informado
+            const usuarioPorNome = usersArray.find(function getName(dados: User) {
+                return dados.userNameAcess === userNameAcess
             });
 
 
-            const groupsRef = ref(db, 'grupos');
-            const snapshot = await get(groupsRef);
 
-            if (snapshot.exists()) {
-                const groupsData = snapshot.val();
-
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const groupEntry = Object.entries(groupsData).find((entry: any) => {
-                    const group = entry[1];
-                    return group.name?.toLowerCase() === groupName.toLowerCase();
-                });
-
-
-                if (groupEntry) {
-                    const [groupId] = groupEntry;
-                    const groupMemberRef = ref(db, `grupos/${groupId}/members/${visitorId}`);
-                    await set(groupMemberRef, {
-                        name: username,
-                        type: 'Membro',
-                    });
-
-                } else {
-                    console.warn('Nenhum grupo público encontrado.');
-                }
+            if (!usuarioPorNome) {
+                alert('Nome de usuário não encontrado!');
+                return;
             }
-            setIsOpen(false);
+
+            if (userNameAcess !== usuarioPorNome.userNameAcess) {
+                alert('Nome de usuário Invalido!');
+                return;
+            }
+            const isMatch = await bcrypt.compare(password, usuarioPorNome.password);
+
+
+            if (!isMatch) {
+                alert('Senha incorreta!');
+                return false;
+            }
+
+            // Se passou das validações acima, é porque está tudo certo
+            sessionStorage.setItem('currentUser', JSON.stringify(usuarioPorNome));
+
+            const expires = new Date();
+            expires.setDate(expires.getDate() + 7);
+
+            ///document.cookie = `user=${JSON.stringify(usuarioPorNome)}; path=/; expires=${expires.toUTCString()};`;
+
+            setTimeout(() => {
+                setIsOpen(false);
+                window.location.reload();
+            }, 1000);
+
         } catch (error) {
-            console.error('Erro ao conceder acesso:', error);
-            alert('Erro ao conceder acesso.');
+            console.error("Erro ao realizar login:", error);
+            alert("Erro ao realizar login. Tente novamente.");
+        } finally {
+            setLoading(false);
         }
     };
 
 
+    async function hashPassword(password: string) {
+        try {
+
+            const salt = await bcrypt.genSalt(10);
+            const hashedPassword = await bcrypt.hash(password, salt);
+            return hashedPassword;
+        } catch (error) {
+            console.error('Erro ao hash da senha:', error);
+        }
+    }
+
+
+    const handleRegister = async () => {
+
+        if (!userNameAcess.trim() || !password.trim()) {
+            alert('Preencha o nome de usuário e a senha!');
+            return;
+        }
+
+        const snapshotUsers = await get(ref(database, "users"));
+
+        const usersData = snapshotUsers.val();
+
+
+        const usersArray: User[] = Object.values(usersData as Record<string, User>);
+        console.log(usersArray, 'usersArray')
+
+        const usuarioPorNome = usersArray.find(user =>
+            user.userNameAcess?.toLowerCase() === userNameAcess.toLowerCase()
+        );
+
+        // if (userNameAcess == usuarioPorNome?.userNameAcess) {
+        //     alert('Escolha um nome de usuário mais forte! Use letras, números e talvez alguns símbolos.');
+        //     return;
+        // }
+
+
+        const hashedPassword = await hashPassword(password);
+
+
+        const user = {
+            id: currentUser?.id,
+            username: username,
+            type: 'Membro',
+            power: 0,
+            group: [],
+            image: image,
+            userNameAcess: userNameAcess,
+            password: hashedPassword,
+            status: 'Online'
+        };
+
+
+
+        const expires = new Date();
+        const groupRef = ref(database, `grupos/${groupId}/members/${currentUser.id}`);
+        const userRef = ref(database, `users/${currentUser.id}`);
+        update(userRef, user);
+        update(groupRef, user);
+        //Assim que criar eu devo atualizar esse usuario
+        sessionStorage.setItem('currentUser', JSON.stringify(user));
+        ///document.cookie = `user=${JSON.stringify(userNameAcess)}; path=/; expires=${expires.toUTCString()};`;
+
+        setTimeout(() => {
+            setIsOpen(false);
+            window.location.reload();
+        }, 1000);
+
+    };
+
+
+
+
     return (
-        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-60">
+        <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm bg-black/40">
             <div className="bg-white rounded-lg shadow-lg p-8 w-96 relative text-black">
                 <button
                     onClick={() => setIsOpen(false)}
@@ -100,75 +182,128 @@ export default function ChatModal({ visitorId, setIsOpen, groupName }: ChatModal
                     ×
                 </button>
 
-                {data ? (
-                    <div className="flex items-center space-x-4 mb-4">
-                        {data.image && (
-                            <Image
-                                src={data.image}
-                                alt="Foto do visitante"
-                                width={100}
-                                height={100}
-                                className="rounded-full"
-                                unoptimized={true}
-                            />
-                        )}
-                        <div className="flex flex-col text-left">
-                            <span className="text-sm text-gray-500">ID: {data.id?.split('-')[0]}</span>
-                            <h3 className="text-xl font-semibold">{data.username}</h3>
+                <h2 className="text-xl font-semibold text-center mb-4">
+                    {isLoginMode ? 'Login' : 'Cadastro'}
+                </h2>
+
+                <div className="space-y-4">
+                    {currentUser.type === 'Visitante' && !isLoginMode && (
+                        <div className="flex items-center space-x-4">
+                            <div className="relative">
+                                {image || currentUser.image ? (
+                                    <Image
+                                        src={image || currentUser.image}
+                                        alt="Avatar"
+                                        width={64}
+                                        height={64}
+                                        className="rounded-full"
+                                        unoptimized
+                                    />
+                                ) : (
+                                    <div className="w-16 h-16 bg-gray-200 rounded-full" />
+                                )}
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) => {
+                                        const file = e.target.files?.[0];
+                                        if (file) {
+                                            const reader = new FileReader();
+                                            reader.onloadend = () => {
+                                                if (reader.result) {
+                                                    setImage(reader.result as string);
+                                                }
+                                            };
+                                            reader.readAsDataURL(file);
+                                        }
+                                    }}
+                                    className="absolute top-0 left-0 w-full h-full opacity-0 cursor-pointer"
+                                    title="Clique para trocar a imagem"
+                                />
+                            </div>
+                            <div>
+                                <h3 className="font-semibold">{username || currentUser.username}</h3>
+                                <p className="text-sm text-gray-500">ID: {currentUser.id.split('-')[0]}</p>
+                            </div>
                         </div>
-                    </div>
-                ) : (
-                    <p className="text-center text-gray-500">Carregando visitante...</p>
-                )}
+                    )}
 
-                <div className="mt-6 space-y-4">
+                    {!isLoginMode && (
+                        <>
+                            <div>
+                                <label htmlFor="username" className="block text-sm font-medium text-gray-700">Nome Nick</label>
+                                <input
+                                    type="text"
+                                    id="username"
+                                    value={username}
+                                    onChange={(e) => setUsername(e.target.value)}
+                                    className="mt-1 p-2 w-full border rounded-md"
+                                    placeholder={currentUser?.username}
+                                />
+                            </div>
+                        </>
+                    )}
 
                     <div>
-
-                        <input
-                            type="text"
-                            id="username"
-                            value={username}
-                            onChange={(e) => setUsername(e.target.value)}
-                            className="mt-1 p-2 w-full border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="Seu nome"
-                        />
-                    </div>
-                    <div>
-                        <label htmlFor="userNameAcess" className="block text-sm font-medium text-gray-700">
-                            Nome de Usuário
-                        </label>
+                        <label htmlFor="userNameAcess" className="block text-sm font-medium text-gray-700">Nome de Usuário</label>
                         <input
                             type="text"
                             id="userNameAcess"
                             value={userNameAcess}
                             onChange={(e) => setUserNameAcess(e.target.value)}
-                            className="mt-1 p-2 w-full border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="mt-1 p-2 w-full border rounded-md"
                             placeholder="aninha"
                         />
                     </div>
 
                     <div>
-                        <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                            Senha
-                        </label>
+                        <label htmlFor="password" className="block text-sm font-medium text-gray-700">Senha</label>
                         <input
                             type="password"
                             id="password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className="mt-1 p-2 w-full border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="mt-1 p-2 w-full border rounded-md"
                             placeholder="1234"
                         />
                     </div>
-                    <button
-                        onClick={handleAccess}
-                        className="w-full py-2 mt-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none"
-                    >
-                        Acessar
-                    </button>
 
+                    {loading ? (
+                        <div className="text-center text-gray-500 mt-4">Carregando...</div>
+                    ) : (
+                        <Button
+                            onClick={isLoginMode ? handleAccess : handleRegister}
+                            className={`w-full py-2 ${isLoginMode ? 'bg-green-600' : 'bg-blue-600'} text-white rounded-md hover:opacity-90`}
+                        >
+                            {isLoginMode ? 'Acessar' : 'Cadastrar'}
+                        </Button>
+                    )}
+
+                    <div className="text-center mt-4 text-sm text-gray-600">
+                        {isLoginMode ? (
+                            <>
+                                Não tem uma conta?{' '}
+                                <span
+                                    onClick={() => setIsLoginMode(false)}
+                                    className="text-blue-600 hover:underline cursor-pointer"
+                                >
+                                    Cadastre-se
+                                </span>
+                            </>
+                        ) : (
+                            <>
+                                Já tem uma conta?{' '}
+                                <span
+                                    onClick={() => setIsLoginMode(true)}
+                                    className="text-green-600 hover:underline cursor-pointer"
+                                >
+                                    Faça login
+                                </span>
+                            </>
+                        )}
+                    </div>
                 </div>
+
             </div>
         </div>
     );

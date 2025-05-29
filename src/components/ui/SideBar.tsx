@@ -1,11 +1,30 @@
+'use client'
 import { useEffect, useState } from 'react';
+import { database } from '../../pages/api/lib/firebase';
+import { ref, get, onValue } from 'firebase/database';
+import GroupCreateModal from './ModalGroup';
+
+import { User, UserType } from '@/utils/userStorage';
 import Image from 'next/image';
-import { database } from '../../../firebase';
-import { ref, get } from 'firebase/database';
+import { useRouter } from 'next/router';
+import Link from 'next/link';
 
 interface SidebarProps {
   selectedItem: string;
   onSelect: (item: string) => void;
+  currentUser: {
+    id: string;
+    username: string;
+    type: UserType;
+    power: number;
+    group: string[];
+    relacionamento?: string;
+    image: string;
+    userNameAcess: string;
+    password: string;
+    status?: string;
+  };
+  groupData: GroupData;
 }
 
 export interface GroupData {
@@ -18,173 +37,161 @@ export interface GroupData {
   createdAt: string;
   image: string;
   groupId: string;
+  category: string;
+  members: Record<string, User>;
 }
 
-export default function Sidebar({ selectedItem, onSelect }: SidebarProps) {
-  const [grupos, setGrupos] = useState<Record<string, GroupData> | null>(null); // Updated type here
-  const [loading, setLoading] = useState<boolean>(false);
-  const [name, setName] = useState('');
-  const [info, setInfo] = useState('');
-  const [type, setType] = useState<'public' | 'private'>('public');
-  const [code, setCode] = useState('');
-  const [background, setBackground] = useState('');
-  const [image, setImage] = useState('');
+export default function Sidebar({ selectedItem, onSelect, currentUser, groupData }: SidebarProps) {
+  const [grupos, setGrupos] = useState<GroupData | null>(null);
+  const [user, setUser] = useState<User[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const gruposArray = grupos ? Object.values(grupos) as GroupData[] : [];
+  const [grposUsuario, setGruposUsuario] = useState<any[]>([]);
 
-  const buscarGrupos = async () => {
-    setLoading(true);
-    try {
-      const snapshot = await get(ref(database, 'grupos'));
-      console.log('Grupos recebidos do Firebase:', snapshot.val());
 
-      if (snapshot.exists()) {
-        const data = snapshot.val();
-        setGrupos(data);
-        console.log(data, 'dados dos grupos');
-      } else {
-        console.log('Nenhum grupo encontrado.');
-        setGrupos(null);
-      }
-    } catch (error: unknown) {
-      console.error('Erro ao buscar grupos:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  console.log(currentUser,'currentUser')
   useEffect(() => {
-    buscarGrupos();
-  }, []);
+    if (groupData?.groupId) {
+      const grupoRef = ref(database, 'grupos');
+
+      const unsubscribe = onValue(grupoRef, snapshot => {
+        if (snapshot.exists()) {
+          const grupos: Record<string, GroupData> = snapshot.val();
+          const grupoEncontrado = Object.entries(grupos).find(([id]) =>
+            id.startsWith(groupData.groupId!)
+          );
 
 
-  const handleEnterGroup = (groupName: string) => {
-    onSelect(groupName);
-  };
 
+          if (grupoEncontrado) {
+            const [, grupoData] = grupoEncontrado;
+            const userLogadoString = sessionStorage.getItem('currentUser');
+            let dadosUserLogadoAsync = JSON.parse(userLogadoString ?? '{}');
+            const gruposMembro = Object.values(grupos).filter((grupo) =>
+              grupo.members && Object.values(grupo.members).some(
+                (membro) => membro.id === dadosUserLogadoAsync.id
+              )
+            );
+            setGruposUsuario(gruposMembro)
+            setUser(dadosUserLogadoAsync)
+            const membrosGrupo = grupoData?.members
+              ? Object.values(grupoData.members)
+              : [];
 
+            const localizaUser = membrosGrupo.find(
+              (item) => item.id === dadosUserLogadoAsync?.id
+            );
 
-  // let fetchUsers = async () => {
-  //   const usersFromFirebase = await getUsersFromFirebase();
-  //   setUsers(usersFromFirebase);
-  // };
+            const precisaAtualizarStatus =
+              dadosUserLogadoAsync?.status === 'Offline' &&
+              localizaUser?.status === 'Online';
 
-  // useEffect(() => {
-  //   const fetchVisitor = async () => {
-  //     const db = getDatabase();
-  //     const visitorRef = ref(db, `visitors/${visitorId}`);
-  //     const snapshot = await get(visitorRef);
-  //     if (snapshot.exists()) {
-  //       const visitorData = snapshot.val();
-  //       setData(visitorData);
-  //     }
-  //   };
-  //   fetchVisitor();
-  // }, [visitorId]);
+            if (precisaAtualizarStatus) {
+              dadosUserLogadoAsync = {
+                ...dadosUserLogadoAsync,
+                status: 'Online',
+              };
+              sessionStorage.setItem(
+                'currentUser',
+                JSON.stringify(dadosUserLogadoAsync)
+              );
+              //document.cookie = `user=${JSON.stringify(dadosUserLogadoAsync)}; path=/;`;
+              console.log('Status do usuário atualizado para Online!');
+            }
 
+            setGrupos(grupoData);
+            //Primeiro Compara esse User Logado
+            //Verifica o status dele na tabela do firebase se no firebase estiver Online  e no Async e Cokies Offiline
+            //Altera o Status dele pra Online no async e no cookie
+            //Depois Habilita o SIdeBar de Cadastro de Grupos e Lista todos os grupos que ele faz parte.
+            //Verifica se ele já tem um grupo criado (Cada membro só pode criar 1 grupo)
+            //Ao criar grupo ele recebe o status de owner na tabela de grupo.
+          }
+        }
+      });
 
-  // const handleCreateGroup = async () => {
-  //   try {
-
-  //     const groupId = uuidv4();
-  //     const grupoPath = `grupos/${groupId}`;
-  //     const userPath = `usuarios/${1}/grupos`;
-
-  //     const groupData: GroupData = {
-  //       name,
-  //       info,
-  //       type,
-  //       background,
-  //       ownerId: '', 
-  //       image,
-  //       groupId,
-  //       createdAt: new Date().toISOString(),
-  //       ...(type === 'private' && { code })
-  //     };
-
-  //     await set(ref(database, grupoPath), groupData);
-  //     await set(ref(database, `${userPath}/${groupId}`), {
-  //       name,
-  //       type,
-  //     });
-
-  //     alert('Grupo criado com sucesso!');
-  //     // setHasGroup(true);
-  //   } catch (error) {
-  //     console.error('Erro ao criar grupo:', error);
-  //     alert('Erro ao criar grupo');
-  //   }
-  // };
-
+      return () => unsubscribe();
+    }
+  }, [groupData?.groupId]);
 
 
   return (
-    <div className="w-20 bg-[#202225] flex flex-col items-center py-4 space-y-4 overflow-y-auto">
-      <button onClick={() => onSelect('direct')} className={`w-12 h-12 rounded-full hover:rounded-2xl transition-all duration-300 ${selectedItem === 'direct' ? 'bg-[#5865F2]' : 'bg-gray-700'}`}>
-        <Image src="https://cdn-icons-png.flaticon.com/512/201/201623.png" alt="Chat Direto" width={24} height={24} />
-      </button>
+    <>
+      {isModalOpen && (
+        <GroupCreateModal
+          currentUserId={currentUser.id}
+          setIsOpen={setIsModalOpen}
+        />
+      )}
 
-      <div className="flex-grow space-y-2 flex flex-col items-center">
-        {
-          loading ? (
-            <>
-              <h1>LENDO</h1>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Nome do Grupo"
-              />
-              <input
-                type="text"
-                value={info}
-                onChange={(e) => setInfo(e.target.value)}
-                placeholder="Informações sobre o Grupo"
-              />
-              <input
-                type="text"
-                value={image}
-                onChange={(e) => setImage(e.target.value)}
-                placeholder="Informações sobre o Grupo"
-              />
-              <select value={type} onChange={(e) => setType(e.target.value as 'public' | 'private')}>
-                <option value="public">Público</option>
-                <option value="private">Privado</option>
-              </select>
-              {type === 'private' && (
-                <input
-                  type="text"
-                  value={code}
-                  onChange={(e) => setCode(e.target.value)}
-                  placeholder="Código do Grupo"
-                />
-              )}
-              <input
-                type="text"
-                value={background}
-                onChange={(e) => setBackground(e.target.value)}
-                placeholder="Cor de Fundo"
-              />
-              {/* <button onClick={() => handleCreateGroup('visitorId1')}>Criar Grupo</button> */}
+      <div className="w-20 bg-[#202225] flex flex-col items-center py-4 space-y-4 overflow-y-auto">
 
-            </>
-          ) : <>
-            {gruposArray.map((grupo) => (
-              <button
-                key={grupo.createdAt}
-                onClick={() => handleEnterGroup(grupo.name)}
-                className={`w-12 h-12 rounded-full hover:rounded-2xl transition-all duration-300 ${selectedItem === grupo.name ? 'bg-[#5865F2]' : 'bg-gray-700'}`}
+        <div className="flex-grow space-y-2 flex flex-col items-center">
+
+          {
+            currentUser?.type !== "Visitante" ? (
+              <div className="mt-6 mb-4">
+                <button
+                  onClick={() => setIsModalOpen(true)}
+                  className="w-12 h-12 bg-green-600 rounded-full hover:rounded-2xl transition-all duration-300"
+                >
+                  +
+                </button>
+              </div>
+            ) : null
+          }
+
+          {currentUser?.type === 'Visitante' ? (
+            groupData && (
+              <Link
+                key={groupData.createdAt}
+                href={`/chat/${groupData?.groupId}`}
+                className={`w-12 h-12 rounded-full hover:rounded-2xl transition-all duration-300 ${selectedItem === groupData.name ? 'bg-[#5865F2]' : 'bg-gray-700'}`}
               >
-                <Image src={grupo.image} alt={grupo.name} width={24} height={24} />
-              </button>
-            ))}
-          </>
-        }
+
+                <Image
+                  src={groupData?.image && groupData?.image.trim() !== '' ? groupData?.image : ''}
+
+                  alt={groupData.name}
+                  width={24}
+                  height={24}
+                />
+
+              </Link>
+            )
+          ) : (
+            grposUsuario?.map((grupo) => {
+              return (
+                <Link
+                  href={`/chat/${grupo?.groupId}`}
+                  key={grupo?.createdAt}
+                  className={`w-12 h-12 rounded-full hover:rounded-2xl transition-all duration-300 ${selectedItem === grupo.name ? 'bg-[#5865F2]' : 'bg-gray-700'}`}
+                >
+
+                  <Image
+
+                    src={grupo?.image || '/default-group.png'}
+                    alt={grupo.name}
+                    width={24}
+                    height={24}
+                  />
+
+                </Link>
+              )
+            })
+          )}
+
+        </div>
+
       </div>
-      {/* 
-      <div className="mt-auto mb-4">
-        <button onClick={() => handleCreateGroup()} className="w-12 h-12 bg-green-600 rounded-full hover:rounded-2xl transition-all duration-300">+</button>
-      </div> */}
-    </div>
+
+      {isModalOpen && (
+        <GroupCreateModal
+          currentUserId={currentUser.id}
+          setIsOpen={setIsModalOpen}
+        />
+      )}
+
+    </>
   );
 }
