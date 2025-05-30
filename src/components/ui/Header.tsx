@@ -15,12 +15,12 @@ export default function Header() {
                     >
                         Home
                     </Link>
-                    <Link
+                    {/* <Link
                         href="/levels"
                         className="transition duration-300 hover:text-pink-500 hover:underline underline-offset-4"
                     >
                         Levels
-                    </Link>
+                    </Link> */}
                 </nav>
             </div>
         </header>

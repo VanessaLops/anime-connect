@@ -11,7 +11,7 @@ export default function Home() {
     <div className="min-h-screen bg-black text-white font-sans">
       <Header />
       <Hero />
-      <Features />
+      {/* <Features /> */}
       <Footer />
     </div>
   );

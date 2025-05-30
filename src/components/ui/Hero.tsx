@@ -18,9 +18,9 @@ export default function Hero() {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.3, duration: 0.8 }}
                 >
-                    <h1 className="text-white text-4xl md:text-5xl font-semibold leading-tight mb-3">
-                        TESTE DEVELOPMENT
-                    </h1>
+                    {/* <h1 className="text-white text-4xl md:text-5xl font-semibold leading-tight mb-3">
+                        Bem-Vindo ao
+                    </h1> */}
                     <h2 className="text-pink-500 text-[52px] md:text-[70px] leading-tight font-extrabold font-orbitron mb-6">
                         Anime <br /> Connect
                     </h2>
@@ -29,7 +29,7 @@ export default function Hero() {
                     </p>
                     <div className="flex flex-col sm:flex-row gap-4">
                         <Button variant="primary" href="/comunidade">Entrar nas Comunidade</Button>
-                        <Button variant="outline" href="/funcionalidades">Ver Funcionalidades</Button>
+                        {/* <Button variant="outline" href="/funcionalidades">Ver Funcionalidades</Button> */}
                     </div>
                 </motion.div>
             </motion.div>
