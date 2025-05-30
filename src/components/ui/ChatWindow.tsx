@@ -157,13 +157,13 @@ function NeonChatLayout({ colors, groupData, currentUser, vipEmoji }: NeonChatLa
             style={{ backgroundColor: colors.background, color: colors.textColor || 'white' }}
         >
             {/* Sidebar Toggle Button for Mobile */}
-            <button
+            {/* <button
                 className="md:hidden p-4 focus:outline-none"
                 style={{ backgroundColor: colors.sidebarBg, color: colors.sidebarBorder }}
                 onClick={() => setIsSidebarOpen(!isSidebarOpen)}
             >
                 {isSidebarOpen ? 'Fechar Membros' : 'Abrir Membros'}
-            </button>
+            </button> */}
 
             {/* Sidebar */}
             <aside
