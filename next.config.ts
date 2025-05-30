@@ -17,7 +17,8 @@ const nextConfig = {
       'api.dicebear.com',
       'media2.giphy.com',
       'fastly.picsum.photos',
-      'placehold.co'
+      'placehold.co',
+      'c.tenor.com'
     ],
   },
   webpack(config: { resolve: { fallback: any; }; }) {

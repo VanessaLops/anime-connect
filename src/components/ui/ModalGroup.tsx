@@ -19,6 +19,8 @@ export default function GroupCreateModal({ currentUserId, setIsOpen }: GroupCrea
     const [existingGroupName, setExistingGroupName] = useState('');
     const [existingGroupId, setExistingGroupId] = useState('');
     const [isLoading, setIsLoading] = useState(true);
+    const [createBot, setCreateBot] = useState(false);
+    const [botName, setBotName] = useState('');
 
 
 
@@ -202,6 +204,34 @@ export default function GroupCreateModal({ currentUserId, setIsOpen }: GroupCrea
                                     placeholder="Nome do grupo"
                                 />
                             </div>
+
+                            <div className="flex items-center space-x-2 mt-4">
+                                <input
+                                    type="checkbox"
+                                    id="createBot"
+                                    checked={createBot}
+                                    onChange={() => setCreateBot(!createBot)}
+                                    className="h-4 w-4"
+                                />
+                                <label htmlFor="createBot" className="text-sm text-gray-700">
+                                    Criar um bot para o grupo
+                                </label>
+                            </div>
+
+                            {createBot && (
+                                <div className="mt-2">
+                                    <label htmlFor="botName" className="block text-sm font-medium text-gray-700">
+                                        Nome do Bot
+                                    </label>
+                                    <input
+                                        id="botName"
+                                        value={botName}
+                                        onChange={(e) => setBotName(e.target.value)}
+                                        className="mt-1 p-2 w-full border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        placeholder="Digite o nome do bot (ex: AjudaBot)"
+                                    />
+                                </div>
+                            )}
 
                             <div>
                                 <label htmlFor="description" className="block text-sm font-medium text-gray-700">

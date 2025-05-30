@@ -14,7 +14,7 @@ interface SidebarProps {
   currentUser: {
     id: string;
     username: string;
-    type: UserType;
+    type?: UserType;
     power: number;
     group: string[];
     relacionamento?: string;
@@ -102,7 +102,7 @@ export default function Sidebar({ selectedItem, onSelect, currentUser, groupData
 
         {/* Lista dos grupos do usuário */}
         <nav className="flex flex-col items-center space-y-4 flex-grow">
-          {(currentUser.type === 'Visitante' && groupData ? [groupData] : gruposUsuario).map((grupo) => (
+          {(currentUser?.type === 'Visitante' && groupData ? [groupData] : gruposUsuario).map((grupo) => (
             <Link
               key={grupo.groupId}
               href={`/chat/${grupo.groupId}`}

@@ -26,6 +26,7 @@ import { User } from "@/utils/userStorage";
 interface AvatarProps extends User {
     isTyping: boolean;
     status?: "online" | "offline";
+    vipEmoji:number
 }
 
 
@@ -35,7 +36,8 @@ const PeaoAvatar: React.FC<AvatarProps> = ({
     type,
     power,
     relacionamento,
-    status
+    status,
+    vipEmoji
 }) => {
 
     let avatarSrc: string = "";

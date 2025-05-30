@@ -5,6 +5,9 @@ import { User } from '@/utils/userStorage';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
+import { useMediaQuery, Drawer, IconButton } from '@mui/material';
+import MenuIcon from '@mui/icons-material/Menu';
+import GroupIcon from '@mui/icons-material/Group';
 
 import { get, onDisconnect, ref, set } from 'firebase/database';
 import ChatWindow from '@/components/ui/ChatWindow';
@@ -19,6 +22,8 @@ export default function ChatPage() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [cookiesAccepted, setCookiesAccepted] = useState<boolean | null>(null);
   const [grupos, setGrupos] = useState<GroupData | null>(null);
+  const isMobile = useMediaQuery('(max-width:768px)');
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
 
   const configureUser = () => {
@@ -140,25 +145,57 @@ export default function ChatPage() {
     sessionStorage.setItem('cookiesAccepted', 'true');
   };
 
+
   return (
     <div className="flex h-screen">
-      <Sidebar
-        selectedItem={selectedItem}
-        onSelect={setSelectedItem}
-        currentUser={{
-          id: currentUser?.id ?? '',
-          username: currentUser?.username ?? '',
-          type: currentUser?.type ?? 'Visitante',
-          power: currentUser?.power ?? 0,
-          group: currentUser?.group ?? [],
-          relacionamento: currentUser?.relacionamento ?? undefined,
-          image: currentUser?.image ?? 'default.jpg',
-          userNameAcess: currentUser?.userNameAcess ?? 'visitante',
-          password: currentUser?.password ?? '',
-          status: currentUser?.status ?? 'Offline'
-        }}
-        groupData={grupos!}
-      />
+      {isMobile ? (
+        <>
+          <IconButton onClick={() => setDrawerOpen(true)} sx={{ position: 'absolute', top: 10, left: 80, zIndex: 9999, color: "#ff00ff" }} >
+            <MenuIcon />
+          </IconButton>
+          <IconButton onClick={() => setDrawerOpen(true)} sx={{ position: 'absolute', top: 10, left: 110, zIndex: 9999, color: "#ff00ff" }} >
+            <GroupIcon />
+          </IconButton>
+          <Drawer
+            anchor="right"
+            open={drawerOpen}
+            onClose={() => setDrawerOpen(false)}
+            ModalProps={{
+              BackdropProps: {
+                style: {
+                  backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                },
+              },
+            }}
+          >
+            <Sidebar
+              selectedItem={selectedItem}
+              onSelect={setSelectedItem}
+              currentUser={{
+                id: currentUser?.id ?? '',
+                username: currentUser?.username ?? '',
+                type: currentUser?.type ?? 'Visitante',
+                power: currentUser?.power ?? 0,
+                group: currentUser?.group ?? [],
+                relacionamento: currentUser?.relacionamento ?? undefined,
+                image: currentUser?.image ?? 'default.jpg',
+                userNameAcess: currentUser?.userNameAcess ?? 'visitante',
+                password: currentUser?.password ?? '',
+                status: currentUser?.status ?? 'Offline',
+              }}
+              groupData={grupos!}
+            />
+          </Drawer>
+
+        </>
+      ) : (
+        <Sidebar
+          selectedItem={selectedItem}
+          onSelect={setSelectedItem}
+          currentUser={currentUser!}
+          groupData={grupos!}
+        />
+      )}
 
       <div className="flex flex-col flex-1">
         {grupos &&

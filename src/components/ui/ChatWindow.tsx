@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { GroupData } from './SideBar';
 import { database } from '@/pages/api/lib/firebase';
-import { onDisconnect, onValue, ref, set } from 'firebase/database';
+import { get, getDatabase, onDisconnect, onValue, ref, remove, set } from 'firebase/database';
 import { User, UserType } from '@/utils/userStorage';
 import PeaoAvatar from './PeaoMembro';
 import MessageInput from './MessageInput';
@@ -151,6 +151,79 @@ function NeonChatLayout({ colors, groupData, currentUser, vipEmoji }: NeonChatLa
     console.log(onlineMembers, 'onlineMembers')
 
 
+    //DELETE VISITANTE DOS GRUPOS
+    async function deleteVisitantesFromGroup(groupId: string) {
+        try {
+            const membersRef = ref(database, `grupos/${groupId}/members`);
+            const snapshot = await get(membersRef);
+
+            if (!snapshot.exists()) {
+                console.log('Nenhum membro encontrado no grupo:', groupId);
+                return;
+            }
+
+            const members = snapshot.val();
+
+            // Percorre cada membro e verifica se é Visitante
+            for (const userId in members) {
+                if (members.hasOwnProperty(userId)) {
+                    const member = members[userId];
+                    if (member.type === 'Visitante') {
+                        // Deleta o membro Visitante
+                        const memberRef = ref(database, `grupos/${groupId}/members/${userId}`);
+                        await remove(memberRef);
+                        console.log(`Membro visitante removido: ${userId}`);
+                    }
+                }
+            }
+
+            console.log('Todos os membros visitantes foram removidos.');
+
+        } catch (error) {
+            console.error('Erro ao deletar membros visitantes:', error);
+        }
+    }
+
+    //DELETE VISITANTE DA TABELA
+    async function deleteAllVisitantes() {
+        const db = getDatabase();
+        const usersRef = ref(db, "users");
+
+        try {
+            const snapshot = await get(usersRef);
+            if (!snapshot.exists()) {
+                console.log("Nenhum usuário encontrado.");
+                return;
+            }
+
+            const usersData = snapshot.val();
+
+            console.log("Usuários carregados:", usersData);
+
+            // Filtra IDs de usuários que são do tipo Visitante (case sensitive)
+            const visitanteIds = Object.entries(usersData)
+                .filter(([_, user]: [string, any]) => user.type === "Visitante")
+                .map(([id]) => id);
+
+            console.log("IDs de visitantes a deletar:", visitanteIds);
+
+            if (visitanteIds.length === 0) {
+                console.log("Nenhum usuário visitante para deletar.");
+                return;
+            }
+
+            // Deleta todos os visitantes
+            const promises = visitanteIds.map(id => remove(ref(db, `users/${id}`)));
+
+            await Promise.all(promises);
+
+            console.log(`${visitanteIds.length} usuários visitantes deletados com sucesso.`);
+        } catch (error) {
+            console.error("Erro ao deletar usuários visitantes:", error);
+        }
+    }
+
+
     return (
         <div
             className={`flex flex-col md:flex-row h-screen font-sans`}
@@ -168,7 +241,7 @@ function NeonChatLayout({ colors, groupData, currentUser, vipEmoji }: NeonChatLa
             {/* Sidebar */}
             <aside
                 className={`w-full md:w-72 p-4 border-r-2 rounded-none md:rounded-tr-2xl md:rounded-br-2xl ${isSidebarOpen ? 'block' : 'hidden'
-                    } md:block`} /* Conditional display based on isSidebarOpen */
+                    } md:block`}
                 style={{
                     backgroundColor: colors.sidebarBg,
                     borderColor: colors.sidebarBorder,
@@ -180,9 +253,17 @@ function NeonChatLayout({ colors, groupData, currentUser, vipEmoji }: NeonChatLa
                         🌐 Conectados
                     </h2>
                     <button
+                        // onClick={() => {
+                        //     if (groupData?.groupId) {
+                        //         deleteAllVisitantes();
+                        //     } else {
+                        //         console.log('groupId não disponível');
+                        //     }
+                        // }}
+
                         className="text-sm px-2 py-1 rounded-md transition shadow"
                         style={{
-                            color: colors.sidebarBorder,
+                            color: vipEmoji == 4 ? "black" : colors.sidebarBorder,
                             border: `1px solid ${colors.sidebarBorder}`,
                             backgroundColor: 'transparent',
                             boxShadow: `0 0 6px ${colors.sidebarShadow}`,
@@ -190,7 +271,7 @@ function NeonChatLayout({ colors, groupData, currentUser, vipEmoji }: NeonChatLa
                         onMouseEnter={e => (e.currentTarget.style.backgroundColor = colors.sidebarBorder)}
                         onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
                     >
-                        Sair
+                        Ticket
                     </button>
                 </div>
 
@@ -199,7 +280,7 @@ function NeonChatLayout({ colors, groupData, currentUser, vipEmoji }: NeonChatLa
                         className="p-2 rounded-lg font-semibold border-l-4 shadow"
                         style={{
                             backgroundColor: colors.inputBg,
-                            color: colors.usernameColor,
+                            color: vipEmoji == 4 ? "black" : colors.usernameColor,
                             borderColor: colors.usernameColor,
                             boxShadow: `0 0 12px ${colors.usernameColor}`,
                         }}
@@ -224,6 +305,7 @@ function NeonChatLayout({ colors, groupData, currentUser, vipEmoji }: NeonChatLa
                                     password={user.user}
                                     userNameAcess={user.userNameAcess}
                                     status={user.status?.toLowerCase()}
+                                    vipEmoji={vipEmoji}
                                 />
 
                             </div>
@@ -253,6 +335,7 @@ function NeonChatLayout({ colors, groupData, currentUser, vipEmoji }: NeonChatLa
                                     password={user.user}
                                     userNameAcess={user.userNameAcess}
                                     status={user.status?.toLowerCase()}
+                                    vipEmoji={vipEmoji}
                                 />
 
                             </div>
@@ -262,66 +345,66 @@ function NeonChatLayout({ colors, groupData, currentUser, vipEmoji }: NeonChatLa
                 </div>
             </aside>
 
-           {/* Main Area */}
-<div className="flex flex-col min-h-mobile-screen">
+            {/* Main Area */}
+            <div className="flex flex-col min-h-mobile-screen">
 
-    {/* Group Title */}
-    <div
-        className="px-6 py-4 border-b-2 shadow shrink-0"
-        style={{
-            backgroundColor: colors.headerBg,
-            borderColor: colors.headerBorder,
-            boxShadow: `0 0 15px ${colors.headerShadow}`,
-        }}
-    >
-        <h1 style={{ color: colors.sidebarBorder }} className="text-xl font-bold">
-            Ajuda
-        </h1>
-    </div>
-
-    {/* Conteúdo principal com scroll interno */}
-    <main
-        className="flex-1 overflow-y-auto p-4"
-        style={{ backgroundColor: colors.mainBg }}
-    >
-        {messages.map((msg, index) => (
-            <div key={index} className="mb-1">
-                <div className="flex items-start gap-2">
-                    <img
-                        src={msg.image || "/default-avatar.png"}
-                        alt={msg.username}
-                        className="w-8 h-8 rounded-full object-cover"
-                    />
-                    <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-[#00ffff]">{msg.username}</p>
-                        <p className="text-sm text-white break-words">{msg.text}</p>
-                        <span className="text-xs text-gray-400">
-                            {new Date(msg.timestamp).toLocaleTimeString()}
-                        </span>
-                    </div>
+                {/* Group Title */}
+                <div
+                    className="px-6 py-4 border-b-2 shadow shrink-0"
+                    style={{
+                        backgroundColor: colors.headerBg,
+                        borderColor: colors.headerBorder,
+                        boxShadow: `0 0 15px ${colors.headerShadow}`,
+                    }}
+                >
+                    <h1 style={{ color: colors.sidebarBorder }} className="text-xl font-bold">
+                        Ajuda
+                    </h1>
                 </div>
-            </div>
-        ))}
-    </main>
 
-    {/* Rodapé fixo no fim da tela */}
-    <footer
-        className="p-4 border-t-2 shadow shrink-0"
-        style={{
-            backgroundColor: colors.headerBg,
-            borderColor: colors.headerBorder,
-            boxShadow: `0 0 15px ${colors.headerShadow}`,
-        }}
-    >
-        <MessageInput
-            vipEmoji={vipEmoji}
-            colors={colors}
-            currentUser={currentUser}
-            groupId={groupData?.groupId}
-        />
-        <div className="mt-2 text-1xl flex gap-2 flex-wrap px-2">Versão 1.0.0.0</div>
-    </footer>
-</div>
+                {/* Conteúdo principal com scroll interno */}
+                <main
+                    className="flex-1 overflow-y-auto p-4"
+                    style={{ backgroundColor: colors.mainBg }}
+                >
+                    {messages.map((msg, index) => (
+                        <div key={index} className="mb-1">
+                            <div className="flex items-start gap-2">
+                                <img
+                                    src={msg.image}
+                                    alt={msg.username}
+                                    className="w-8 h-8 rounded-full object-cover"
+                                />
+                                <div className="flex-1 min-w-0">
+                                    <p className="font-semibold text-[#00ffff]">{msg.username}</p>
+                                    <p className="text-sm text-white break-words">{msg.text}</p>
+                                    <span className="text-xs text-gray-400">
+                                        {new Date(msg.timestamp).toLocaleTimeString()}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </main>
+
+                {/* Rodapé fixo no fim da tela */}
+                <footer
+                    className="p-4 border-t-2 shadow shrink-0"
+                    style={{
+                        backgroundColor: colors.headerBg,
+                        borderColor: colors.headerBorder,
+                        boxShadow: `0 0 15px ${colors.headerShadow}`,
+                    }}
+                >
+                    <MessageInput
+                        vipEmoji={vipEmoji}
+                        colors={colors}
+                        currentUser={currentUser}
+                        groupId={groupData?.groupId}
+                    />
+                    <div className="mt-2 text-1xl flex gap-2 flex-wrap px-2">Versão 1.0.0.0</div>
+                </footer>
+            </div>
 
         </div>
     );
