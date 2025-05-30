@@ -3,19 +3,18 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import ChatModal from './Modal';
-import { Button } from './Button';
 import { ref, push } from 'firebase/database';
-import { database } from '@/pages/api/lib/firebase'; // ajuste esse path se necessário
+import { database } from '@/pages/api/lib/firebase';
 import { UserType } from '@/utils/userStorage';
+import { getEmojisByVip } from '@/utils/emojis';
 
 interface MessageInputProps {
-    groupName: string;
-    groupId: string;
-    currentUser: {
+    groupId?: string;
+    currentUser?: {
         id: string;
         username: string;
         type: UserType;
-        power: number;
+        power: number; // vamos usar para controle de permissão
         group: string[];
         relacionamento?: string;
         image: string;
@@ -23,40 +22,54 @@ interface MessageInputProps {
         password: string;
         status?: string;
     };
+    vipEmoji: number;
+    colors: {
+        background: string;
+        sidebarBg: string;
+        sidebarBorder: string;
+        sidebarShadow: string;
+        headerBg: string;
+        headerBorder: string;
+        headerShadow: string;
+        mainBg: string;
+        inputBg: string;
+        inputBorder: string;
+        buttonBg: string;
+        buttonHoverBg: string;
+        buttonShadow: string;
+        usernameColor: string;
+        textColor?: string;
+    };
 }
 
-export default function MessageInput({ groupId, groupName, currentUser }: MessageInputProps) {
+export default function MessageInput({ groupId, vipEmoji, currentUser, colors }: MessageInputProps) {
     const [message, setMessage] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [localUser, setLocalUser] = useState(currentUser);
 
-    const emojis = [
-        { code: '(happy)', src: 'https://www.free-smileys.com/files/happy-smileys/572.gif' },
-        { code: '(wink)', src: 'https://www.free-smileys.com/files/happy-smileys/573.gif' },
-        { code: '(cool)', src: 'https://www.free-smileys.com/files/happy-smileys/576.gif' },
-        { code: '(laugh)', src: 'https://www.free-smileys.com/files/happy-smileys/574.gif' },
-        { code: '(sad)', src: 'https://www.free-smileys.com/files/happy-smileys/579.gif' },
-        { code: '(surprised)', src: 'https://www.free-smileys.com/files/happy-smileys/581.gif' },
-        { code: '(disappointed)', src: 'https://www.free-smileys.com/files/disappointed-smileys/898.gif' },
-        { code: '(love1)', src: 'https://www.free-smileys.com/files/love-smileys/871.gif' },
-        { code: '(love)', src: 'https://www.free-smileys.com/files/love-smileys/872.gif' },
-        { code: '(love3)', src: 'https://www.free-smileys.com/files/love-smileys/870.gif' },
-    ];
+    const emojis = getEmojisByVip(vipEmoji);
 
     const handleEmojiClick = (emoji: string) => {
         setMessage((prev) => prev + ` ${emoji}`);
     };
 
+    console.log(currentUser, 'currentUser')
+
+const canSendMessage = Boolean(currentUser);
+
+
     const sendMessage = async () => {
         if (!message.trim()) return;
+        if (!canSendMessage) return alert('Você não tem permissão para enviar mensagens.');
 
         const messageRef = ref(database, `grupos/${groupId}/messages`);
         const newMessage = {
             text: message,
             timestamp: Date.now(),
-            userId: currentUser.id,
-            username: currentUser.username,
-            image: currentUser.image,
-            status: currentUser.status || 'Online',
+            userId: currentUser?.id,
+            username: currentUser?.username,
+            image: currentUser?.image,
+            status: currentUser?.status || 'Online',
         };
 
         await push(messageRef, newMessage);
@@ -65,45 +78,80 @@ export default function MessageInput({ groupId, groupName, currentUser }: Messag
 
     function logout() {
         sessionStorage.removeItem('currentUser');
+        setLocalUser(undefined);
         window.location.href = '/';
     }
 
     return (
         <div>
-            <div className="emoji-picker flex gap-2 mb-2">
-                {emojis.map((emoji) => (
-                    <button key={emoji.code} onClick={() => handleEmojiClick(emoji.code)}>
-                        <Image src={emoji.src} alt={emoji.code} width={32} height={32} className="h-8 w-8" />
-                    </button>
-                ))}
+            <div>
+                {emojis.map((emoji) =>
+                    emoji.src ? (
+                        <button
+                            key={emoji.code}
+                            onClick={() => canSendMessage && handleEmojiClick(emoji.code)}
+                            disabled={!canSendMessage}
+                            style={{ cursor: canSendMessage ? 'pointer' : 'not-allowed' }}
+                        >
+                            <Image src={emoji.src} alt={emoji.code} width={32} height={32} className="h-8 w-8" />
+                        </button>
+                    ) : (
+                        <button
+                            key={emoji.code}
+                            onClick={() => canSendMessage && handleEmojiClick(emoji.code)}
+                            disabled={!canSendMessage}
+                            style={{ fontSize: 24, cursor: canSendMessage ? 'pointer' : 'not-allowed' }}
+                        >
+                            {emoji.code}
+                        </button>
+                    )
+                )}
             </div>
-
-            <div className="flex items-center justify-between space-x-4 mt-4">
-                <div className="flex items-center w-full space-x-2">
-                    <input
+            <div className="w-full">
+                <div className="flex items-center gap-2 w-full">
+                    <textarea
                         placeholder="Digite sua mensagem..."
-                        className="flex-1 p-3 rounded-lg bg-[#2f3136] text-white placeholder-gray-400 focus:outline-none resize-none h-24 w-120 transition-all"
                         value={message}
                         onChange={(e) => setMessage(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
+                        rows={2}
+                        className="w-full resize-none rounded-xl px-4 py-2 shadow border focus:outline-none"
+                        style={{
+                            backgroundColor: colors.inputBg,
+                            color: colors.textColor || 'white',
+                            borderColor: colors.inputBorder,
+                            boxShadow: `0 0 8px ${colors.sidebarShadow}`,
+                            cursor: canSendMessage ? 'auto' : 'not-allowed',
+                        }}
+                        disabled={!canSendMessage}
                     />
-                    <button
-                        onClick={sendMessage}
-                        className="bg-[#34b7f1] text-white p-3 rounded-lg w-8 h-24 flex items-center justify-center hover:bg-[#29a3cc] transition-all duration-200"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 transform rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path d="M15 19l-7-7 7-7" />
-                        </svg>
-                    </button>
-                </div>
+                    <div className="flex flex-col gap-2">
 
-                <div className="flex flex-col space-y-3 w-auto">
-                    <Button variant="primary" onClick={() => setIsModalOpen(true)}>Entrar</Button>
-                    <Button onClick={logout} variant="outline">Sair</Button>
+                        {
+
+                            currentUser?.type === "Visitante" ? 
+                            <button className="px-4 py-2 rounded-full text-white shadow hover:transition" onClick={() => setIsModalOpen(true)}>Entrar</button> : <button className="px-4 py-2 rounded-full text-white shadow hover:transition" onClick={logout}>Sair</button>
+                        }
+
+
+                        <button
+                            className="px-4 py-2 rounded-full text-white shadow hover:transition"
+                            style={{
+                                backgroundColor: canSendMessage ? colors.buttonBg : '#555',
+                                boxShadow: canSendMessage ? `0 0 10px ${colors.buttonShadow}` : 'none',
+                                cursor: canSendMessage ? 'pointer' : 'not-allowed',
+                            }}
+                            onClick={sendMessage}
+                            disabled={!canSendMessage}
+                            onMouseEnter={e => canSendMessage && (e.currentTarget.style.backgroundColor = colors.buttonHoverBg)}
+                            onMouseLeave={e => canSendMessage && (e.currentTarget.style.backgroundColor = colors.buttonBg)}
+                        >
+                            Enviar
+                        </button>
+                    </div>
                 </div>
             </div>
 
-            {isModalOpen && (
+            {isModalOpen && currentUser && groupId && (
                 <ChatModal
                     currentUser={currentUser}
                     setIsOpen={setIsModalOpen}
