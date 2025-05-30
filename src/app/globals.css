@@ -63,5 +63,5 @@ html, body, #root {
 }
 
 .min-h-mobile-screen {
-  min-height: 90dvh;
+  min-height: 60dvh;
 }
