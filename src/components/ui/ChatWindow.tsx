@@ -156,9 +156,19 @@ function NeonChatLayout({ colors, groupData, currentUser, vipEmoji }: NeonChatLa
             className={`flex flex-col md:flex-row h-screen font-sans`}
             style={{ backgroundColor: colors.background, color: colors.textColor || 'white' }}
         >
+            {/* Sidebar Toggle Button for Mobile */}
+            <button
+                className="md:hidden p-4 focus:outline-none"
+                style={{ backgroundColor: colors.sidebarBg, color: colors.sidebarBorder }}
+                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            >
+                {isSidebarOpen ? 'Fechar Membros' : 'Abrir Membros'}
+            </button>
+
             {/* Sidebar */}
             <aside
-                className="w-full md:w-72 p-4 border-r-2 rounded-none md:rounded-tr-2xl md:rounded-br-2xl"
+                className={`w-full md:w-72 p-4 border-r-2 rounded-none md:rounded-tr-2xl md:rounded-br-2xl ${isSidebarOpen ? 'block' : 'hidden'
+                    } md:block`} /* Conditional display based on isSidebarOpen */
                 style={{
                     backgroundColor: colors.sidebarBg,
                     borderColor: colors.sidebarBorder,
@@ -252,62 +262,67 @@ function NeonChatLayout({ colors, groupData, currentUser, vipEmoji }: NeonChatLa
                 </div>
             </aside>
 
-            {/* Main Area */}
-            <div className="flex-1 flex flex-col">
-                {/* Group Title */}
-                <div
-                    className="px-6 py-4 border-b-2 shadow"
-                    style={{
-                        backgroundColor: colors.headerBg,
-                        borderColor: colors.headerBorder,
-                        boxShadow: `0 0 15px ${colors.headerShadow}`,
-                    }}
-                >
-                    <h1 style={{ color: colors.sidebarBorder }} className="text-xl font-bold">
-                        Ajuda
-                    </h1>
+           {/* Main Area */}
+<div className="flex flex-col min-h-mobile-screen">
+
+    {/* Group Title */}
+    <div
+        className="px-6 py-4 border-b-2 shadow shrink-0"
+        style={{
+            backgroundColor: colors.headerBg,
+            borderColor: colors.headerBorder,
+            boxShadow: `0 0 15px ${colors.headerShadow}`,
+        }}
+    >
+        <h1 style={{ color: colors.sidebarBorder }} className="text-xl font-bold">
+            Ajuda
+        </h1>
+    </div>
+
+    {/* Conteúdo principal com scroll interno */}
+    <main
+        className="flex-1 overflow-y-auto p-4"
+        style={{ backgroundColor: colors.mainBg }}
+    >
+        {messages.map((msg, index) => (
+            <div key={index} className="mb-1">
+                <div className="flex items-start gap-2">
+                    <img
+                        src={msg.image || "/default-avatar.png"}
+                        alt={msg.username}
+                        className="w-8 h-8 rounded-full object-cover"
+                    />
+                    <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-[#00ffff]">{msg.username}</p>
+                        <p className="text-sm text-white break-words">{msg.text}</p>
+                        <span className="text-xs text-gray-400">
+                            {new Date(msg.timestamp).toLocaleTimeString()}
+                        </span>
+                    </div>
                 </div>
-
-                {/* Messages */}
-                <main className="flex-1 p-6 space-y-6" style={{ backgroundColor: colors.mainBg }}>
-                    <div>
-                         {messages.map((msg, index) => (
-                        <div key={index} className="mb-2">
-                            <div className="flex items-start gap-2">
-                                <img
-                                    src={msg.image || "/default-avatar.png"}
-                                    alt={msg.username}
-                                    className="w-8 h-8 rounded-full object-cover"
-                                />
-                                <div>
-                                    <p className="font-semibold text-[#00ffff]">{msg.username}</p>
-                                    <p className="text-sm text-white">{msg.text}</p>
-                                    <span className="text-xs text-gray-400">
-                                        {new Date(msg.timestamp).toLocaleTimeString()}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    ))}
-                    </div>
-                </main>
-
-                {/* Input */}
-                <footer
-                    className="p-4 border-t-2 shadow"
-                    style={{
-                        backgroundColor: colors.headerBg,
-                        borderColor: colors.headerBorder,
-                        boxShadow: `0 0 15px ${colors.headerShadow}`,
-                    }}
-                >
-                    <div>
-                        <MessageInput vipEmoji={vipEmoji} colors={colors} currentUser={currentUser} groupId={groupData?.groupId} />
-
-                    </div>
-                    <div className="mt-2 text-1xl flex gap-2 flex-wrap px-2">Versão 1.0.0.0</div>
-                </footer>
             </div>
+        ))}
+    </main>
+
+    {/* Rodapé fixo no fim da tela */}
+    <footer
+        className="p-4 border-t-2 shadow shrink-0"
+        style={{
+            backgroundColor: colors.headerBg,
+            borderColor: colors.headerBorder,
+            boxShadow: `0 0 15px ${colors.headerShadow}`,
+        }}
+    >
+        <MessageInput
+            vipEmoji={vipEmoji}
+            colors={colors}
+            currentUser={currentUser}
+            groupId={groupData?.groupId}
+        />
+        <div className="mt-2 text-1xl flex gap-2 flex-wrap px-2">Versão 1.0.0.0</div>
+    </footer>
+</div>
+
         </div>
     );
 }
