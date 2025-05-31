@@ -252,30 +252,58 @@ function NeonChatLayout({ colors, groupData, currentUser, vipEmoji }: NeonChatLa
                     <h2 style={{ color: colors.sidebarBorder }} className="text-2xl font-bold">
                         🌐 Conectados
                     </h2>
-                    <button
-                        // onClick={() => {
-                        //     if (groupData?.groupId) {
-                        //         deleteAllVisitantes();
-                        //     } else {
-                        //         console.log('groupId não disponível');
-                        //     }
-                        // }}
 
-                        className="text-sm px-2 py-1 rounded-md transition shadow"
-                        style={{
-                            color: vipEmoji == 4 ? "black" : colors.sidebarBorder,
-                            border: `1px solid ${colors.sidebarBorder}`,
-                            backgroundColor: 'transparent',
-                            boxShadow: `0 0 6px ${colors.sidebarShadow}`,
-                        }}
-                        onMouseEnter={e => (e.currentTarget.style.backgroundColor = colors.sidebarBorder)}
-                        onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
-                    >
-                        Ticket
-                    </button>
                 </div>
 
                 <div className="space-y-3">
+                    {
+                        currentUser?.type === "Dono_Sala" ?
+                            <>
+                                <button
+                                    onClick={() => {
+                                        if (groupData?.groupId) {
+                                            deleteAllVisitantes();
+                                        } else {
+                                            console.log('groupId não disponível');
+                                        }
+                                    }}
+
+                                    className="text-sm px-2 py-1 rounded-md transition shadow"
+                                    style={{
+                                        color: vipEmoji == 4 ? "black" : colors.sidebarBorder,
+                                        border: `1px solid ${colors.sidebarBorder}`,
+                                        backgroundColor: 'transparent',
+                                        boxShadow: `0 0 6px ${colors.sidebarShadow}`,
+                                    }}
+                                    onMouseEnter={e => (e.currentTarget.style.backgroundColor = colors.sidebarBorder)}
+                                    onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
+                                >
+                                    Delete Visitantes Users
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        if (groupData?.groupId) {
+                                            deleteVisitantesFromGroup(groupData?.groupId);
+                                        } else {
+                                            console.log('groupId não disponível');
+                                        }
+                                    }}
+
+                                    className="text-sm px-2 py-1 rounded-md transition shadow"
+                                    style={{
+                                        color: vipEmoji == 4 ? "black" : colors.sidebarBorder,
+                                        border: `1px solid ${colors.sidebarBorder}`,
+                                        backgroundColor: 'transparent',
+                                        boxShadow: `0 0 6px ${colors.sidebarShadow}`,
+                                    }}
+                                    onMouseEnter={e => (e.currentTarget.style.backgroundColor = colors.sidebarBorder)}
+                                    onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
+                                >
+                                    Delete Visitantes Grupos
+                                </button>
+
+                            </> : null
+                    }
                     <div
                         className="p-2 rounded-lg font-semibold border-l-4 shadow"
                         style={{
