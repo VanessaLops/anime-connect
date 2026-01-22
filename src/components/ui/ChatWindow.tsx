@@ -9,7 +9,13 @@ import { useEffect, useRef, useState } from 'react';
 import AdminPanel from './AdminPanel';
 import MessageInput from './MessageInput';
 import PeaoAvatar from './PeaoMembro';
-import { GroupData } from './SideBar';
+import { GroupData as ImportedGroupData } from './SideBar';
+
+
+interface GroupData extends ImportedGroupData {
+    hasBot?: boolean;
+    botName?: string;
+}
 
 interface ChatWindowProps {
     groupData: GroupData;
@@ -32,10 +38,11 @@ interface NeonChatLayoutProps {
     groupData?: GroupData;
     currentUser?: ChatWindowProps["currentUser"];
     vipEmoji: number;
+    hasBot: boolean;
 }
 
 // === COMPONENTE DE LAYOUT VISUAL ===
-function NeonChatLayout({ colors, groupData, currentUser, vipEmoji }: NeonChatLayoutProps) {
+function NeonChatLayout({ colors, groupData, currentUser, vipEmoji, hasBot }: NeonChatLayoutProps) {
     const [messages, setMessages] = useState<any[]>([]);
     const [onlineMembers, setOnlineMembers] = useState<any[]>([]);
     const [offlineMembers, setOfflineMembers] = useState<any[]>([]);
@@ -347,7 +354,7 @@ function NeonChatLayout({ colors, groupData, currentUser, vipEmoji }: NeonChatLa
                         </div>
 
                         {/* Área de Controle (Admin & Staff) */}
-                        {(currentUser?.type === "Dono_Sala" || currentUser?.type === "Staff" || currentUser?.type === "Admin_mod") && (
+                        {(currentUser?.type === "Dono_Sala" || currentUser?.type === "Staff") && (
                             <div className={`p-3 border-t border-white/10 backdrop-blur-sm ${currentUser.type === "Dono_Sala" ? 'bg-red-900/10' : 'bg-blue-900/10'}`}>
                                 <button
                                     onClick={() => setIsAdminPanelOpen(true)} // <--- Abre o Modal
@@ -371,7 +378,7 @@ function NeonChatLayout({ colors, groupData, currentUser, vipEmoji }: NeonChatLa
                             <AdminPanel
                                 isOpen={isAdminPanelOpen}
                                 onClose={() => setIsAdminPanelOpen(false)}
-                                groupId={groupData.groupId}
+                                groupId={groupData.groupId ?? ''}
                                 currentUser={currentUser}
                             />
                         )}
@@ -412,5 +419,5 @@ function getUserVipLevel(): number {
 export default function ChatWindow({ groupData, currentUser }: ChatWindowProps) {
     const userVip = getUserVipLevel();
     // Você pode restaurar o colorsMap aqui se precisar das cores VIPs diferentes
-    return <NeonChatLayout colors={defaultColors} groupData={groupData} currentUser={currentUser} vipEmoji={userVip} />
+    return <NeonChatLayout hasBot={true} colors={defaultColors} groupData={groupData} currentUser={currentUser} vipEmoji={userVip} />
 }

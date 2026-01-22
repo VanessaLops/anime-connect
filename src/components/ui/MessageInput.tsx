@@ -117,6 +117,18 @@ export default function MessageInput({ groupId, vipEmoji, currentUser, colors }:
                             botName: groupData.botName,
                             triggerMessage: messageText,
                             senderUser: currentUser
+                                ? {
+                                    id: currentUser.id,
+                                    username: currentUser.username,
+                                    type: String(currentUser.type),
+                                    power: currentUser.power
+                                }
+                                : {
+                                    id: '',
+                                    username: '',
+                                    type: '',
+                                    power: 0
+                                }
                         });
                     }
                 }
