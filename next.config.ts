@@ -5,20 +5,15 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
   images: {
-    domains: [
-      'www.free-smileys.com',
-      's0.xat.com',
-      'gs.xat.com',
-      'images.stockcake.com',
-      'upload.wikimedia.org',
-      'cdn-icons-png.flaticon.com',
-      'img.myloview.com.br',
-      'img.myloview.com.br',
-      'api.dicebear.com',
-      'media2.giphy.com',
-      'fastly.picsum.photos',
-      'placehold.co',
-      'c.tenor.com'
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**',
+      },
+      {
+        protocol: 'http',
+        hostname: '**',
+      },
     ],
   },
   webpack(config: { resolve: { fallback: any; }; }) {
