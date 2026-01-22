@@ -1,12 +1,15 @@
-'use client'
+'use client';
 
-import { useState } from 'react';
-import Image from 'next/image';
-import ChatModal from './Modal';
-import { ref, push } from 'firebase/database';
 import { database } from '@/pages/api/lib/firebase';
-import { UserType } from '@/utils/userStorage';
+import { BotSystem } from '@/utils/botSystem'; // <--- O CÉREBRO DO BOT IMPORTADO AQUI
 import { getEmojisByVip } from '@/utils/emojis';
+import { UserType } from '@/utils/userStorage';
+import { get, push, ref } from 'firebase/database'; // Adicionado 'get' para verificar configurações do bot
+import { AnimatePresence, motion } from 'framer-motion';
+import { Loader2, LogIn, LogOut, Send, Smile } from 'lucide-react';
+import Image from 'next/image';
+import { useEffect, useRef, useState } from 'react';
+import ChatModal from './Modal';
 
 interface MessageInputProps {
     groupId?: string;
@@ -14,7 +17,7 @@ interface MessageInputProps {
         id: string;
         username: string;
         type: UserType;
-        power: number; // vamos usar para controle de permissão
+        power: number;
         group: string[];
         relacionamento?: string;
         image: string;
@@ -45,112 +48,201 @@ interface MessageInputProps {
 export default function MessageInput({ groupId, vipEmoji, currentUser, colors }: MessageInputProps) {
     const [message, setMessage] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [localUser, setLocalUser] = useState(currentUser);
+    const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+    const [isSending, setIsSending] = useState(false);
+    const emojiPickerRef = useRef<HTMLDivElement>(null);
 
     const emojis = getEmojisByVip(vipEmoji);
+    const canSendMessage = Boolean(currentUser);
+
+    // Fechar emoji picker ao clicar fora
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target as Node)) {
+                setShowEmojiPicker(false);
+            }
+        }
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
 
     const handleEmojiClick = (emoji: string) => {
         setMessage((prev) => prev + ` ${emoji}`);
     };
 
-    console.log(currentUser, 'currentUser')
-
-const canSendMessage = Boolean(currentUser);
-
-
+    // --- FUNÇÃO DE ENVIO COM A LÓGICA DO BOT ---
     const sendMessage = async () => {
         if (!message.trim()) return;
         if (!canSendMessage) return alert('Você não tem permissão para enviar mensagens.');
 
-        const messageRef = ref(database, `grupos/${groupId}/messages`);
-        const newMessage = {
-            text: message,
-            timestamp: Date.now(),
-            userId: currentUser?.id,
-            username: currentUser?.username,
-            image: currentUser?.image,
-            status: currentUser?.status || 'Online',
-        };
+        setIsSending(true);
 
-        await push(messageRef, newMessage);
-        setMessage('');
+        try {
+            // 1. Prepara a mensagem do Usuário
+            const messageRef = ref(database, `grupos/${groupId}/messages`);
+            const messageText = message; // Guarda o texto antes de limpar o state
+            
+            const newMessage = {
+                text: messageText,
+                timestamp: Date.now(),
+                userId: currentUser?.id,
+                username: currentUser?.username,
+                image: currentUser?.image,
+                status: currentUser?.status || 'Online',
+                type: currentUser?.type, // Importante para o bot saber a permissão (Dono/Membro)
+                vipColor: colors.usernameColor
+            };
+
+            // 2. Envia para o Firebase
+            await push(messageRef, newMessage);
+            
+            // 3. Limpa a UI imediatamente (Melhor UX)
+            setMessage('');
+            setShowEmojiPicker(false);
+
+            // 4. LÓGICA DO BOT (Executa em segundo plano)
+            if (groupId) {
+                // Busca dados do grupo para saber se tem bot ativado
+                const groupRef = ref(database, `grupos/${groupId}`);
+                const snapshot = await get(groupRef);
+                
+                if (snapshot.exists()) {
+                    const groupData = snapshot.val();
+
+                    // Se o grupo tem a flag 'hasBot' e um nome de bot definido
+                    if (groupData.hasBot && groupData.botName) {
+                        // Chama o cérebro do bot sem 'await' para não travar a interface do usuário
+                        BotSystem.processMessage({
+                            groupId: groupId,
+                            botName: groupData.botName,
+                            triggerMessage: messageText,
+                            senderUser: currentUser
+                        });
+                    }
+                }
+            }
+
+        } catch (error) {
+            console.error("Erro ao enviar:", error);
+        } finally {
+            setIsSending(false);
+        }
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+        }
     };
 
     function logout() {
         sessionStorage.removeItem('currentUser');
-        setLocalUser(undefined);
         window.location.href = '/';
     }
 
     return (
-        <div>
-            <div>
-                {emojis.map((emoji) =>
-                    emoji.src ? (
-                        <button
-                            key={emoji.code}
-                            onClick={() => canSendMessage && handleEmojiClick(emoji.code)}
-                            disabled={!canSendMessage}
-                            style={{ cursor: canSendMessage ? 'pointer' : 'not-allowed' }}
-                        >
-                            <Image src={emoji.src} alt={emoji.code} width={32} height={32} className="h-8 w-8" />
-                        </button>
-                    ) : (
-                        <button
-                            key={emoji.code}
-                            onClick={() => canSendMessage && handleEmojiClick(emoji.code)}
-                            disabled={!canSendMessage}
-                            style={{ fontSize: 24, cursor: canSendMessage ? 'pointer' : 'not-allowed' }}
-                        >
-                            {emoji.code}
-                        </button>
-                    )
+        <div className="relative w-full max-w-5xl mx-auto">
+            
+            {/* === EMOJI PICKER POP-UP === */}
+            <AnimatePresence>
+                {showEmojiPicker && (
+                    <motion.div 
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                        ref={emojiPickerRef}
+                        className="absolute bottom-full left-0 mb-4 bg-black/80 backdrop-blur-xl border border-white/10 rounded-2xl p-4 shadow-2xl w-full sm:w-[320px] max-h-[200px] overflow-y-auto custom-scrollbar z-50"
+                        style={{ borderColor: colors.sidebarBorder }}
+                    >
+                        <div className="grid grid-cols-6 gap-2">
+                            {emojis.map((emoji, index) => (
+                                <button
+                                    key={index}
+                                    onClick={() => handleEmojiClick(emoji.code)}
+                                    className="hover:bg-white/10 p-1.5 rounded-lg transition-colors flex items-center justify-center"
+                                >
+                                    {emoji.src ? (
+                                        <Image src={emoji.src} alt={emoji.code} width={24} height={24} className="w-6 h-6 object-contain" />
+                                    ) : (
+                                        <span className="text-xl">{emoji.code}</span>
+                                    )}
+                                </button>
+                            ))}
+                        </div>
+                    </motion.div>
                 )}
-            </div>
-            <div className="w-full">
-                <div className="flex items-center gap-2 w-full">
+            </AnimatePresence>
+
+            {/* === INPUT BAR === */}
+            <div className="flex items-end gap-2">
+                
+                {/* 1. Botão de Emoji */}
+                <button
+                    onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                    className="p-3 rounded-full bg-white/5 border border-white/10 text-gray-400 hover:text-white hover:bg-white/10 transition-all active:scale-95"
+                    disabled={!canSendMessage}
+                >
+                    <Smile size={24} />
+                </button>
+
+                {/* 2. Área de Texto Glassmorphism */}
+                <div 
+                    className="flex-1 relative rounded-2xl border transition-all duration-300"
+                    style={{
+                        backgroundColor: "rgba(255, 255, 255, 0.03)",
+                        borderColor: colors.inputBorder,
+                        boxShadow: `0 0 10px ${colors.sidebarShadow}20`
+                    }}
+                >
                     <textarea
-                        placeholder="Digite sua mensagem..."
+                        placeholder={canSendMessage ? "Digite sua mensagem... (/ajuda para o bot)" : "Faça login para conversar"}
                         value={message}
                         onChange={(e) => setMessage(e.target.value)}
-                        rows={2}
-                        className="w-full resize-none rounded-xl px-4 py-2 shadow border focus:outline-none"
-                        style={{
-                            backgroundColor: colors.inputBg,
-                            color: colors.textColor || 'white',
-                            borderColor: colors.inputBorder,
-                            boxShadow: `0 0 8px ${colors.sidebarShadow}`,
-                            cursor: canSendMessage ? 'auto' : 'not-allowed',
-                        }}
+                        onKeyDown={handleKeyDown}
+                        rows={1}
+                        className="w-full bg-transparent text-white px-4 py-3 pr-12 rounded-2xl focus:outline-none resize-none min-h-[48px] max-h-[120px] custom-scrollbar placeholder:text-gray-500"
+                        style={{ color: colors.textColor || 'white' }}
                         disabled={!canSendMessage}
                     />
-                    <div className="flex flex-col gap-2">
-
-                        {
-
-                            currentUser?.type === "Visitante" ? 
-                            <button className="px-4 py-2 rounded-full text-white shadow hover:transition" onClick={() => setIsModalOpen(true)}>Entrar</button> : <button className="px-4 py-2 rounded-full text-white shadow hover:transition" onClick={logout}>Sair</button>
-                        }
-
-
-                        <button
-                            className="px-4 py-2 rounded-full text-white shadow hover:transition"
-                            style={{
-                                backgroundColor: canSendMessage ? colors.buttonBg : '#555',
-                                boxShadow: canSendMessage ? `0 0 10px ${colors.buttonShadow}` : 'none',
-                                cursor: canSendMessage ? 'pointer' : 'not-allowed',
-                            }}
-                            onClick={sendMessage}
-                            disabled={!canSendMessage}
-                            onMouseEnter={e => canSendMessage && (e.currentTarget.style.backgroundColor = colors.buttonHoverBg)}
-                            onMouseLeave={e => canSendMessage && (e.currentTarget.style.backgroundColor = colors.buttonBg)}
-                        >
-                            Enviar
-                        </button>
-                    </div>
+                    
+                    {/* Botão Enviar (Dentro do Input) */}
+                    <button
+                        onClick={sendMessage}
+                        disabled={!message.trim() || isSending || !canSendMessage}
+                        className="absolute right-2 bottom-2 p-2 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed text-white"
+                        style={{
+                            backgroundColor: message.trim() ? colors.buttonBg : 'transparent',
+                            color: message.trim() ? '#fff' : 'gray',
+                            boxShadow: message.trim() ? `0 0 15px ${colors.buttonShadow}` : 'none'
+                        }}
+                    >
+                        {isSending ? <Loader2 size={18} className="animate-spin"/> : <Send size={18} />}
+                    </button>
                 </div>
+
+                {/* 3. Botão Login/Logout */}
+                {currentUser?.type === "Visitante" ? (
+                    <button 
+                        onClick={() => setIsModalOpen(true)}
+                        className="p-3 rounded-full bg-green-600/20 border border-green-500/50 text-green-400 hover:bg-green-600/40 hover:text-white transition-all shadow-[0_0_10px_rgba(0,255,0,0.2)]"
+                        title="Fazer Login"
+                    >
+                        <LogIn size={24} />
+                    </button>
+                ) : (
+                    <button 
+                        onClick={logout}
+                        className="p-3 rounded-full bg-red-600/10 border border-red-500/30 text-red-400 hover:bg-red-600/30 hover:text-white transition-all"
+                        title="Sair"
+                    >
+                        <LogOut size={24} />
+                    </button>
+                )}
+
             </div>
 
+            {/* Modal de Login (Usando Portal internamente no componente Modal) */}
             {isModalOpen && currentUser && groupId && (
                 <ChatModal
                     currentUser={currentUser}

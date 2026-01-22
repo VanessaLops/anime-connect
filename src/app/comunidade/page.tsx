@@ -1,178 +1,227 @@
 'use client';
 
-
-import { useState, useEffect } from "react";
+import Footer from "@/components/ui/Footer"; // Certifique-se que o Footer V2 está aqui
 import Header from "@/components/ui/Header";
-import Footer from "@/components/ui/Footer";
-import { Swiper, SwiperSlide } from "swiper/react";
-import { Autoplay, Navigation } from "swiper/modules";
-import "swiper/css";
-import "swiper/css/navigation";
-import { ref, get, onValue, off } from "firebase/database";
-
-import { GroupData } from "@/components/ui/SideBar";
+import { off, onValue, ref } from "firebase/database";
+import { motion } from "framer-motion";
+import { Hash, Search, Sparkles, Users } from "lucide-react";
 import Link from "next/link";
-import { database } from "../../pages/api/lib/firebase";
+import { useEffect, useMemo, useState } from "react";
+import "swiper/css";
+import "swiper/css/free-mode";
+import "swiper/css/navigation";
+import { FreeMode } from "swiper/modules";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { database } from "../../pages/api/lib/firebase"; // Ajuste o caminho se necessário
+
+// Tipagem (Mantida a sua ou ajustada se necessário)
+export interface GroupData {
+  groupId: string;
+  name: string;
+  category: string;
+  background: string;
+  members?: Record<string, any> | string[];
+  description?: string;
+}
+
 export default function ComunidadePage() {
-
-  const [selectedCategory, setSelectedCategory] = useState<string>("Ajuda");
-  const [groupChats, setGroupChats] = useState<GroupData[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>("Todos");
   const [grupos, setGrupos] = useState<Record<string, GroupData> | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  const gruposArray = grupos ? Object.values(grupos) : [];
+  // 1. Converter Objeto em Array
+  const gruposArray = useMemo(() => {
+    return grupos ? Object.values(grupos) : [];
+  }, [grupos]);
 
-  const buscarGruposEmTempoReal = () => {
-    setLoading(true);
-    const gruposRef = ref(database, "grupos");
+  // 2. Extrair Categorias Únicas para o Menu
+  const categories = useMemo(() => {
+    const cats = new Set(gruposArray.map(g => g.category || "Geral"));
+    return ["Todos", ...Array.from(cats)];
+  }, [gruposArray]);
 
-    // Adiciona o listener para mudanças em tempo real
-    onValue(
-      gruposRef,
-      (snapshot) => {
-        if (snapshot.exists()) {
-          const gruposData = snapshot.val();
-          const gruposComMembros: Record<string, GroupData> = Object.keys(gruposData).reduce(
-            (acc, key) => {
-              acc[key] = {
-                ...gruposData[key],
-                members: gruposData[key].members || [],
-                groupId: key,
-              };
-              return acc;
-            },
-            {} as Record<string, GroupData>
-          );
-          setGrupos(gruposComMembros);
-        } else {
-          setGrupos(null);
-        }
-        setLoading(false);
-      },
-      (error) => {
-        console.error("Erro ao buscar grupos:", error);
-        setLoading(false);
-      }
-    );
+  // 3. Filtrar Grupos baseados na Categoria Selecionada
+  const filteredGroups = useMemo(() => {
+    if (selectedCategory === "Todos") return gruposArray;
+    return gruposArray.filter((g) => g.category === selectedCategory);
+  }, [selectedCategory, gruposArray]);
 
-    // Retorna a função para desinscrever o listener
-    return () => {
-      off(gruposRef);
-    };
-  };
-
+  // --- Efeito: Buscar Firebase ---
   useEffect(() => {
-    // Ativa o listener e obtém a função para remover o listener
-    const unsubscribe = buscarGruposEmTempoReal();
+    const gruposRef = ref(database, "grupos");
+    setLoading(true);
 
-    // Limpa o listener quando o componente desmontar
-    return () => {
-      unsubscribe();
-    };
+    const unsubscribe = onValue(gruposRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.val();
+        // Tratamento de dados para garantir o formato correto
+        const formattedData: Record<string, GroupData> = Object.keys(data).reduce((acc, key) => {
+          acc[key] = {
+            ...data[key],
+            groupId: key, // Garante que o ID está no objeto
+            members: data[key].members || []
+          };
+          return acc;
+        }, {} as Record<string, GroupData>);
+        
+        setGrupos(formattedData);
+      } else {
+        setGrupos(null);
+      }
+      setLoading(false);
+    }, (error) => {
+      console.error("Erro Firebase:", error);
+      setLoading(false);
+    });
+
+    return () => off(gruposRef);
   }, []);
 
-
-  useEffect(() => {
-    if (grupos) {
-      const filteredGroups = gruposArray.filter((group) => group.category === selectedCategory);
-      setGroupChats(filteredGroups);
-    }
-  }, [selectedCategory, grupos]);
-
-  const handleCategoryChange = (categoria: string) => {
-    setSelectedCategory(categoria);
-  };
-
-
-  console.log(grupos, 'gruposgrupos')
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-[#050505] text-white selection:bg-anime-pink selection:text-white overflow-x-hidden">
       <Header />
-      <div className="h-10" />
-      <main className="flex flex-col items-center justify-center px-6 py-20 text-center bg-gradient-to-b from-[#1a1a1a] to-black">
-        <h1 className="text-4xl md:text-5xl font-bold mb-6 text-pink-500">
-          Junte-se à nossa Comunidade
-        </h1>
+      
+      {/* Background Ambience (Igual a Home V2) */}
+      <div className="fixed top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
+          <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-anime-purple/20 rounded-full blur-[120px]" />
+          <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-anime-pink/15 rounded-full blur-[120px]" />
+      </div>
 
-        <p className="text-lg text-gray-300 max-w-2xl mb-16">
-          Conecte-se com outros otakus e geeks, compartilhe suas paixões por animes, games, filmes e cultura pop. Aqui, você encontra pessoas como você — apaixonadas, criativas e sempre prontas para boas conversas e descobertas épicas!
-        </p>
+      <main className="pt-32 pb-20 px-6 max-w-7xl mx-auto">
+        
+        {/* --- Hero Section da Comunidade --- */}
+        <div className="text-center mb-16 relative">
+            <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8 }}
+            >
+                <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-anime-cyan/30 bg-anime-cyan/10 text-anime-cyan text-xs font-bold uppercase tracking-wider mb-4">
+                    <Users size={12} /> Guildas & Clãs
+                </span>
+                <h1 className="text-4xl md:text-6xl font-display font-extrabold mb-6">
+                    Explore Comunidades <br/>
+                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-anime-pink via-purple-500 to-anime-cyan">
+                        Épicas
+                    </span>
+                </h1>
+                <p className="text-gray-400 text-lg max-w-2xl mx-auto leading-relaxed">
+                    Encontre seu esquadrão. Discuta teorias, compartilhe fanarts e suba de nível juntos em grupos dedicados aos seus animes e jogos favoritos.
+                </p>
+            </motion.div>
+        </div>
 
+        {/* --- Filtro de Categorias (Estilo Tags) --- */}
+        <div className="mb-12">
+            <Swiper
+                modules={[FreeMode]}
+                slidesPerView="auto"
+                spaceBetween={12}
+                freeMode={true}
+                className="w-full max-w-4xl !px-1" // !px-1 evita corte de shadow
+            >
+                {categories.map((cat, index) => (
+                    <SwiperSlide key={index} className="!w-auto">
+                        <button
+                            onClick={() => setSelectedCategory(cat)}
+                            className={`
+                                flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-bold transition-all duration-300 border
+                                ${selectedCategory === cat 
+                                    ? "bg-gradient-to-r from-anime-pink to-anime-purple border-transparent text-white shadow-[0_0_15px_rgba(255,0,128,0.4)] scale-105" 
+                                    : "bg-[#121212] border-white/10 text-gray-400 hover:border-anime-pink/50 hover:text-white"
+                                }
+                            `}
+                        >
+                            {cat === "Todos" ? <Sparkles size={14}/> : <Hash size={14}/>}
+                            {cat}
+                        </button>
+                    </SwiperSlide>
+                ))}
+            </Swiper>
+        </div>
 
-        <Swiper
-          modules={[Navigation]}
-          navigation
-          slidesPerView={2}
-          spaceBetween={16}
-          className="mb-8 w-full max-w-3xl"
-        >
-          {gruposArray.map((group, index) => (
-            <SwiperSlide key={index}>
-              <div className="px-2">
-                <button
-                  onClick={() => handleCategoryChange(group.category)}
-                  className={`w-full text-white py-3 px-6 rounded-md transition-colors duration-300 ${selectedCategory === group.category
-                    ? "bg-pink-600"
-                    : "bg-gray-600 hover:bg-pink-500"
-                    }`}
-                >
-                  {group.category}
-                </button>
-              </div>
-            </SwiperSlide>
-          ))}
-        </Swiper>
+        {/* --- Grid de Grupos --- */}
+        <div className="min-h-[400px]">
+            <div className="flex items-center gap-3 mb-6">
+                <h2 className="text-2xl font-display font-bold text-white">
+                    {selectedCategory === "Todos" ? "Grupos em Destaque" : `Explorando: ${selectedCategory}`}
+                </h2>
+                <div className="h-[1px] flex-1 bg-gradient-to-r from-white/10 to-transparent" />
+            </div>
 
+            {loading ? (
+                // Skeleton Loading
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {[1,2,3,4].map(i => (
+                        <div key={i} className="h-[280px] bg-white/5 rounded-2xl animate-pulse" />
+                    ))}
+                </div>
+            ) : filteredGroups.length === 0 ? (
+                // Estado Vazio
+                <div className="flex flex-col items-center justify-center py-20 text-gray-500 border border-dashed border-white/10 rounded-3xl bg-white/[0.02]">
+                    <Search size={48} className="mb-4 opacity-50"/>
+                    <p>Nenhum grupo encontrado nesta categoria.</p>
+                </div>
+            ) : (
+                // Lista de Grupos
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {filteredGroups.map((group) => (
+                        <Link href={`/chat/${group.groupId}`} key={group.groupId}>
+                            <motion.div 
+                                whileHover={{ y: -8 }}
+                                className="group relative h-[320px] bg-[#121212] rounded-2xl overflow-hidden border border-white/10 hover:border-anime-pink/50 transition-colors shadow-lg"
+                            >
+                                {/* Imagem/Vídeo de Fundo */}
+                                <div className="absolute inset-0 z-0">
+                                    {group.background?.endsWith(".mp4") ? (
+                                        <video
+                                            src={group.background}
+                                            autoPlay loop muted
+                                            className="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity duration-500 group-hover:scale-105 transform"
+                                        />
+                                    ) : (
+                                        <img
+                                            src={group.background || "/placeholder.jpg"}
+                                            alt={group.name}
+                                            className="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity duration-500 group-hover:scale-105 transform"
+                                        />
+                                    )}
+                                    {/* Overlay Gradiente para leitura do texto */}
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+                                </div>
 
-        <div className="w-full max-w-6xl mb-20">
-          <h2 className="text-2xl md:text-3xl font-semibold text-white mb-6 text-left">
-            {selectedCategory}
-          </h2>
-          <Swiper
-            modules={[Autoplay, Navigation]}
-            slidesPerView={1}
-            breakpoints={{
-              640: { slidesPerView: 2 },
-              768: { slidesPerView: 3 },
-              1024: { slidesPerView: 3 },
-              1280: { slidesPerView: 4 },
-            }}
-            autoplay={{ delay: 4000, disableOnInteraction: false }}
-            navigation
-            loop
-            className="w-full"
-          >
-            {groupChats.map((chat, i) => (
-              <SwiperSlide key={i}>
-                <Link href={`/chat/${chat?.groupId}`}>
-                  <div
-                    className="cursor-pointer bg-[#1f1f1f] rounded-2xl p-4 m-2 shadow-lg hover:scale-105 transition-transform duration-300">
-                    {chat?.background?.endsWith(".mp4") ? (
-                      <video
-                        src={chat?.background}
-                        autoPlay
-                        loop
-                        muted
-                        className="w-full h-full object-cover rounded-xl"
-                      />
-                    ) : (
-                      <img
-                        src={chat?.background}
-                        alt="background"
-                        className="w-full h-full object-cover rounded-xl"
-                      />
-                    )}
+                                {/* Conteúdo do Card */}
+                                <div className="absolute bottom-0 left-0 w-full p-5 z-10">
+                                    {/* Tag da Categoria */}
+                                    <span className="inline-block px-2 py-0.5 mb-2 rounded bg-white/10 backdrop-blur-md border border-white/10 text-[10px] uppercase font-bold text-anime-cyan">
+                                        {group.category}
+                                    </span>
 
-                    <h3 className="text-xl font-semibold mb-2">{chat.name}</h3>
-                    <p className="text-pink-500">{chat.members ? Object.keys(chat.members).length : 0} pessoas visitaram</p>
-                  </div>
-                </Link>
-
-              </SwiperSlide>
-            ))}
-          </Swiper>
+                                    <h3 className="text-xl font-bold text-white mb-1 leading-tight group-hover:text-anime-pink transition-colors">
+                                        {group.name}
+                                    </h3>
+                                    
+                                    <div className="flex items-center justify-between mt-3 text-sm text-gray-300">
+                                        <div className="flex items-center gap-1.5">
+                                            <Users size={14} className="text-anime-purple" />
+                                            <span>
+                                                {group.members ? (Array.isArray(group.members) ? group.members.length : Object.keys(group.members).length) : 0}
+                                            </span>
+                                        </div>
+                                        <span className="text-xs text-gray-500 font-mono group-hover:text-white transition-colors">
+                                            Entrar →
+                                        </span>
+                                    </div>
+                                </div>
+                                <div className="absolute inset-0 border-2 border-transparent group-hover:border-anime-pink/30 rounded-2xl pointer-events-none transition-colors" />
+                            </motion.div>
+                        </Link>
+                    ))}
+                </div>
+            )}
         </div>
       </main>
+      
       <Footer />
     </div>
   );

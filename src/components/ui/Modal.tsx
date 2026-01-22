@@ -1,14 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { get, onDisconnect, ref, set, update } from 'firebase/database';
-import Image from 'next/image';
 import { User, UserType } from '@/utils/userStorage';
-import { GroupData } from './SideBar';
-import { database } from '../../pages/api/lib/firebase';
-import { Button } from './Button';
 import bcrypt from 'bcryptjs';
-
+import { get, ref, update } from 'firebase/database';
+import { motion } from 'framer-motion';
+import { Camera, Loader2, Lock, LogIn, User as UserIcon, UserPlus, X } from 'lucide-react';
+import Image from 'next/image';
+import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { database } from '../../pages/api/lib/firebase';
 
 interface ChatModalProps {
     setIsOpen: (open: boolean) => void;
@@ -27,284 +27,303 @@ interface ChatModalProps {
 }
 
 export default function ChatModal({ groupId, currentUser, setIsOpen }: ChatModalProps) {
+    // States de Dados
     const [userNameAcess, setUserNameAcess] = useState('');
     const [password, setPassword] = useState('');
-    const [username, setUsername] = useState('');
-
+    const [username, setUsername] = useState(''); // Nickname público
     const [image, setImage] = useState('');
+    
+    // States de Controle
     const [isLoginMode, setIsLoginMode] = useState(true);
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+    const [mounted, setMounted] = useState(false);
 
+    useEffect(() => {
+        setMounted(true);
+        return () => setMounted(false);
+    }, []);
+
+    // --- FUNÇÕES AUXILIARES ---
+    
+    async function hashPassword(pass: string) {
+        const salt = await bcrypt.genSalt(10);
+        return await bcrypt.hash(pass, salt);
+    }
+
+    // --- LÓGICA DE LOGIN (HandleAccess) ---
     const handleAccess = async () => {
         setLoading(true);
-
+        setError('');
 
         if (!userNameAcess.trim() || !password.trim()) {
-            alert('Preencha o nome de usuário e a senha!');
+            setError('Preencha usuário e senha!');
+            setLoading(false);
             return;
         }
 
         try {
-
+            // 1. Busca todos os usuários
             const snapshotUsers = await get(ref(database, "users"));
+            if (!snapshotUsers.exists()) {
+                setError('Banco de dados de usuários vazio.');
+                setLoading(false);
+                return;
+            }
 
             const usersData = snapshotUsers.val();
-
             const usersArray: User[] = Object.values(usersData as Record<string, User>);
 
+            // 2. Encontra usuário pelo Login (userNameAcess)
+            const usuarioEncontrado = usersArray.find(user => 
+                user.userNameAcess === userNameAcess
+            );
 
-            //Verifica se existe algum usuário com o username informado
-            const usuarioPorNome = usersArray.find(function getName(dados: User) {
-                return dados.userNameAcess === userNameAcess
-            });
-
-
-
-            if (!usuarioPorNome) {
-                alert('Nome de usuário não encontrado!');
+            if (!usuarioEncontrado) {
+                setError('Usuário não encontrado.');
+                setLoading(false);
                 return;
             }
 
-            if (userNameAcess !== usuarioPorNome.userNameAcess) {
-                alert('Nome de usuário Invalido!');
-                return;
-            }
-            const isMatch = await bcrypt.compare(password, usuarioPorNome.password);
-
+            // 3. Valida Senha (Bcrypt)
+            const isMatch = await bcrypt.compare(password, usuarioEncontrado.password);
 
             if (!isMatch) {
-                alert('Senha incorreta!');
-                return false;
+                setError('Senha incorreta!');
+                setLoading(false);
+                return;
             }
 
-            // Se passou das validações acima, é porque está tudo certo
-            sessionStorage.setItem('currentUser', JSON.stringify(usuarioPorNome));
-
-            const expires = new Date();
-            expires.setDate(expires.getDate() + 7);
-
-            ///document.cookie = `user=${JSON.stringify(usuarioPorNome)}; path=/; expires=${expires.toUTCString()};`;
-
+            // 4. Sucesso: Salva na Sessão e Recarrega
+            // Mantém o tipo (Dono, Staff, Membro) que veio do banco
+            sessionStorage.setItem('currentUser', JSON.stringify(usuarioEncontrado));
+            
+            // Feedback visual antes do reload
             setTimeout(() => {
                 setIsOpen(false);
                 window.location.reload();
-            }, 1000);
+            }, 500);
 
         } catch (error) {
             console.error("Erro ao realizar login:", error);
-            alert("Erro ao realizar login. Tente novamente.");
-        } finally {
+            setError("Erro interno ao conectar.");
             setLoading(false);
         }
     };
 
-
-    async function hashPassword(password: string) {
-        try {
-
-            const salt = await bcrypt.genSalt(10);
-            const hashedPassword = await bcrypt.hash(password, salt);
-            return hashedPassword;
-        } catch (error) {
-            console.error('Erro ao hash da senha:', error);
-        }
-    }
-
-
+    // --- LÓGICA DE CADASTRO (HandleRegister) ---
     const handleRegister = async () => {
+        setLoading(true);
+        setError('');
 
+        // Validação Básica
         if (!userNameAcess.trim() || !password.trim()) {
-            alert('Preencha o nome de usuário e a senha!');
+            setError('Preencha usuário e senha!');
+            setLoading(false);
             return;
         }
 
-        const snapshotUsers = await get(ref(database, "users"));
+        try {
+            // 1. Verifica Duplicidade (Lógica que faltava)
+            const snapshotUsers = await get(ref(database, "users"));
+            if (snapshotUsers.exists()) {
+                const usersData = snapshotUsers.val();
+                const usersArray: User[] = Object.values(usersData as Record<string, User>);
+                
+                const usuarioExistente = usersArray.find(user => 
+                    user.userNameAcess?.toLowerCase() === userNameAcess.toLowerCase()
+                );
 
-        const usersData = snapshotUsers.val();
+                if (usuarioExistente) {
+                    setError('Este nome de usuário já está em uso. Escolha outro.');
+                    setLoading(false);
+                    return;
+                }
+            }
 
+            // 2. Criptografa Senha
+            const hashedPassword = await hashPassword(password);
 
-        const usersArray: User[] = Object.values(usersData as Record<string, User>);
-        console.log(usersArray, 'usersArray')
+            // 3. Cria Objeto do Novo Membro
+            // Importante: Usa o ID do Visitante atual para "promovê-lo"
+            const newUser: User = {
+                id: currentUser?.id, 
+                username: username || currentUser.username || "Membro Novo",
+                type: 'Membro', // Todo cadastro novo vira Membro (Dono é setado manualmente no banco depois se precisar)
+                power: 0,
+                group: [],
+                image: image || currentUser.image || "",
+                userNameAcess: userNameAcess,
+                password: hashedPassword,
+                status: 'Online'
+            };
 
-        const usuarioPorNome = usersArray.find(user =>
-            user.userNameAcess?.toLowerCase() === userNameAcess.toLowerCase()
-        );
+            // 4. Atualiza no Firebase (Users Global e Members do Grupo)
+            const userRef = ref(database, `users/${newUser.id}`);
+            const groupMemberRef = ref(database, `grupos/${groupId}/members/${newUser.id}`);
 
-        // if (userNameAcess == usuarioPorNome?.userNameAcess) {
-        //     alert('Escolha um nome de usuário mais forte! Use letras, números e talvez alguns símbolos.');
-        //     return;
-        // }
+            await update(userRef, newUser);
+            await update(groupMemberRef, newUser);
 
+            // 5. Salva na Sessão Local
+            sessionStorage.setItem('currentUser', JSON.stringify(newUser));
 
-        const hashedPassword = await hashPassword(password);
+            // 6. Reload para efetivar
+            setTimeout(() => {
+                setIsOpen(false);
+                window.location.reload();
+            }, 500);
 
-
-        const user = {
-            id: currentUser?.id,
-            username: username,
-            type: 'Membro',
-            power: 0,
-            group: [],
-            image: image,
-            userNameAcess: userNameAcess,
-            password: hashedPassword,
-            status: 'Online'
-        };
-
-
-
-        const expires = new Date();
-        const groupRef = ref(database, `grupos/${groupId}/members/${currentUser.id}`);
-        const userRef = ref(database, `users/${currentUser.id}`);
-        update(userRef, user);
-        update(groupRef, user);
-        //Assim que criar eu devo atualizar esse usuario
-        sessionStorage.setItem('currentUser', JSON.stringify(user));
-        ///document.cookie = `user=${JSON.stringify(userNameAcess)}; path=/; expires=${expires.toUTCString()};`;
-
-        setTimeout(() => {
-            setIsOpen(false);
-            window.location.reload();
-        }, 1000);
-
+        } catch (error) {
+            console.error('Erro ao registrar:', error);
+            setError('Falha ao criar conta.');
+            setLoading(false);
+        }
     };
 
+    if (!mounted) return null;
 
+    // --- RENDERIZAÇÃO (VISUAL V2 - PORTAL) ---
+    const modalContent = (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+            
+            {/* Backdrop */}
+            <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setIsOpen(false)}
+                className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+            />
 
+            {/* Modal Card */}
+            <motion.div 
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                className="relative w-full max-w-md bg-[#0a0a0a] border border-anime-purple/30 rounded-2xl shadow-[0_0_50px_rgba(121,40,202,0.3)] overflow-hidden z-10"
+            >
+                {/* Glow Topo */}
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-anime-pink via-anime-purple to-anime-cyan" />
 
-    return (
-        <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm bg-black/40">
-            <div className="bg-white rounded-lg shadow-lg p-8 w-96 relative text-black">
-                <button
-                    onClick={() => setIsOpen(false)}
-                    className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-2xl"
-                >
-                    ×
+                <button onClick={() => setIsOpen(false)} className="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors z-20">
+                    <X size={24} />
                 </button>
 
-                <h2 className="text-xl font-semibold text-center mb-4">
-                    {isLoginMode ? 'Login' : 'Cadastro'}
-                </h2>
-
-                <div className="space-y-4">
-                    {currentUser.type === 'Visitante' && !isLoginMode && (
-                        <div className="flex items-center space-x-4">
-                            <div className="relative">
-                                {image || currentUser.image ? (
-                                    <Image
-                                        src={image || currentUser.image}
-                                        alt="Avatar"
-                                        width={64}
-                                        height={64}
-                                        className="rounded-full"
-                                        unoptimized
-                                    />
-                                ) : (
-                                    <div className="w-16 h-16 bg-gray-200 rounded-full" />
-                                )}
-                                <input
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={(e) => {
-                                        const file = e.target.files?.[0];
-                                        if (file) {
-                                            const reader = new FileReader();
-                                            reader.onloadend = () => {
-                                                if (reader.result) {
-                                                    setImage(reader.result as string);
-                                                }
-                                            };
-                                            reader.readAsDataURL(file);
-                                        }
-                                    }}
-                                    className="absolute top-0 left-0 w-full h-full opacity-0 cursor-pointer"
-                                    title="Clique para trocar a imagem"
-                                />
-                            </div>
-                            <div>
-                                <h3 className="font-semibold">{username || currentUser.username}</h3>
-                                <p className="text-sm text-gray-500">ID: {currentUser.id.split('-')[0]}</p>
-                            </div>
+                <div className="p-8 relative z-10">
+                    <div className="text-center mb-8">
+                        <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-anime-pink to-anime-purple flex items-center justify-center text-white shadow-lg">
+                            {isLoginMode ? <LogIn size={32} /> : <UserPlus size={32} />}
                         </div>
-                    )}
+                        <h2 className="text-2xl font-bold text-white font-display tracking-wide">
+                            {isLoginMode ? 'Acessar Sistema' : 'Criar Identidade'}
+                        </h2>
+                    </div>
 
-                    {!isLoginMode && (
-                        <>
-                            <div>
-                                <label htmlFor="username" className="block text-sm font-medium text-gray-700">Nome Nick</label>
+                    <div className="space-y-4">
+                        {/* Avatar Upload (Só no cadastro) */}
+                        {!isLoginMode && (
+                            <div className="flex justify-center mb-6">
+                                <div className="relative group cursor-pointer">
+                                    <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-anime-purple p-1">
+                                        {image || currentUser.image ? (
+                                            <Image 
+                                                src={image || currentUser.image} 
+                                                alt="Avatar" 
+                                                width={96} height={96} 
+                                                className="rounded-full w-full h-full object-cover" 
+                                                unoptimized
+                                            />
+                                        ) : (
+                                            <div className="w-full h-full bg-white/5 flex items-center justify-center rounded-full text-gray-500">
+                                                <UserIcon size={32} />
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <Camera className="text-white" size={24} />
+                                    </div>
+                                    <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer"
+                                        onChange={(e) => {
+                                            const file = e.target.files?.[0];
+                                            if (file) {
+                                                const reader = new FileReader();
+                                                reader.onloadend = () => setImage(reader.result as string);
+                                                reader.readAsDataURL(file);
+                                            }
+                                        }}
+                                    />
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Inputs */}
+                        {!isLoginMode && (
+                            <div className="relative group">
+                                <UserIcon className="absolute left-3 top-3.5 text-gray-500 group-focus-within:text-anime-pink transition-colors" size={18} />
                                 <input
                                     type="text"
-                                    id="username"
+                                    placeholder="Seu Nickname Público (Ex: Goku)"
                                     value={username}
                                     onChange={(e) => setUsername(e.target.value)}
-                                    className="mt-1 p-2 w-full border rounded-md"
-                                    placeholder={currentUser?.username}
+                                    className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-white focus:outline-none focus:border-anime-pink focus:bg-white/10 transition-all placeholder:text-gray-600"
                                 />
                             </div>
-                        </>
-                    )}
-
-                    <div>
-                        <label htmlFor="userNameAcess" className="block text-sm font-medium text-gray-700">Nome de Usuário</label>
-                        <input
-                            type="text"
-                            id="userNameAcess"
-                            value={userNameAcess}
-                            onChange={(e) => setUserNameAcess(e.target.value)}
-                            className="mt-1 p-2 w-full border rounded-md"
-                            placeholder="aninha"
-                        />
-                    </div>
-
-                    <div>
-                        <label htmlFor="password" className="block text-sm font-medium text-gray-700">Senha</label>
-                        <input
-                            type="password"
-                            id="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            className="mt-1 p-2 w-full border rounded-md"
-                            placeholder="1234"
-                        />
-                    </div>
-
-                    {loading ? (
-                        <div className="text-center text-gray-500 mt-4">Carregando...</div>
-                    ) : (
-                        <Button
-                            onClick={isLoginMode ? handleAccess : handleRegister}
-                            className={`w-full py-2 ${isLoginMode ? 'bg-green-600' : 'bg-blue-600'} text-white rounded-md hover:opacity-90`}
-                        >
-                            {isLoginMode ? 'Acessar' : 'Cadastrar'}
-                        </Button>
-                    )}
-
-                    <div className="text-center mt-4 text-sm text-gray-600">
-                        {isLoginMode ? (
-                            <>
-                                Não tem uma conta?{' '}
-                                <span
-                                    onClick={() => setIsLoginMode(false)}
-                                    className="text-blue-600 hover:underline cursor-pointer"
-                                >
-                                    Cadastre-se
-                                </span>
-                            </>
-                        ) : (
-                            <>
-                                Já tem uma conta?{' '}
-                                <span
-                                    onClick={() => setIsLoginMode(true)}
-                                    className="text-green-600 hover:underline cursor-pointer"
-                                >
-                                    Faça login
-                                </span>
-                            </>
                         )}
+
+                        <div className="relative group">
+                            <UserIcon className="absolute left-3 top-3.5 text-gray-500 group-focus-within:text-anime-cyan transition-colors" size={18} />
+                            <input
+                                type="text"
+                                placeholder="Usuário de Login (Sem espaços)"
+                                value={userNameAcess}
+                                onChange={(e) => setUserNameAcess(e.target.value)}
+                                className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-white focus:outline-none focus:border-anime-cyan focus:bg-white/10 transition-all placeholder:text-gray-600"
+                            />
+                        </div>
+
+                        <div className="relative group">
+                            <Lock className="absolute left-3 top-3.5 text-gray-500 group-focus-within:text-anime-purple transition-colors" size={18} />
+                            <input
+                                type="password"
+                                placeholder="Sua Senha"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-white focus:outline-none focus:border-anime-purple focus:bg-white/10 transition-all placeholder:text-gray-600"
+                            />
+                        </div>
+
+                        {error && (
+                            <p className="text-red-400 text-xs text-center bg-red-500/10 py-2 rounded-lg border border-red-500/20">
+                                {error}
+                            </p>
+                        )}
+
+                        <button
+                            onClick={isLoginMode ? handleAccess : handleRegister}
+                            disabled={loading}
+                            className={`w-full py-3.5 rounded-xl font-bold text-white shadow-lg transition-all active:scale-95 ${loading ? 'bg-gray-700 cursor-not-allowed' : 'bg-gradient-to-r from-anime-pink to-anime-purple hover:shadow-[0_0_20px_rgba(255,0,128,0.4)]'}`}
+                        >
+                            {loading ? <Loader2 className="animate-spin mx-auto" size={20} /> : (isLoginMode ? 'Acessar' : 'Cadastrar')}
+                        </button>
+
+                        <div className="text-center mt-6">
+                            <button
+                                onClick={() => { setIsLoginMode(!isLoginMode); setError(''); }}
+                                className="text-sm text-gray-400 hover:text-white transition-colors"
+                            >
+                                {isLoginMode ? (
+                                    <>Não tem conta? <span className="text-anime-cyan font-bold hover:underline">Registre-se</span></>
+                                ) : (
+                                    <>Já é membro? <span className="text-anime-pink font-bold hover:underline">Faça Login</span></>
+                                )}
+                            </button>
+                        </div>
                     </div>
                 </div>
-
-            </div>
+            </motion.div>
         </div>
     );
+
+    return createPortal(modalContent, document.body);
 }

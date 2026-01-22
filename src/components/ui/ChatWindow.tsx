@@ -1,13 +1,14 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { GroupData } from './SideBar';
 import { database } from '@/pages/api/lib/firebase';
-import { get, getDatabase, onDisconnect, onValue, ref, remove, set } from 'firebase/database';
-import { User, UserType } from '@/utils/userStorage';
-import PeaoAvatar from './PeaoMembro';
+import { UserType } from '@/utils/userStorage';
+import { onDisconnect, onValue, ref, set } from 'firebase/database';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Crown, Hash, LogOut, Shield, Users } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import MessageInput from './MessageInput';
-
+import PeaoAvatar from './PeaoMembro';
+import { GroupData } from './SideBar';
 
 interface ChatWindowProps {
     groupData: GroupData;
@@ -23,44 +24,26 @@ interface ChatWindowProps {
         password: string;
         status?: string;
     };
-
 }
 
 interface NeonChatLayoutProps {
-    colors: {
-        background: string;
-        sidebarBg: string;
-        sidebarBorder: string;
-        sidebarShadow: string;
-        headerBg: string;
-        headerBorder: string;
-        headerShadow: string;
-        mainBg: string;
-        inputBg: string;
-        inputBorder: string;
-        buttonBg: string;
-        buttonHoverBg: string;
-        buttonShadow: string;
-        usernameColor: string;
-        textColor?: string;
-    };
+    colors: any; // Simplificado para focar na lógica visual
     groupData?: GroupData;
     currentUser?: ChatWindowProps["currentUser"];
     vipEmoji: number;
 }
 
+// === COMPONENTE DE LAYOUT VISUAL ===
 function NeonChatLayout({ colors, groupData, currentUser, vipEmoji }: NeonChatLayoutProps) {
-
-    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-
-    const [grupos, setGrupos] = useState<GroupData | null>(null);
+    const [messages, setMessages] = useState<any[]>([]);
     const [onlineMembers, setOnlineMembers] = useState<any[]>([]);
     const [offlineMembers, setOfflineMembers] = useState<any[]>([]);
-    const [selectedUser, setSelectedUser] = useState<any | null>(null);
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [messages, setMessages] = useState<any[]>([]);
-    console.log(groupData, 'gruposgrupos')
+    const [showMembers, setShowMembers] = useState(true); // Toggle da Sidebar Direita
+    const scrollRef = useRef<HTMLDivElement>(null);
+
+    // --- 1. BUSCAR MENSAGENS ---
     useEffect(() => {
+        if (!groupData?.groupId) return;
         const messagesRef = ref(database, `grupos/${groupData?.groupId}/messages`);
         const unsubscribe = onValue(messagesRef, (snapshot) => {
             const data = snapshot.val();
@@ -71,375 +54,291 @@ function NeonChatLayout({ colors, groupData, currentUser, vipEmoji }: NeonChatLa
                 setMessages(parsed);
             }
         });
-
         return () => unsubscribe();
     }, [groupData?.groupId]);
 
-
-
+    // --- 2. AUTO SCROLL ---
     useEffect(() => {
-        if (groupData?.groupId) {
-            const grupoRef = ref(database, 'grupos');
-
-            const unsubscribe = onValue(grupoRef, snapshot => {
-                if (snapshot.exists()) {
-                    const grupos: Record<string, GroupData> = snapshot.val();
-                    const grupoEncontrado = Object.entries(grupos).find(([id]) => id.startsWith(groupData.groupId!));
-
-                    if (grupoEncontrado) {
-                        const [, grupoData] = grupoEncontrado;
-                        setGrupos(grupoData);
-                    }
-                }
-            });
-
-            return () => unsubscribe();
+        if (scrollRef.current) {
+            scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
         }
-    }, [groupData?.groupId]);
+    }, [messages]);
 
-
-    //Deixa online e offline apenas o usuário cadastrados
+    // --- 3. GERENCIAR STATUS & LISTA DE MEMBROS ---
     useEffect(() => {
-        if (!grupos || !currentUser) return;
+        if (!groupData?.groupId || !currentUser) return;
 
-        const userExists = !!grupos.members?.[currentUser.id];
-        if (userExists) {
-            const userStatusRef = ref(
-                database,
-                `grupos/${grupos.groupId}/members/${currentUser.id}/status`
-            );
-            set(userStatusRef, 'Online');
-            onDisconnect(userStatusRef).set('Offline');
-        }
-    }, [grupos, currentUser]);
+        // Setar status do usuário atual como Online
+        const userStatusRef = ref(database, `grupos/${groupData.groupId}/members/${currentUser.id}/status`);
+        set(userStatusRef, 'Online');
+        onDisconnect(userStatusRef).set('Offline');
 
-
-
-    // Monitorando alterações de status e movendo para a lista de Offline
-    useEffect(() => {
-        const gruposRef = ref(database, `grupos/${groupData?.groupId}/members`);
-
-        console.log(gruposRef, 'gruposRef')
-        const unsubscribe = onValue(gruposRef, (snapshot) => {
+        // Ouvir lista de membros
+        const membersRef = ref(database, `grupos/${groupData.groupId}/members`);
+        const unsubscribe = onValue(membersRef, (snapshot) => {
             if (snapshot.exists()) {
                 const members = snapshot.val();
-                const updatedOnlineUsers = Object.values(members).filter(
-                    (user: any) => typeof user === 'object' && user.status === 'Online'
-                );
-                const updatedOfflineUsers = Object.values(members).filter(
-                    (user: any) => user.status !== 'Online' && user.type === 'Membro'
-                );
-                console.log(updatedOfflineUsers, 'updatedOfflineUsers')
 
-                setOnlineMembers(updatedOnlineUsers);
-                setOfflineMembers(updatedOfflineUsers);
+                // Separar Online e Offline
+                const online: any[] = [];
+                const offline: any[] = [];
+
+                Object.values(members).forEach((user: any) => {
+                    if (user.status === 'Online') {
+                        online.push(user);
+                    } else if (user.type !== 'Visitante') { // Não mostramos visitantes offline
+                        offline.push(user);
+                    }
+                });
+
+                setOnlineMembers(online);
+                setOfflineMembers(offline);
             }
         });
-
         return () => unsubscribe();
-    }, [groupData?.groupId]);
+    }, [groupData?.groupId, currentUser]);
 
-
-    const handleUserClick = (user: User) => {
-        if (user.type !== 'Visitante') {
-            setSelectedUser(user);
-            setIsModalOpen(true);
-        }
+    // --- FUNÇÃO PARA ORDENAR POR CARGO (Hierarquia xat) ---
+    const rolePriority: Record<string, number> = {
+        'Dono_Geral': 0,
+        'Dono_Sala': 1,
+        'Sub_Dono': 2,
+        'Admin_mod': 3,
+        'Staff': 4,
+        'Membro': 5,
+        'Visitante': 6
     };
 
-    console.log(onlineMembers, 'onlineMembers')
-    console.log(onlineMembers, 'onlineMembers')
+    const getSortedMembers = (members: any[]) => {
+        return members.sort((a, b) => {
+            const roleA = rolePriority[a.type] ?? 99;
+            const roleB = rolePriority[b.type] ?? 99;
+            return roleA - roleB;
+        });
+    };
 
-
-    //DELETE VISITANTE DOS GRUPOS
-    async function deleteVisitantesFromGroup(groupId: string) {
-        try {
-            const membersRef = ref(database, `grupos/${groupId}/members`);
-            const snapshot = await get(membersRef);
-
-            if (!snapshot.exists()) {
-                console.log('Nenhum membro encontrado no grupo:', groupId);
-                return;
-            }
-
-            const members = snapshot.val();
-
-            // Percorre cada membro e verifica se é Visitante
-            for (const userId in members) {
-                if (members.hasOwnProperty(userId)) {
-                    const member = members[userId];
-                    if (member.type === 'Visitante') {
-                        // Deleta o membro Visitante
-                        const memberRef = ref(database, `grupos/${groupId}/members/${userId}`);
-                        await remove(memberRef);
-                        console.log(`Membro visitante removido: ${userId}`);
-                    }
-                }
-            }
-
-            console.log('Todos os membros visitantes foram removidos.');
-
-        } catch (error) {
-            console.error('Erro ao deletar membros visitantes:', error);
-        }
-    }
-
-    //DELETE VISITANTE DA TABELA
-    async function deleteAllVisitantes() {
-        const db = getDatabase();
-        const usersRef = ref(db, "users");
-
-        try {
-            const snapshot = await get(usersRef);
-            if (!snapshot.exists()) {
-                console.log("Nenhum usuário encontrado.");
-                return;
-            }
-
-            const usersData = snapshot.val();
-
-            console.log("Usuários carregados:", usersData);
-
-            // Filtra IDs de usuários que são do tipo Visitante (case sensitive)
-            const visitanteIds = Object.entries(usersData)
-                .filter(([_, user]: [string, any]) => user.type === "Visitante")
-                .map(([id]) => id);
-
-            console.log("IDs de visitantes a deletar:", visitanteIds);
-
-            if (visitanteIds.length === 0) {
-                console.log("Nenhum usuário visitante para deletar.");
-                return;
-            }
-
-            // Deleta todos os visitantes
-            const promises = visitanteIds.map(id => remove(ref(db, `users/${id}`)));
-
-            await Promise.all(promises);
-
-            console.log(`${visitanteIds.length} usuários visitantes deletados com sucesso.`);
-        } catch (error) {
-            console.error("Erro ao deletar usuários visitantes:", error);
-        }
-    }
-
+    const sortedOnline = getSortedMembers(onlineMembers);
 
     return (
-        <div
-            className={`flex flex-col md:flex-row h-screen font-sans`}
-            style={{ backgroundColor: colors.background, color: colors.textColor || 'white' }}
-        >
-            {/* Sidebar Toggle Button for Mobile */}
-            {/* <button
-                className="md:hidden p-4 focus:outline-none"
-                style={{ backgroundColor: colors.sidebarBg, color: colors.sidebarBorder }}
-                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            >
-                {isSidebarOpen ? 'Fechar Membros' : 'Abrir Membros'}
-            </button> */}
+        <div className="relative flex w-full h-screen overflow-hidden bg-black text-white">
 
-            {/* Sidebar */}
-            <aside
-                className={`w-full md:w-72 p-4 border-r-2 rounded-none md:rounded-tr-2xl md:rounded-br-2xl ${isSidebarOpen ? 'block' : 'hidden'
-                    } md:block`}
-                style={{
-                    backgroundColor: colors.sidebarBg,
-                    borderColor: colors.sidebarBorder,
-                    boxShadow: `0 0 20px ${colors.sidebarShadow}`,
-                }}
-            >
-                <div className="flex justify-between items-center mb-6">
-                    <h2 style={{ color: colors.sidebarBorder }} className="text-2xl font-bold">
-                        🌐 Conectados
-                    </h2>
+            {/* === CAMADA 1: BACKGROUND IMERSIVO === */}
+            <div className="absolute inset-0 z-0">
+                {groupData?.background?.endsWith('.mp4') ? (
+                    <video
+                        src={groupData.background}
+                        autoPlay loop muted
+                        className="w-full h-full object-cover opacity-30"
+                    />
+                ) : (
+                    <img
+                        src={groupData?.background || '/default-bg.jpg'}
+                        alt="bg"
+                        className="w-full h-full object-cover opacity-30"
+                    />
+                )}
+                {/* Overlay Gradiente para leitura */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/60 pointer-events-none" />
+            </div>
 
-                </div>
+            {/* === CAMADA 2: ÁREA DO CHAT (CENTRO) === */}
+            <div className="relative z-10 flex-1 flex flex-col min-w-0 transition-all duration-300">
 
-                <div className="space-y-3">
-                    {
-                        currentUser?.type === "Dono_Sala" ?
-                            <>
-                                <button
-                                    onClick={() => {
-                                        if (groupData?.groupId) {
-                                            deleteAllVisitantes();
-                                        } else {
-                                            console.log('groupId não disponível');
-                                        }
-                                    }}
-
-                                    className="text-sm px-2 py-1 rounded-md transition shadow"
-                                    style={{
-                                        color: vipEmoji == 4 ? "black" : colors.sidebarBorder,
-                                        border: `1px solid ${colors.sidebarBorder}`,
-                                        backgroundColor: 'transparent',
-                                        boxShadow: `0 0 6px ${colors.sidebarShadow}`,
-                                    }}
-                                    onMouseEnter={e => (e.currentTarget.style.backgroundColor = colors.sidebarBorder)}
-                                    onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
-                                >
-                                    Delete Visitantes Users
-                                </button>
-                                <button
-                                    onClick={() => {
-                                        if (groupData?.groupId) {
-                                            deleteVisitantesFromGroup(groupData?.groupId);
-                                        } else {
-                                            console.log('groupId não disponível');
-                                        }
-                                    }}
-
-                                    className="text-sm px-2 py-1 rounded-md transition shadow"
-                                    style={{
-                                        color: vipEmoji == 4 ? "black" : colors.sidebarBorder,
-                                        border: `1px solid ${colors.sidebarBorder}`,
-                                        backgroundColor: 'transparent',
-                                        boxShadow: `0 0 6px ${colors.sidebarShadow}`,
-                                    }}
-                                    onMouseEnter={e => (e.currentTarget.style.backgroundColor = colors.sidebarBorder)}
-                                    onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
-                                >
-                                    Delete Visitantes Grupos
-                                </button>
-
-                            </> : null
-                    }
-                    <div
-                        className="p-2 rounded-lg font-semibold border-l-4 shadow"
-                        style={{
-                            backgroundColor: colors.inputBg,
-                            color: vipEmoji == 4 ? "black" : colors.usernameColor,
-                            borderColor: colors.usernameColor,
-                            boxShadow: `0 0 12px ${colors.usernameColor}`,
-                        }}
-                    >
-                        <h3 className="text-md font-semibold text-green-400 mb-1">🟢 Online</h3>
-                        {onlineMembers?.map((user, index) => (
-                            <div
-                                key={`online-${index}`}
-                                className="flex items-center gap-2 px-1 py-1 hover:bg-[#2e2e3a] rounded-sm transition-all"
-                                onClick={() => handleUserClick(user)}
-                            >
-
-                                <PeaoAvatar
-                                    username={user.username || "Visitante"}
-                                    type={user.type}
-                                    power={user.power}
-                                    relacionamento={user.relacionamento}
-                                    isTyping={false}
-                                    group={user.group}
-                                    id={user.id}
-                                    image={user?.image}
-                                    password={user.user}
-                                    userNameAcess={user.userNameAcess}
-                                    status={user.status?.toLowerCase()}
-                                    vipEmoji={vipEmoji}
-                                />
-
-                            </div>
-                        ))}
-
-                    </div>
-                </div>
-
-                <div className="mt-8 text-sm text-gray-400">
-                    <p className="mb-2">⚪ Offline</p>
-                    <ul className="space-y-1 text-gray-600">
-                        {offlineMembers?.map((user, index) => (
-                            <div
-                                key={`online-${index}`}
-                                className="flex items-center gap-2 px-1 py-1 hover:bg-[#2e2e3a] rounded-sm transition-all"
-
-                            >
-                                <PeaoAvatar
-                                    username={user?.username || "Visitante"}
-                                    type={user.type}
-                                    power={user.power}
-                                    relacionamento={user.relacionamento}
-                                    isTyping={false}
-                                    group={user.group}
-                                    id={user.id}
-                                    image={user?.image}
-                                    password={user.user}
-                                    userNameAcess={user.userNameAcess}
-                                    status={user.status?.toLowerCase()}
-                                    vipEmoji={vipEmoji}
-                                />
-
-                            </div>
-                        ))}
-
-                    </ul>
-                </div>
-            </aside>
-
-            {/* Main Area */}
-            <div className="flex flex-col min-h-mobile-screen">
-
-                {/* Group Title */}
-                <div
-                    className="px-6 py-4 border-b-2 shadow shrink-0"
-                    style={{
-                        backgroundColor: colors.headerBg,
-                        borderColor: colors.headerBorder,
-                        boxShadow: `0 0 15px ${colors.headerShadow}`,
-                    }}
-                >
-                    <h1 style={{ color: colors.sidebarBorder }} className="text-xl font-bold">
-                        Ajuda
-                    </h1>
-                </div>
-
-                {/* Conteúdo principal com scroll interno */}
-                <main
-                    className="flex-1 overflow-y-auto p-4"
-                    style={{ backgroundColor: colors.mainBg }}
-                >
-                    {messages.map((msg, index) => (
-                        <div key={index} className="mb-1">
-                            <div className="flex items-start gap-2">
-                                <img
-                                    src={msg.image}
-                                    alt={msg.username}
-                                    className="w-8 h-8 rounded-full object-cover"
-                                />
-                                <div className="flex-1 min-w-0">
-                                    <p className="font-semibold text-[#00ffff]">{msg.username}</p>
-                                    <p className="text-sm text-white break-words">{msg.text}</p>
-                                    <span className="text-xs text-gray-400">
-                                        {new Date(msg.timestamp).toLocaleTimeString()}
-                                    </span>
-                                </div>
+                {/* Header do Chat */}
+                <header className="h-16 px-6 flex items-center justify-between border-b border-white/10 bg-black/40 backdrop-blur-md">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-white/5 border border-white/10">
+                            <Hash size={20} className="text-anime-pink" />
+                        </div>
+                        <div>
+                            <h1 className="font-bold text-lg text-white leading-tight drop-shadow-md">
+                                {groupData?.name || "Sala de Chat"}
+                            </h1>
+                            <div className="flex items-center gap-2 text-xs text-gray-400 font-mono">
+                                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                                {onlineMembers.length} Online
                             </div>
                         </div>
-                    ))}
-                </main>
+                    </div>
 
-                {/* Rodapé fixo no fim da tela */}
-                <footer
-                    className="p-4 border-t-2 shadow shrink-0"
-                    style={{
-                        backgroundColor: colors.headerBg,
-                        borderColor: colors.headerBorder,
-                        boxShadow: `0 0 15px ${colors.headerShadow}`,
-                    }}
+                    {/* Botão Mobile/Desktop para Toggle da Lista */}
+                    <button
+                        onClick={() => setShowMembers(!showMembers)}
+                        className={`p-2 rounded-lg transition-colors border ${showMembers ? 'bg-anime-purple/20 border-anime-purple text-white' : 'border-white/10 text-gray-400 hover:text-white'}`}
+                    >
+                        <Users size={20} />
+                    </button>
+                </header>
+
+                {/* Lista de Mensagens */}
+                <div
+                    className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar"
+                    ref={scrollRef}
                 >
+                    {messages.map((msg, index) => {
+                        const isMe = msg.username === currentUser?.username;
+
+                        return (
+                            <motion.div
+                                key={index}
+                                initial={{ opacity: 0, x: isMe ? 20 : -20 }} // Animação lateral
+                                animate={{ opacity: 1, x: 0 }}
+                                className={`flex items-end gap-3 mb-4 ${isMe ? 'flex-row-reverse' : 'flex-row'}`}
+                            >
+                                {/* AVATAR PEÃO NA MENSAGEM */}
+                                <div className="flex-shrink-0 -mb-1">
+                                    {/* Usando o PeaoAvatar com showName={false} para mostrar só o boneco */}
+                                    <PeaoAvatar
+                                        {...msg} // Passa todas as props do user
+                                        type={msg.type || 'Visitante'}
+                                        power={msg.power || 0}
+                                        username={msg.username}
+                                        isTyping={false}
+                                        showName={false} // IMPORTANTE: Esconde o nome (já mostramos na bolha)
+                                        className="scale-90" // Um pouco menor que na lista
+                                    />
+                                </div>
+
+                                <div className={`flex flex-col max-w-[75%] ${isMe ? 'items-end' : 'items-start'}`}>
+                                    {/* Nome do Usuário */}
+                                    <span
+                                        className="text-[10px] font-bold mb-1 ml-1 opacity-80"
+                                        style={{ color: isMe ? colors.usernameColor : '#ccc' }}
+                                    >
+                                        {msg.username}
+                                    </span>
+
+                                    {/* Bolha de Vidro (Glassmorphism mais forte) */}
+                                    <div
+                                        className={`px-4 py-2 rounded-2xl text-sm leading-relaxed backdrop-blur-md shadow-lg border border-white/5
+                        ${isMe
+                                                ? 'bg-anime-purple/60 text-white rounded-br-none' // Roxo translúcido para mim
+                                                : 'bg-black/60 text-gray-100 rounded-bl-none' // Preto translúcido para outros
+                                            }
+                    `}
+                                    >
+                                        {msg.text}
+                                    </div>
+
+                                    {/* Hora pequena */}
+                                    <span className="text-[9px] text-gray-500 mt-1 opacity-50">
+                                        {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    </span>
+                                </div>
+                            </motion.div>
+                        );
+                    })}
+                </div>
+
+                {/* Input Area */}
+                <div className="p-4 bg-black/60 backdrop-blur-xl border-t border-white/10">
                     <MessageInput
                         vipEmoji={vipEmoji}
                         colors={colors}
                         currentUser={currentUser}
                         groupId={groupData?.groupId}
                     />
-                    <div className="mt-2 text-1xl flex gap-2 flex-wrap px-2">Versão 1.0.0.0</div>
-                </footer>
+                    <div className="flex justify-between items-center mt-2 px-1">
+                        <span className="text-[10px] text-gray-500 font-mono">V2.0.0 Stable</span>
+                        <span className="text-[10px] text-anime-pink font-bold">Anime Connect</span>
+                    </div>
+                </div>
             </div>
+
+            {/* === CAMADA 3: LISTA DE MEMBROS (DIREITA) === */}
+            <AnimatePresence>
+                {showMembers && (
+                    <motion.aside
+                        initial={{ width: 0, opacity: 0 }}
+                        animate={{ width: 300, opacity: 1 }} // Largura fixa 300px
+                        exit={{ width: 0, opacity: 0 }}
+                        transition={{ duration: 0.3, ease: "easeInOut" }}
+                        className="relative z-20 h-full border-l border-white/10 bg-black/70 backdrop-blur-xl flex flex-col shadow-2xl"
+                    >
+                        {/* Header Membros */}
+                        <div className="p-4 border-b border-white/10 bg-white/5 flex items-center justify-between">
+                            <h2
+                                className="font-display font-bold text-sm tracking-wider uppercase flex items-center gap-2 text-gray-200"
+                            >
+                                <Users size={16} className="text-anime-cyan" />
+                                Membros
+                            </h2>
+                            <div className="px-2 py-0.5 rounded bg-green-500/20 text-green-400 text-[10px] font-bold border border-green-500/30">
+                                {sortedOnline.length} ON
+                            </div>
+                        </div>
+
+                        {/* Lista Scrollável */}
+                        <div className="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar">
+
+                            {/* Membros Online */}
+                            <div className="px-2 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest">Online</div>
+                            {sortedOnline.map((user) => (
+                                <div
+                                    key={user.id}
+                                    className={`
+                                        group relative p-2 rounded-xl border border-transparent transition-all cursor-pointer
+                                        hover:bg-white/10 hover:border-white/10 hover:shadow-lg
+                                        ${currentUser?.id === user.id ? 'bg-white/5 border-white/5' : ''}
+                                    `}
+                                // onClick={() => handleUserClick(user)} // Adicione sua lógica de modal aqui
+                                >
+                                    <div className="flex items-center justify-between">
+                                        <PeaoAvatar
+                                            {...user}
+                                            isTyping={false}
+                                            showName={true}
+                                            status="Online"
+                                        />
+
+                                        {/* Ícone de Cargo (Opcional) */}
+                                        <div className="opacity-50 group-hover:opacity-100 transition-opacity">
+                                            {user.type === 'Dono_Sala' && <Crown size={14} className="text-yellow-400" />}
+                                            {user.type === 'Staff' && <Shield size={14} className="text-blue-400" />}
+                                            {user.type === 'Visitante' && <LogOut size={12} className="text-gray-600" />}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+
+                            {/* Membros Offline (Opcional - Se quiser mostrar) */}
+                            {offlineMembers.length > 0 && (
+                                <>
+                                    <div className="mt-6 px-2 py-2 text-[10px] font-bold text-gray-600 uppercase tracking-widest border-t border-white/5">Offline</div>
+                                    {offlineMembers.map((user) => (
+                                        <div key={user.id} className="p-2 opacity-50 hover:opacity-100 transition-opacity grayscale">
+                                            <PeaoAvatar
+                                                {...user}
+                                                isTyping={false}
+                                                showName={true}
+                                                status="offline"
+                                            />
+                                        </div>
+                                    ))}
+                                </>
+                            )}
+                        </div>
+
+                        {/* Área de Admin (Se for Dono) */}
+                        {currentUser?.type === "Dono_Sala" && (
+                            <div className="p-3 border-t border-white/10 bg-red-900/10 backdrop-blur-sm">
+                                <button className="w-full flex items-center justify-center gap-2 py-2 text-xs font-bold text-red-400 border border-red-500/30 rounded-lg hover:bg-red-500/20 transition-all shadow-[0_0_10px_rgba(239,68,68,0.1)]">
+                                    <Shield size={14} />
+                                    Painel Admin
+                                </button>
+                            </div>
+                        )}
+
+                    </motion.aside>
+                )}
+            </AnimatePresence>
 
         </div>
     );
 }
 
-// === Definição dos temas de cores para cada VIP ===
-
+// === COMPONENTE WRAPPER (Mantido para compatibilidade com seu código) ===
+// Defina suas cores padrão aqui se quiser sobrescrever
 const defaultColors = {
     background: '#0c0026',
     sidebarBg: '#14003c',
@@ -458,102 +357,13 @@ const defaultColors = {
     textColor: 'white',
 };
 
-const vip1Colors = { // ROXO NEON 
-    ...defaultColors,
-};
-
-const vip2Colors = { // AZUL NEON
-    background: '#001f3f',
-    sidebarBg: '#003366',
-    sidebarBorder: '#00bfff',
-    sidebarShadow: '#00bfff',
-    headerBg: '#004c99',
-    headerBorder: '#00bfff',
-    headerShadow: '#00bfff',
-    mainBg: '#00264d',
-    inputBg: '#0059cc',
-    inputBorder: '#00bfff',
-    buttonBg: '#00bfff',
-    buttonHoverBg: '#0099e6',
-    buttonShadow: '#00bfff',
-    usernameColor: '#66d9ff',
-    textColor: 'white',
-};
-
-const vip3Colors = { // VERMELHO NEON
-    background: '#330000',
-    sidebarBg: '#660000',
-    sidebarBorder: '#ff3300',
-    sidebarShadow: '#ff3300',
-    headerBg: '#990000',
-    headerBorder: '#ff3300',
-    headerShadow: '#ff3300',
-    mainBg: '#4d0000',
-    inputBg: '#b30000',
-    inputBorder: '#ff3300',
-    buttonBg: '#ff3300',
-    buttonHoverBg: '#cc2900',
-    buttonShadow: '#ff3300',
-    usernameColor: '#ff6666',
-    textColor: 'white',
-};
-
-const vip4Colors = { // BRANCO AMARELADO
-    background: '#fffbea',
-    sidebarBg: '#fff5d1',
-    sidebarBorder: '#f3d27a',
-    sidebarShadow: '#f3d27a',
-    headerBg: '#f7e4a3',
-    headerBorder: '#f3d27a',
-    headerShadow: '#f3d27a',
-    mainBg: '#fff8c1',
-    inputBg: '#fff9d6',
-    inputBorder: '#f3d27a',
-    buttonBg: '#f3d27a',
-    buttonHoverBg: '#d7b44a',
-    buttonShadow: '#f3d27a',
-    usernameColor: '#a67c00',
-    textColor: '#5a4600',
-};
-
-const vip5Colors = { // OURO
-    background: '#3e2f00',
-    sidebarBg: '#5c4500',
-    sidebarBorder: '#ffcc00',
-    sidebarShadow: '#ffcc00',
-    headerBg: '#7a6000',
-    headerBorder: '#ffcc00',
-    headerShadow: '#ffcc00',
-    mainBg: '#4b3a00',
-    inputBg: '#6b5400',
-    inputBorder: '#ffcc00',
-    buttonBg: '#ffcc00',
-    buttonHoverBg: '#d4b300',
-    buttonShadow: '#ffcc00',
-    usernameColor: '#fff5b1',
-    textColor: '#fffacd',
-};
-
-// === Função simulada que retorna o VIP do usuário 
+// Mock function
 function getUserVipLevel(): number {
-    // Simulando retorno, troque para dinâmica real (0 a 5)
-    return 0; // por exemplo, VIP3 (vermelho neon)
+    return 0;
 }
 
 export default function ChatWindow({ groupData, currentUser }: ChatWindowProps) {
     const userVip = getUserVipLevel();
-
-    const colorsMap: { [key: number]: typeof defaultColors } = {
-        0: defaultColors,
-        1: vip1Colors,
-        2: vip2Colors,
-        3: vip3Colors,
-        4: vip4Colors,
-        5: vip5Colors,
-    };
-
-    const userColors = colorsMap[userVip] || defaultColors;
-
-    return <NeonChatLayout colors={userColors} groupData={groupData} currentUser={currentUser} vipEmoji={userVip} />
-
+    // Você pode restaurar o colorsMap aqui se precisar das cores VIPs diferentes
+    return <NeonChatLayout colors={defaultColors} groupData={groupData} currentUser={currentUser} vipEmoji={userVip} />
 }
