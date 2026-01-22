@@ -2,10 +2,11 @@
 
 import { database } from '@/pages/api/lib/firebase';
 import { UserType } from '@/utils/userStorage';
-import { onDisconnect, onValue, ref, set } from 'firebase/database';
+import { onValue, ref } from 'firebase/database';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Crown, Hash, LogOut, Shield, Users } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import AdminPanel from './AdminPanel';
 import MessageInput from './MessageInput';
 import PeaoAvatar from './PeaoMembro';
 import { GroupData } from './SideBar';
@@ -40,7 +41,7 @@ function NeonChatLayout({ colors, groupData, currentUser, vipEmoji }: NeonChatLa
     const [offlineMembers, setOfflineMembers] = useState<any[]>([]);
     const [showMembers, setShowMembers] = useState(true); // Toggle da Sidebar Direita
     const scrollRef = useRef<HTMLDivElement>(null);
-
+    const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
     // --- 1. BUSCAR MENSAGENS ---
     useEffect(() => {
         if (!groupData?.groupId) return;
@@ -68,25 +69,36 @@ function NeonChatLayout({ colors, groupData, currentUser, vipEmoji }: NeonChatLa
     useEffect(() => {
         if (!groupData?.groupId || !currentUser) return;
 
-        // Setar status do usuário atual como Online
-        const userStatusRef = ref(database, `grupos/${groupData.groupId}/members/${currentUser.id}/status`);
-        set(userStatusRef, 'Online');
-        onDisconnect(userStatusRef).set('Offline');
+        // ... (código de setar status online do usuário mantém igual) ...
 
-        // Ouvir lista de membros
         const membersRef = ref(database, `grupos/${groupData.groupId}/members`);
         const unsubscribe = onValue(membersRef, (snapshot) => {
             if (snapshot.exists()) {
                 const members = snapshot.val();
 
-                // Separar Online e Offline
                 const online: any[] = [];
                 const offline: any[] = [];
+
+                // --- INJEÇÃO DO BOT NA LISTA (VISUAL) ---
+                // Se o grupo tem bot configurado, adicionamos ele manualmente na lista online
+                if (groupData.hasBot && groupData.botName) {
+                    online.push({
+                        id: 'BOT_SYSTEM', // ID fixo para ordenação
+                        userId: 'BOT_SYSTEM',
+                        username: groupData.botName,
+                        type: 'Bot', // Type Bot para pegar prioridade 0
+                        power: 999,
+                        image: `https://api.dicebear.com/7.x/bottts/png?seed=${groupData.botName}`,
+                        status: 'Online',
+                        relacionamento: '🤖 Sistema'
+                    });
+                }
+                // ----------------------------------------
 
                 Object.values(members).forEach((user: any) => {
                     if (user.status === 'Online') {
                         online.push(user);
-                    } else if (user.type !== 'Visitante') { // Não mostramos visitantes offline
+                    } else if (user.type !== 'Visitante') {
                         offline.push(user);
                     }
                 });
@@ -96,17 +108,18 @@ function NeonChatLayout({ colors, groupData, currentUser, vipEmoji }: NeonChatLa
             }
         });
         return () => unsubscribe();
-    }, [groupData?.groupId, currentUser]);
+    }, [groupData?.groupId, currentUser, groupData?.hasBot, groupData?.botName]);
 
     // --- FUNÇÃO PARA ORDENAR POR CARGO (Hierarquia xat) ---
     const rolePriority: Record<string, number> = {
-        'Dono_Geral': 0,
-        'Dono_Sala': 1,
-        'Sub_Dono': 2,
-        'Admin_mod': 3,
-        'Staff': 4,
-        'Membro': 5,
-        'Visitante': 6
+        'Bot': 0,          // Bot no TOPO (0)
+        'Dono_Geral': 1,
+        'Dono_Sala': 2,
+        'Sub_Dono': 3,
+        'Admin_mod': 4,
+        'Staff': 5,
+        'Membro': 6,
+        'Visitante': 7     // Visitante no fim (7)
     };
 
     const getSortedMembers = (members: any[]) => {
@@ -117,8 +130,22 @@ function NeonChatLayout({ colors, groupData, currentUser, vipEmoji }: NeonChatLa
         });
     };
 
-    const sortedOnline = getSortedMembers(onlineMembers);
+    // Combinamos Online + Offline para processar, mas aqui focamos na lista online
+    const sortedOnline = [...onlineMembers].sort((a, b) => {
+        // Se for o BOT SYSTEM, força ele pro topo sempre (caso o type não esteja exato)
+        if (a.userId === 'BOT_SYSTEM') return -1;
+        if (b.userId === 'BOT_SYSTEM') return 1;
 
+        const roleA = rolePriority[a.type] ?? 99; // 99 para desconhecidos
+        const roleB = rolePriority[b.type] ?? 99;
+
+        // Se cargos forem iguais, ordena por nome
+        if (roleA === roleB) {
+            return a.username.localeCompare(b.username);
+        }
+
+        return roleA - roleB; // Menor número = Mais alto na lista
+    });
     return (
         <div className="relative flex w-full h-screen overflow-hidden bg-black text-white">
 
@@ -319,14 +346,34 @@ function NeonChatLayout({ colors, groupData, currentUser, vipEmoji }: NeonChatLa
                             )}
                         </div>
 
-                        {/* Área de Admin (Se for Dono) */}
-                        {currentUser?.type === "Dono_Sala" && (
-                            <div className="p-3 border-t border-white/10 bg-red-900/10 backdrop-blur-sm">
-                                <button className="w-full flex items-center justify-center gap-2 py-2 text-xs font-bold text-red-400 border border-red-500/30 rounded-lg hover:bg-red-500/20 transition-all shadow-[0_0_10px_rgba(239,68,68,0.1)]">
+                        {/* Área de Controle (Admin & Staff) */}
+                        {(currentUser?.type === "Dono_Sala" || currentUser?.type === "Staff" || currentUser?.type === "Admin_mod") && (
+                            <div className={`p-3 border-t border-white/10 backdrop-blur-sm ${currentUser.type === "Dono_Sala" ? 'bg-red-900/10' : 'bg-blue-900/10'}`}>
+                                <button
+                                    onClick={() => setIsAdminPanelOpen(true)} // <--- Abre o Modal
+                                    className={`
+                w-full flex items-center justify-center gap-2 py-2 text-xs font-bold border rounded-lg transition-all shadow-lg
+                ${currentUser.type === "Dono_Sala"
+                                            ? 'text-red-400 border-red-500/30 hover:bg-red-500/20'
+                                            : 'text-blue-400 border-blue-500/30 hover:bg-blue-500/20'}
+            `}
+                                >
                                     <Shield size={14} />
-                                    Painel Admin
+                                    {currentUser.type === "Dono_Sala" ? "Painel Master" : "Painel Staff"}
                                 </button>
                             </div>
+                        )}
+
+                        {/* ... depois do fechamento da <motion.aside> ... */}
+
+                        {/* RENDERIZAÇÃO DO MODAL DE ADMINISTRAÇÃO */}
+                        {isAdminPanelOpen && groupData && (
+                            <AdminPanel
+                                isOpen={isAdminPanelOpen}
+                                onClose={() => setIsAdminPanelOpen(false)}
+                                groupId={groupData.groupId}
+                                currentUser={currentUser}
+                            />
                         )}
 
                     </motion.aside>
