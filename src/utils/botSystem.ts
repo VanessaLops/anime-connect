@@ -25,9 +25,23 @@ const getPowerLevel = (type: string) => {
     }
 };
 
+// --- CÉREBRO AUTÔNOMO (FRASES E REAÇÕES) ---
+const randomPhrases = [
+    "Alguém aí assistiu o episódio novo de One Piece? Tá insano! 🔥",
+    "Estou entediado... quem quer jogar um /dado valendo XP?",
+    "Lembrem-se de beber água, pessoal! 💧",
+    "Detectei um nível de otaku muito alto nesta sala... 🧐",
+    "Se eu fosse humano, passaria o dia vendo animes.",
+    "Alguém viu meu criador por aí? Preciso de um upgrade.",
+    "A paz deste grupo é suspeita...",
+    "Curiosidade: O primeiro anime da história foi lançado em 1917! 📜",
+    "Vocês preferem Dublado ou Legendado? (Cuidado com a resposta...)",
+    "Bip bop... processando... alguém disse 'pizza'?"
+];
+
 export const BotSystem = {
     
-    // --- NOVO: HELPER PARA ACHAR ID PELO NOME ---
+    // --- HELPER PARA ACHAR ID PELO NOME ---
     async findMemberIdByName(groupId: string, nameToFind: string) {
         const membersRef = ref(database, `grupos/${groupId}/members`);
         const snapshot = await get(membersRef);
@@ -35,16 +49,43 @@ export const BotSystem = {
         if (!snapshot.exists()) return null;
 
         const members = snapshot.val();
-        
-        // Procura no objeto de membros (Case Insensitive)
-        // Ex: "goku" acha "Goku", "GOKU", etc.
         const foundEntry = Object.entries(members).find(([key, user]: [string, any]) => 
             user.username?.toLowerCase() === nameToFind.toLowerCase()
         );
 
-        // Retorna o ID (chave) se achar, ou null
         return foundEntry ? foundEntry[0] : null;
     },
+
+    // --- FUNÇÃO DE FALA PADRÃO ---
+    async botSpeak(groupId: string, botName: string, text: string) {
+        const messagesRef = ref(database, `grupos/${groupId}/messages`);
+        await push(messagesRef, {
+            text: text,
+            timestamp: Date.now(),
+            userId: 'BOT_SYSTEM',
+            username: botName,
+            image: `https://api.dicebear.com/7.x/bottts/png?seed=${botName}`,
+            type: 'Bot',
+            status: 'Online',
+            vipColor: '#00ff00'
+        });
+    },
+
+    // --- INTERAÇÃO AUTÔNOMA (O PULSO DE VIDA) ---
+    async tryAutonomousAction(groupId: string, botName: string) {
+        // Chance de 10% de falar algo a cada mensagem enviada por humanos
+        const chance = Math.random();
+        
+        if (chance < 0.10) { // 10% de chance
+            const randomPhrase = randomPhrases[Math.floor(Math.random() * randomPhrases.length)];
+            
+            // Pequeno delay para parecer que ele está "pensando" ou digitando
+            setTimeout(() => {
+                this.botSpeak(groupId, botName, randomPhrase);
+            }, 3000); 
+        }
+    }
+    ,
 
     // Função de Boas-vindas
     async announceJoin(groupId: string, botName: string, newUser: any) {
@@ -64,39 +105,28 @@ export const BotSystem = {
     // Processador de Comandos
     async processMessage({ groupId, botName, triggerMessage, senderUser }: BotConfig) {
 
+        // 1. Sempre tenta uma interação autônoma (mesmo se não for comando)
+        // Isso faz o bot parecer vivo enquanto vocês conversam
+        this.tryAutonomousAction(groupId, botName);
+
+        // 2. Se não for comando, para por aqui
         if (!triggerMessage.startsWith('/')) return;
 
-        // Separa o comando do argumento
-        // Ex: "/promover Goku Super Saiyajin" -> command="/promover", targetName="Goku Super Saiyajin"
         const args = triggerMessage.split(' ');
         const command = args[0].toLowerCase();
-        const targetName = args.slice(1).join(' '); // Pega tudo depois do comando como nome (incluindo espaços)
+        const targetName = args.slice(1).join(' ');
 
-        const messagesRef = ref(database, `grupos/${groupId}/messages`);
         const senderPower = getPowerLevel(senderUser.type);
-
-        const botSpeak = async (text: string) => {
-            await push(messagesRef, {
-                text: text,
-                timestamp: Date.now(),
-                userId: 'BOT_SYSTEM',
-                username: botName,
-                image: `https://api.dicebear.com/7.x/bottts/png?seed=${botName}`,
-                type: 'Bot',
-                status: 'Online',
-                vipColor: '#00ff00'
-            });
-        };
 
         const adminCommands = ['/promover', '/rebaixar', '/kick', '/ban'];
         if (adminCommands.includes(command) && senderPower < 50) {
-            return await botSpeak(`⛔ Sem permissão, ${senderUser.username}.`);
+            return await this.botSpeak(groupId, botName, `⛔ Sem permissão, ${senderUser.username}.`);
         }
 
         // --- COMANDOS ---
 
         if (command === '/ajuda') {
-            await botSpeak(`🤖 Comandos:
+            await this.botSpeak(groupId, botName, `🤖 Comandos:
             /diario - Recompensa diária
             /dado - Rolar D20
             ${senderPower >= 50 ? '\n👮 Admin (Use o Nome):\n/promover [Nome]\n/rebaixar [Nome]\n/kick [Nome]\n/ban [Nome]' : ''}`);
@@ -104,53 +134,53 @@ export const BotSystem = {
 
         else if (command === '/dado') {
             const result = Math.floor(Math.random() * 20) + 1;
-            await botSpeak(`🎲 ${senderUser.username} rolou: [ ${result} ]`);
+            await this.botSpeak(groupId, botName, `🎲 ${senderUser.username} rolou: [ ${result} ]`);
         }
 
         else if (command === '/diario') {
-            if (senderPower === 0) return await botSpeak("⛔ Visitantes não ganham XP.");
+            if (senderPower === 0) return await this.botSpeak(groupId, botName, "⛔ Visitantes não ganham XP.");
             const userRef = ref(database, `grupos/${groupId}/members/${senderUser.id}`);
             await update(userRef, { 
                 relacionamento: '🌟 Membro Fiel',
                 power: (senderUser.power || 0) + 1 
             });
-            await botSpeak(`🎁 ${senderUser.username} ganhou XP diário!`);
+            await this.botSpeak(groupId, botName, `🎁 ${senderUser.username} ganhou XP diário!`);
         }
 
         // --- COMANDOS ADMINISTRATIVOS POR NOME ---
 
         else if (command === '/promover') {
-            if (senderPower < 90) return await botSpeak("⛔ Só o Dono promove.");
-            if (!targetName) return await botSpeak("⚠️ Digite o nome. Ex: /promover Goku");
+            if (senderPower < 90) return await this.botSpeak(groupId, botName, "⛔ Só o Dono promove.");
+            if (!targetName) return await this.botSpeak(groupId, botName, "⚠️ Digite o nome. Ex: /promover Goku");
 
             const targetId = await BotSystem.findMemberIdByName(groupId, targetName);
             
             if (targetId) {
                 const targetRef = ref(database, `grupos/${groupId}/members/${targetId}`);
                 await update(targetRef, { type: 'Staff', power: 5 });
-                await botSpeak(`🛡️ ${targetName} foi promovido a STAFF!`);
+                await this.botSpeak(groupId, botName, `🛡️ ${targetName} foi promovido a STAFF!`);
             } else {
-                await botSpeak(`❌ Usuário "${targetName}" não encontrado na sala.`);
+                await this.botSpeak(groupId, botName, `❌ Usuário "${targetName}" não encontrado na sala.`);
             }
         }
 
         else if (command === '/rebaixar') {
-            if (senderPower < 90) return await botSpeak("⛔ Só o Dono rebaixa.");
-            if (!targetName) return await botSpeak("⚠️ Digite o nome.");
+            if (senderPower < 90) return await this.botSpeak(groupId, botName, "⛔ Só o Dono rebaixa.");
+            if (!targetName) return await this.botSpeak(groupId, botName, "⚠️ Digite o nome.");
 
             const targetId = await BotSystem.findMemberIdByName(groupId, targetName);
 
             if (targetId) {
                 const targetRef = ref(database, `grupos/${groupId}/members/${targetId}`);
                 await update(targetRef, { type: 'Membro', power: 0 });
-                await botSpeak(`⬇️ ${targetName} virou Membro comum.`);
+                await this.botSpeak(groupId, botName, `⬇️ ${targetName} virou Membro comum.`);
             } else {
-                await botSpeak(`❌ Usuário "${targetName}" não encontrado.`);
+                await this.botSpeak(groupId, botName, `❌ Usuário "${targetName}" não encontrado.`);
             }
         }
 
         else if (command === '/kick') {
-            if (!targetName) return await botSpeak("⚠️ Digite o nome.");
+            if (!targetName) return await this.botSpeak(groupId, botName, "⚠️ Digite o nome.");
 
             const targetId = await BotSystem.findMemberIdByName(groupId, targetName);
 
@@ -160,18 +190,18 @@ export const BotSystem = {
                 const targetData = snapshot.val();
 
                 if (getPowerLevel(targetData.type) >= senderPower) {
-                    return await botSpeak("⛔ Você não pode chutar alguém de cargo superior/igual.");
+                    return await this.botSpeak(groupId, botName, "⛔ Você não pode chutar alguém de cargo superior/igual.");
                 }
 
                 await remove(targetRef);
-                await botSpeak(`🥾 ${targetData.username} foi expulso.`);
+                await this.botSpeak(groupId, botName, `🥾 ${targetData.username} foi expulso.`);
             } else {
-                await botSpeak(`❌ Usuário não encontrado.`);
+                await this.botSpeak(groupId, botName, `❌ Usuário não encontrado.`);
             }
         }
 
         else if (command === '/ban') {
-            if (!targetName) return await botSpeak("⚠️ Digite o nome.");
+            if (!targetName) return await this.botSpeak(groupId, botName, "⚠️ Digite o nome.");
 
             const targetId = await BotSystem.findMemberIdByName(groupId, targetName);
 
@@ -181,10 +211,9 @@ export const BotSystem = {
                 const targetData = snapshot.val();
 
                 if (getPowerLevel(targetData.type) >= senderPower) {
-                    return await botSpeak("⛔ Sem permissão para banir este cargo.");
+                    return await this.botSpeak(groupId, botName, "⛔ Sem permissão para banir este cargo.");
                 }
 
-                // Lista Negra
                 const banRef = ref(database, `grupos/${groupId}/banned/${targetId}`);
                 await set(banRef, {
                     username: targetData.username,
@@ -193,9 +222,9 @@ export const BotSystem = {
                 });
 
                 await remove(targetRef);
-                await botSpeak(`🚫 ${targetData.username} foi BANIDO.`);
+                await this.botSpeak(groupId, botName, `🚫 ${targetData.username} foi BANIDO.`);
             } else {
-                await botSpeak(`❌ Usuário não encontrado.`);
+                await this.botSpeak(groupId, botName, `❌ Usuário não encontrado.`);
             }
         }
     }
