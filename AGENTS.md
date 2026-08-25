@@ -27,13 +27,26 @@ pequena, valide o padrão nela, só então repita pra próxima.
 ## Status atual do projeto
 
 Só existe a landing hoje: `src/app/page.tsx` →
-`presentation/screens/landing/LandingScreen.tsx`, ainda um placeholder
-("Olá mundo"). O código antigo (chat, comunidade, dashboard,
-funcionalidades, levels, e as libs que eles usavam — Firebase, MUI, Framer
-Motion, Swiper, react-redux etc.) foi removido pra dar lugar à arquitetura
-nova. Cada uma dessas features volta a ser construída dentro do padrão
+`presentation/screens/landing/LandingScreen.tsx`. É conteúdo real (não
+mais placeholder), tema "beta galaxy" — a ideia central do produto é
+"AnimeConnect é uma galáxia conectada", com estética inspirada em space
+opera (starfield, crawl de abertura, patentes em vez de "níveis"). Sem
+`domain/`/`data/` porque é tela estática sem regra de negócio — só
+`presentation/components/ui/` (`Starfield`, `OpeningCrawl`, `FeatureCard`).
+
+**v3 é a versão da arquitetura do site, não do produto.** O app em si
+ainda não foi publicado em lugar nenhum — está em beta, amadurecendo rumo
+à sua v1. Não confundir os dois versionamentos.
+
+O código antigo (chat, comunidade, dashboard, funcionalidades, levels, e
+as libs que eles usavam — Firebase, MUI, Framer Motion, Swiper,
+react-redux etc.) foi removido pra dar lugar à arquitetura nova. Cada uma
+dessas features volta a ser construída dentro do padrão
 domain/data/presentation/core, uma de cada vez — não é pra recriar tudo de
-uma vez só porque o esqueleto existe.
+uma vez só porque o esqueleto existe. O doc funcional completo do produto
+(requisitos, sistema de níveis/XP/gifts) é histórico do projeto anterior;
+serve de referência de visão, não de spec exata — vários números já estão
+sendo revistos.
 
 ## Regras de código
 
