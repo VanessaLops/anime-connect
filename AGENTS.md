@@ -78,6 +78,25 @@ sendo revistos.
 - Uma interface de repository por feature em `domain/<feature>/repositories.ts`,
   implementação em `data/<feature>/<feature>-repository.ts`.
 
+## Cuidado com o Tailwind v4
+
+`src/app/globals.css` tem `@config "../../tailwind.config.mjs";` logo
+depois do `@import "tailwindcss"`. Sem essa linha, o Tailwind v4 **ignora
+silenciosamente** o `tailwind.config.mjs` inteiro — cor customizada,
+keyframe, animação, tudo. Isso já aconteceu uma vez aqui (classes tipo
+`text-anime-cyan`/`animate-crawl` existiam no JSX mas não geravam CSS
+nenhum, sem erro de build). Se adicionar algo em `theme.extend` e a classe
+não aparecer na página, primeiro confira se o `@config` ainda está lá.
+
+## `npm run dev` (Turbopack) x `npm run build` (webpack)
+
+`dev` roda com `--turbopack`, `build` roda no webpack padrão — os dois
+escrevem em `.next/` com formatos incompatíveis entre si. Alternar entre
+os dois sem limpar o cache no meio já causou
+`Cannot find module '../chunks/ssr/[turbopack]_runtime.js'` em runtime.
+Se for rodar `npm run build` depois de ter usado `npm run dev` (ou
+vice-versa), rode `rm -rf .next` antes.
+
 ## Comandos
 
 - `npm run build` — build de produção (Next.js + typecheck). Rodar depois
