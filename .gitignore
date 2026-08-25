@@ -36,6 +36,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# claude code (config/skills locais — ver AGENTS.md/CLAUDE.md, que ficam versionados)
+.claude
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
