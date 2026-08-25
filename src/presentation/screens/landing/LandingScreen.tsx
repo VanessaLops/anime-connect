@@ -1,11 +1,17 @@
-// Primeira screen no padrão presentation/ — landing page.
-// Placeholder por enquanto; o conteúdo real (Header, Hero, LevelSystem,
-// Footer, que já existem em src/components/ui/) volta a ser plugado aqui
-// conforme o desenvolvimento continuar.
+import BetaFooter from "@/presentation/screens/landing/sections/BetaFooter";
+import CrawlSection from "@/presentation/screens/landing/sections/CrawlSection";
+import FleetRanks from "@/presentation/screens/landing/sections/FleetRanks";
+import Hero from "@/presentation/screens/landing/sections/Hero";
+import Systems from "@/presentation/screens/landing/sections/Systems";
+
 export default function LandingScreen() {
   return (
-    <main className="min-h-screen flex items-center justify-center bg-background">
-      <h1 className="text-3xl font-bold text-white">Olá mundo</h1>
+    <main className="min-h-screen bg-background">
+      <Hero />
+      <CrawlSection />
+      <Systems />
+      <FleetRanks />
+      <BetaFooter />
     </main>
   );
 }

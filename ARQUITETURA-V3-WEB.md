@@ -131,7 +131,8 @@ ainda não foi migrado — continua onde está, funcionando normalmente.
 
 Primeira feature a validar o padrão: a landing page, em
 `src/presentation/screens/landing/`, chamada de forma fina por
-`src/app/page.tsx`. Por enquanto ela só renderiza um placeholder
-("Olá mundo") — o conteúdo de verdade (Header, Hero, LevelSystem, Footer,
-que já existem em `src/components/ui/`) volta a ser plugado ali conforme o
-desenvolvimento continuar.
+`src/app/page.tsx`. Já tem conteúdo real (tema "beta galaxy" — ver
+`AGENTS.md`), 100% Server Component, sem `domain/`/`data/` porque é tela
+estática sem regra de negócio. As demais features antigas (chat,
+comunidade, dashboard...) foram removidas junto com a arquitetura antiga e
+voltam a ser construídas uma de cada vez, dentro do padrão novo.
