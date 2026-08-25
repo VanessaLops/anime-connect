@@ -1,10 +1,16 @@
+import EpisodeTag from "@/presentation/components/ui/EpisodeTag";
 import RankBadge from "@/presentation/components/ui/RankBadge";
+import Starfield from "@/presentation/components/ui/Starfield";
 import { FLEET_RANKS } from "@/presentation/screens/landing/content";
+
+const STARFIELD_SEED = 99;
 
 export default function FleetRanks() {
   return (
-    <section className="border-t border-white/5 bg-gradient-to-b from-black to-[#0a0a12] px-6 py-24">
-      <div className="mx-auto max-w-3xl text-center">
+    <section className="relative overflow-hidden border-t border-white/5 bg-gradient-to-b from-black to-[#0a0a12] px-6 py-24">
+      <Starfield seed={STARFIELD_SEED} />
+      <div className="relative mx-auto max-w-3xl text-center">
+        <EpisodeTag>EPISÓDIO III</EpisodeTag>
         <h2 className="font-display text-3xl font-bold text-white md:text-4xl">
           Patentes da Frota
         </h2>

@@ -31,13 +31,17 @@ function generateStars(count: number, seed: number): Star[] {
   }));
 }
 
-const STARS = generateStars(STAR_COUNT, STAR_SEED);
+interface StarfieldProps {
+  seed?: number;
+}
 
 // Campo de estrelas decorativo. Sem estado, sem efeito — Server Component.
-export default function Starfield() {
+// `seed` diferente por seção evita repetir o mesmo padrão em toda a página.
+export default function Starfield({ seed = STAR_SEED }: StarfieldProps) {
+  const stars = generateStars(STAR_COUNT, seed);
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
-      {STARS.map((star, i) => (
+      {stars.map((star, i) => (
         <span
           key={i}
           className="absolute animate-twinkle rounded-full bg-white"

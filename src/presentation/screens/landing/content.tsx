@@ -1,9 +1,10 @@
 import type { ReactNode } from "react";
 
 export const CRAWL_LINES: string[] = [
-  "Em algum lugar entre mil animeverses, uma comunidade se prepara para se conectar como nunca antes.",
-  "Pilotos de todos os cantos da galáxia trocam mensagens em tempo real, sobem de patente e descobrem novos mundos — juntos.",
-  "A frota AnimeConnect ainda está em construção. Este é o sinal da beta galaxy, enviado antes da grande jornada.",
+  "Havia um tempo em que cada fã de anime era uma estrela sozinha: brilhando em algoritmos diferentes, em feeds diferentes, sem se ver.",
+  "O silêncio entre essas estrelas crescia. Comunidades fragmentadas, conversas perdidas em mil aplicativos — uma galáxia sem constelação.",
+  "Mas um sinal foi enviado através do vazio. Uma frota está se formando para reunir essas estrelas soltas numa única galáxia conectada.",
+  "É o primeiro sinal da beta galaxy — antes da grande jornada, antes da v1. A tripulação está sendo recrutada agora.",
 ];
 
 export interface Feature {

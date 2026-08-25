@@ -1,3 +1,5 @@
+import EpisodeTag from "@/presentation/components/ui/EpisodeTag";
+
 interface OpeningCrawlProps {
   episode?: string;
   title: string;
@@ -8,13 +10,9 @@ interface OpeningCrawlProps {
 // opera. Genérico de propósito — quem chama passa o conteúdo.
 export default function OpeningCrawl({ episode, title, lines }: OpeningCrawlProps) {
   return (
-    <div className="relative h-[70vh] overflow-hidden [perspective:350px]">
+    <div className="relative h-[80vh] overflow-hidden [perspective:350px]">
       <div className="absolute inset-x-0 bottom-0 origin-bottom animate-crawl text-center [transform-style:preserve-3d]">
-        {episode && (
-          <p className="mb-4 font-display text-sm tracking-[0.3em] text-holo-gold">
-            {episode}
-          </p>
-        )}
+        {episode && <EpisodeTag>{episode}</EpisodeTag>}
         <h2 className="mb-8 font-display text-3xl font-bold uppercase tracking-wide text-holo-gold md:text-5xl">
           {title}
         </h2>
