@@ -119,18 +119,8 @@ export interface PowerTeaser {
   description: string;
 }
 
-// Prévia dos powers da loja do app — catálogo completo em desenvolvimento.
+// Prévia dos powers menores da loja do app — catálogo completo em desenvolvimento.
 export const POWER_TEASERS: PowerTeaser[] = [
-  {
-    name: "Angel",
-    rarity: "épico",
-    description: "Pacote com 10 modelos de asas e auréola, batendo do seu lado no chat.",
-  },
-  {
-    name: "Devil",
-    rarity: "épico",
-    description: "10 modelos de chifres e aura sombria — pra quem prefere o outro lado da galáxia.",
-  },
   {
     name: "Namegrad",
     rarity: "comum",
@@ -140,5 +130,42 @@ export const POWER_TEASERS: PowerTeaser[] = [
     name: "Invisible",
     rarity: "épico",
     description: "Some da lista de membros e continua vendo tudo — ninguém sabe que você tá online.",
+  },
+];
+
+export type PowerAccent = "gold" | "pink";
+
+export interface AngelDevilPower {
+  emoji: string;
+  name: string;
+  tagline: string;
+  description: string;
+  price: number;
+  models: string[];
+  accent: PowerAccent;
+}
+
+// Os dois powers de peão da loja — o par mais visível do catálogo, cada um
+// com 10 modelos no mesmo pacote. Dados vêm do catálogo real do app.
+export const ANGEL_DEVIL_POWERS: AngelDevilPower[] = [
+  {
+    emoji: "👼",
+    name: "Angel",
+    tagline: "O lado da luz",
+    description:
+      "Pacote com 10 modelos de asas e auréola batendo do seu lado no chat — do clássico penas brancas ao anjo mecânico de circuitos azuis.",
+    price: 800,
+    models: ["Anjo Clássico", "Arcanjo", "Anjo Fênix"],
+    accent: "gold",
+  },
+  {
+    emoji: "😈",
+    name: "Devil",
+    tagline: "O lado sombrio",
+    description:
+      "10 modelos de chifres e aura sombria — de asas de morcego clássicas ao arquidemônio, o mais raro do pacote.",
+    price: 800,
+    models: ["Diabinho Clássico", "Arquidemônio", "Demônio Real"],
+    accent: "pink",
   },
 ];
