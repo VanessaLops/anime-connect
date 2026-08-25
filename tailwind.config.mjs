@@ -40,7 +40,7 @@ const config = {
       },
       animation: {
         twinkle: "twinkle 3s ease-in-out infinite",
-        crawl: "crawl 22s linear infinite",
+        crawl: "crawl 26s linear infinite",
         "fade-up": "fade-up 0.6s ease-out both",
       },
     },

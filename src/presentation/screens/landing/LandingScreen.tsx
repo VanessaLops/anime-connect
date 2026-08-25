@@ -7,8 +7,8 @@ import Systems from "@/presentation/screens/landing/sections/Systems";
 export default function LandingScreen() {
   return (
     <main className="min-h-screen bg-background">
-      <Hero />
       <CrawlSection />
+      <Hero />
       <Systems />
       <FleetRanks />
       <BetaFooter />

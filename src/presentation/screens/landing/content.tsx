@@ -4,6 +4,7 @@ export const CRAWL_LINES: string[] = [
   "Havia um tempo em que cada fã de anime era uma estrela sozinha: brilhando em algoritmos diferentes, em feeds diferentes, sem se ver.",
   "O silêncio entre essas estrelas crescia. Comunidades fragmentadas, conversas perdidas em mil aplicativos — uma galáxia sem constelação.",
   "Mas um sinal foi enviado através do vazio. Uma frota está se formando para reunir essas estrelas soltas numa única galáxia conectada.",
+  "Quem sobe de patente na frota não ganha só um título — desbloqueia powers: asas de anjo brilhando ao lado do nome, ou a aura sombria de quem escolheu o outro lado da galáxia.",
   "É o primeiro sinal da beta galaxy — antes da grande jornada, antes da v1. A tripulação está sendo recrutada agora.",
 ];
 
@@ -108,4 +109,36 @@ export const FLEET_RANKS: string[] = [
   "Comandante",
   "Almirante",
   "Lenda da Galáxia",
+];
+
+export type PowerRarity = "comum" | "raro" | "épico" | "lendário";
+
+export interface PowerTeaser {
+  name: string;
+  rarity: PowerRarity;
+  description: string;
+}
+
+// Prévia dos powers da loja do app — catálogo completo em desenvolvimento.
+export const POWER_TEASERS: PowerTeaser[] = [
+  {
+    name: "Angel",
+    rarity: "épico",
+    description: "Pacote com 10 modelos de asas e auréola, batendo do seu lado no chat.",
+  },
+  {
+    name: "Devil",
+    rarity: "épico",
+    description: "10 modelos de chifres e aura sombria — pra quem prefere o outro lado da galáxia.",
+  },
+  {
+    name: "Namegrad",
+    rarity: "comum",
+    description: "Seu nome corre em gradiente, letra a letra, por uma paleta de 6 cores.",
+  },
+  {
+    name: "Invisible",
+    rarity: "épico",
+    description: "Some da lista de membros e continua vendo tudo — ninguém sabe que você tá online.",
+  },
 ];
