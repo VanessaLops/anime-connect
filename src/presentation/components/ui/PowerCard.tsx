@@ -1,26 +1,18 @@
-import type { PowerRarity } from "@/presentation/screens/landing/content";
+import PowerName from "@/presentation/components/powers/PowerName";
+import HexFrame from "@/presentation/components/ui/HexFrame";
+import RarityTag from "@/presentation/components/ui/RarityTag";
+import type { PowerTeaser } from "@/presentation/screens/landing/content";
 
-interface PowerCardProps {
-  name: string;
-  rarity: PowerRarity;
-  description: string;
-}
-
-const RARITY_STYLES: Record<PowerRarity, string> = {
-  comum: "text-gray-300",
-  raro: "text-anime-cyan",
-  épico: "text-anime-purple",
-  lendário: "text-holo-gold",
-};
-
-export default function PowerCard({ name, rarity, description }: PowerCardProps) {
+export default function PowerCard({ name, rarity, description, nameEffect }: PowerTeaser) {
   return (
-    <div className="rounded-xl border border-white/10 bg-white/5 p-4 text-left backdrop-blur">
-      <p className="font-display text-sm font-bold uppercase tracking-wide">
-        <span className={RARITY_STYLES[rarity]}>{name}</span>{" "}
-        <span className="text-gray-500">· {rarity}</span>
-      </p>
-      <p className="mt-1 text-sm text-gray-400">{description}</p>
-    </div>
+    <HexFrame as="li" className="p-4 text-left">
+      <div className="flex items-center justify-between gap-3">
+        <p className="font-display text-sm font-bold uppercase tracking-wide text-hex-gold-light">
+          {nameEffect ? <PowerName name={name} effect={nameEffect} /> : name}
+        </p>
+        <RarityTag rarity={rarity} />
+      </div>
+      <p className="mt-2 text-sm text-hex-gold-light/60">{description}</p>
+    </HexFrame>
   );
 }

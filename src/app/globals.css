@@ -5,8 +5,8 @@
 @tailwind utilities;
 
 :root {
-  --background: #050505;
-  --foreground: #ededed;
+  --background: #010a13;
+  --foreground: #f0e6d2;
 }
 
 @theme inline {
@@ -26,10 +26,32 @@ body {
   color: var(--foreground);
 }
 
+/* Animações decorativas: com reduced-motion tudo fica na pose final/parada
+   (ver `still` em AngelWings/Mascot). */
+@media (prefers-reduced-motion: reduce) {
+  .animate-wing-left,
+  .animate-wing-right,
+  .animate-halo-float,
+  .animate-mascot-bob,
+  .animate-mascot-breathe,
+  .animate-blink,
+  .animate-namegrad,
+  .animate-namewave,
+  .animate-nameglow,
+  .animate-planet-spin,
+  .animate-intro,
+  .animate-logo-in,
+  .animate-planet-rise,
+  .animate-nebula-drift,
+  .animate-fade-up {
+    animation: none;
+  }
+}
+
 ::-webkit-scrollbar {
   width: 6px;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.3);
+  background: rgba(200, 170, 110, 0.45);
   border-radius: 10px;
 }

@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
+import { Cinzel, Inter } from "next/font/google";
 import "./globals.css";
-import "@fontsource/orbitron";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_TITLE, SITE_URL } from "@/core/seo";
 
 export const metadata: Metadata = {
@@ -54,9 +54,19 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#050505",
+  themeColor: "#010A13",
   colorScheme: "dark",
 };
+
+// Cinzel (serifada de inscrição) nos títulos, Inter no texto — o par
+// display/body do tema hextech. Expostas como variáveis pro Tailwind.
+const displayFont = Cinzel({
+  subsets: ["latin"],
+  weight: ["400", "700", "900"],
+  variable: "--font-display",
+  display: "swap",
+});
+const bodyFont = Inter({ subsets: ["latin"], variable: "--font-body", display: "swap" });
 
 const ORGANIZATION_JSON_LD = {
   "@context": "https://schema.org",
@@ -69,8 +79,8 @@ const ORGANIZATION_JSON_LD = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR" className="scroll-smooth">
-      <body className="font-sans antialiased selection:bg-anime-pink selection:text-white">
+    <html lang="pt-BR" className={`scroll-smooth ${displayFont.variable} ${bodyFont.variable}`}>
+      <body className="font-sans antialiased selection:bg-hex-gold selection:text-hex-navy">
         {children}
         <script
           type="application/ld+json"

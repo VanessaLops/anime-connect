@@ -30,9 +30,13 @@ Só existe a landing hoje: `src/app/page.tsx` →
 `presentation/screens/landing/LandingScreen.tsx`. É conteúdo real (não
 mais placeholder), tema "beta galaxy" — a ideia central do produto é
 "AnimeConnect é uma galáxia conectada", com estética inspirada em space
-opera (starfield, crawl de abertura, patentes em vez de "níveis"). Sem
-`domain/`/`data/` porque é tela estática sem regra de negócio — só
-`presentation/components/ui/` (`Starfield`, `OpeningCrawl`, `FeatureCard`).
+opera (starfield, planetas, crawl de abertura, patentes em vez de
+"níveis") e acabamento visual de cliente de jogo estilo LoL (paleta
+"hextech" dourado/azul-marinho, Cinzel nos títulos, molduras com cantos
+ornamentados). Sem `domain/`/`data/` porque é tela estática sem regra de
+negócio — só `presentation/components/ui/` (`HexFrame`, `HexButton`,
+`SectionHeading`, `Planet`, `Starfield`, `OpeningCrawl`…) e
+`presentation/components/powers/` (asas Angel/Devil, efeitos de nome).
 
 **v3 é a versão da arquitetura do site, não do produto.** O app em si
 ainda não foi publicado em lugar nenhum — está em beta, amadurecendo rumo
