@@ -3,6 +3,13 @@ import type { NameEffect } from "@/presentation/components/powers/PowerName";
 import type { AngelVariant, PowerFamily } from "@/presentation/components/powers/angelVariants";
 import type { PowerRarity } from "@/presentation/components/ui/RarityTag";
 
+// APK do beta pra Android. `dl=1` faz o Dropbox baixar direto em vez de
+// abrir a página de preview.
+export const APK_DOWNLOAD_URL =
+  "https://www.dropbox.com/scl/fi/pd81z6i8mx1r5wcu2an9r/AnimeConnect-1.apk?rlkey=0lqz8ngnynmmiy5hhgri7xynq&dl=1";
+export const APK_DOWNLOAD_LABEL = "Baixar para Android";
+export const APK_DOWNLOAD_NOTE = "Beta · APK para Android · ~96 MB";
+
 export const CRAWL_LINES: string[] = [
   "Havia um tempo em que cada fã de anime era uma estrela sozinha: brilhando em algoritmos diferentes, em feeds diferentes, sem se ver.",
   "O silêncio entre essas estrelas crescia. Comunidades fragmentadas, conversas perdidas em mil aplicativos — uma galáxia sem constelação.",

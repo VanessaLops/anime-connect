@@ -3,6 +3,11 @@ import HexButton from "@/presentation/components/ui/HexButton";
 import Ornament from "@/presentation/components/ui/Ornament";
 import Planet from "@/presentation/components/ui/Planet";
 import Starfield from "@/presentation/components/ui/Starfield";
+import {
+  APK_DOWNLOAD_LABEL,
+  APK_DOWNLOAD_NOTE,
+  APK_DOWNLOAD_URL,
+} from "@/presentation/screens/landing/content";
 
 // Linha do tempo da abertura (ms): a frase azul acende, o logo entra
 // enquanto ela recua, e o resto sobe depois do logo assentar.
@@ -76,14 +81,14 @@ export default function Hero() {
           </p>
         </div>
 
-        <div
-          className="mt-10 flex animate-fade-up flex-col gap-4 sm:flex-row"
-          style={delay(ACTIONS_DELAY_MS)}
-        >
-          <HexButton href="#sistemas">Junte-se à frota</HexButton>
-          <HexButton href="#abertura" variant="ghost">
-            Ver a abertura
-          </HexButton>
+        <div className="mt-10 flex animate-fade-up flex-col items-center" style={delay(ACTIONS_DELAY_MS)}>
+          <div className="flex flex-col gap-4 sm:flex-row">
+            <HexButton href={APK_DOWNLOAD_URL}>{APK_DOWNLOAD_LABEL}</HexButton>
+            <HexButton href="#abertura" variant="ghost">
+              Ver a abertura
+            </HexButton>
+          </div>
+          <p className="mt-4 text-xs text-hex-gold-light/50">{APK_DOWNLOAD_NOTE}</p>
         </div>
       </div>
     </section>
