@@ -1,4 +1,7 @@
 import type { ReactNode } from "react";
+import type { NameEffect } from "@/presentation/components/powers/PowerName";
+import type { AngelVariant, PowerFamily } from "@/presentation/components/powers/angelVariants";
+import type { PowerRarity } from "@/presentation/components/ui/RarityTag";
 
 export const CRAWL_LINES: string[] = [
   "Havia um tempo em que cada fã de anime era uma estrela sozinha: brilhando em algoritmos diferentes, em feeds diferentes, sem se ver.",
@@ -111,12 +114,12 @@ export const FLEET_RANKS: string[] = [
   "Lenda da Galáxia",
 ];
 
-export type PowerRarity = "comum" | "raro" | "épico" | "lendário";
-
 export interface PowerTeaser {
   name: string;
   rarity: PowerRarity;
   description: string;
+  /** Efeito aplicado ao próprio nome do card, quando o power é de nome. */
+  nameEffect?: NameEffect;
 }
 
 // Prévia dos powers menores da loja do app — catálogo completo em desenvolvimento.
@@ -125,6 +128,7 @@ export const POWER_TEASERS: PowerTeaser[] = [
     name: "Namegrad",
     rarity: "comum",
     description: "Seu nome corre em gradiente, letra a letra, por uma paleta de 6 cores.",
+    nameEffect: "grad",
   },
   {
     name: "Invisible",
@@ -136,36 +140,40 @@ export const POWER_TEASERS: PowerTeaser[] = [
 export type PowerAccent = "gold" | "pink";
 
 export interface AngelDevilPower {
-  emoji: string;
+  family: PowerFamily;
   name: string;
   tagline: string;
   description: string;
+  rarity: PowerRarity;
   price: number;
-  models: string[];
+  /** Modelo animado em destaque no card. */
+  showcase: AngelVariant;
   accent: PowerAccent;
 }
 
 // Os dois powers de peão da loja — o par mais visível do catálogo, cada um
-// com 10 modelos no mesmo pacote. Dados vêm do catálogo real do app.
+// com 10 modelos no mesmo pacote (ver angelVariants.ts).
 export const ANGEL_DEVIL_POWERS: AngelDevilPower[] = [
   {
-    emoji: "👼",
+    family: "angel",
     name: "Angel",
     tagline: "O lado da luz",
     description:
-      "Pacote com 10 modelos de asas e auréola batendo do seu lado no chat — do clássico penas brancas ao anjo mecânico de circuitos azuis.",
+      "Asas e auréola batendo do seu lado no chat — do clássico penas brancas ao anjo mecânico de circuitos azuis.",
+    rarity: "épico",
     price: 800,
-    models: ["Anjo Clássico", "Arcanjo", "Anjo Fênix"],
+    showcase: "archangel",
     accent: "gold",
   },
   {
-    emoji: "😈",
+    family: "devil",
     name: "Devil",
     tagline: "O lado sombrio",
     description:
-      "10 modelos de chifres e aura sombria — de asas de morcego clássicas ao arquidemônio, o mais raro do pacote.",
+      "Chifres e aura sombria — de asas de morcego clássicas ao arquidemônio, o mais raro do pacote.",
+    rarity: "épico",
     price: 800,
-    models: ["Diabinho Clássico", "Arquidemônio", "Demônio Real"],
+    showcase: "d-arch",
     accent: "pink",
   },
 ];

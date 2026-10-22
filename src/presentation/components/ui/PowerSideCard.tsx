@@ -1,60 +1,64 @@
-import type { PowerAccent } from "@/presentation/screens/landing/content";
+import AngelWings from "@/presentation/components/powers/AngelWings";
+import { variantsOf } from "@/presentation/components/powers/angelVariants";
+import HexFrame from "@/presentation/components/ui/HexFrame";
+import RarityTag from "@/presentation/components/ui/RarityTag";
+import type { AngelDevilPower, PowerAccent } from "@/presentation/screens/landing/content";
 
-interface PowerSideCardProps {
-  emoji: string;
-  name: string;
-  tagline: string;
-  description: string;
-  price: number;
-  models: string[];
-  accent: PowerAccent;
-}
+// Tamanho do mascote (px) no destaque e nas miniaturas da galeria.
+const SHOWCASE_SIZE = 56;
+const THUMB_SIZE = 18;
 
-const ACCENT_STYLES: Record<PowerAccent, { border: string; text: string; chip: string }> = {
-  gold: {
-    border: "border-holo-gold/30 hover:border-holo-gold/60",
-    text: "text-holo-gold",
-    chip: "border-holo-gold/30 bg-holo-gold/10 text-holo-gold",
-  },
-  pink: {
-    border: "border-anime-pink/30 hover:border-anime-pink/60",
-    text: "text-anime-pink",
-    chip: "border-anime-pink/30 bg-anime-pink/10 text-anime-pink",
-  },
+const ACCENT_STYLES: Record<PowerAccent, { text: string; glow: string }> = {
+  gold: { text: "text-hex-gold", glow: "from-hex-gold/20" },
+  pink: { text: "text-anime-pink", glow: "from-anime-pink/20" },
 };
 
 export default function PowerSideCard({
-  emoji,
+  family,
   name,
   tagline,
   description,
+  rarity,
   price,
-  models,
+  showcase,
   accent,
-}: PowerSideCardProps) {
+}: AngelDevilPower) {
   const styles = ACCENT_STYLES[accent];
+  const models = variantsOf(family);
+
   return (
-    <div
-      className={`rounded-2xl border bg-white/5 p-6 text-left backdrop-blur transition ${styles.border}`}
-    >
-      <span className="text-4xl" aria-hidden="true">
-        {emoji}
-      </span>
-      <h4 className={`mt-3 font-display text-2xl font-bold uppercase tracking-wide ${styles.text}`}>
-        {name}
-      </h4>
-      <p className={`mt-1 font-display text-xs uppercase tracking-[0.2em] ${styles.text}`}>
-        {tagline}
-      </p>
-      <p className="mt-3 text-sm text-gray-400">{description}</p>
-      <div className="mt-4 flex flex-wrap gap-2">
-        {models.map((model) => (
-          <span key={model} className={`rounded-full border px-3 py-1 text-xs ${styles.chip}`}>
-            {model}
-          </span>
-        ))}
+    <HexFrame as="article" className="text-left">
+      <div className={`flex justify-center bg-gradient-to-b ${styles.glow} to-transparent pb-2 pt-6`}>
+        <AngelWings variant={showcase} size={SHOWCASE_SIZE} />
       </div>
-      <p className="mt-4 text-xs text-gray-500">épico · {price} moedas · 10 modelos no pacote</p>
-    </div>
+
+      <div className="p-6 pt-2">
+        <div className="flex items-center justify-between gap-3">
+          <h4 className={`font-display text-2xl font-bold uppercase tracking-wide ${styles.text}`}>
+            {name}
+          </h4>
+          <RarityTag rarity={rarity} />
+        </div>
+        <p className={`mt-1 font-display text-xs uppercase tracking-[0.2em] ${styles.text}`}>
+          {tagline}
+        </p>
+        <p className="mt-3 text-sm leading-relaxed text-hex-gold-light/60">{description}</p>
+
+        <ul
+          className="mt-5 grid grid-cols-5 gap-y-2 border-t border-hex-gold-dark/40 pt-4"
+          aria-label={`Os ${models.length} modelos do pacote ${name}`}
+        >
+          {models.map((model) => (
+            <li key={model.id} className="flex justify-center" title={model.label}>
+              <AngelWings variant={model.id} size={THUMB_SIZE} still />
+            </li>
+          ))}
+        </ul>
+
+        <p className="mt-4 text-xs text-hex-gold-light/50">
+          {price} moedas · {models.length} modelos no pacote
+        </p>
+      </div>
+    </HexFrame>
   );
 }

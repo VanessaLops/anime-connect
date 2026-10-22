@@ -31,7 +31,8 @@ daqui.
 Notas do estado atual do projeto:
 
 - `components/ui/` já tem os primeiros componentes reais: `Starfield`,
-  `OpeningCrawl`, `FeatureCard` e `RankBadge`, usados pela landing. O antigo
+  `OpeningCrawl`, `FeatureCard`, `RankBadge`, `HexFrame`, `HexButton`,
+  `SectionHeading` e `Planet`, usados pela landing. O antigo
   `src/components/ui/` (arquitetura pré-v3) foi removido — tudo daqui pra
   frente nasce direto no padrão novo.
 - `screens/landing/` é a primeira screen no padrão, com conteúdo real (tema
