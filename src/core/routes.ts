@@ -3,3 +3,4 @@
 export const HOME_PATH = "/";
 export const PRIVACY_PATH = "/privacidade";
 export const TERMS_PATH = "/termos";
+export const ACCOUNT_DELETION_PATH = "/excluir-conta";

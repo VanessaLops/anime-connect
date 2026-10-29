@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { PRIVACY_PATH, TERMS_PATH } from "@/core/routes";
+import { ACCOUNT_DELETION_PATH, PRIVACY_PATH, TERMS_PATH } from "@/core/routes";
 import { SITE_URL } from "@/core/seo";
 
 export default function sitemap(): MetadataRoute.Sitemap {
@@ -10,7 +10,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "weekly",
       priority: 1,
     },
-    ...[PRIVACY_PATH, TERMS_PATH].map((path) => ({
+    ...[PRIVACY_PATH, TERMS_PATH, ACCOUNT_DELETION_PATH].map((path) => ({
       url: `${SITE_URL}${path}`,
       lastModified: new Date(),
       changeFrequency: "yearly" as const,

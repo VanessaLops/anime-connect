@@ -1,4 +1,4 @@
-import { PRIVACY_PATH, TERMS_PATH } from "@/core/routes";
+import { ACCOUNT_DELETION_PATH, PRIVACY_PATH, TERMS_PATH } from "@/core/routes";
 
 // TODO: trocar por um e-mail do domínio de produção assim que ele existir
 // (mesma pendência do SITE_URL em core/seo.ts).
@@ -6,7 +6,7 @@ export const LEGAL_CONTACT_EMAIL = "contato@animeconnect.app";
 
 // Data exibida no topo dos dois documentos — atualizar sempre que o texto
 // de qualquer um deles mudar.
-const LAST_UPDATED = "25 de outubro de 2026";
+const LAST_UPDATED = "29 de outubro de 2026";
 
 export interface LegalSection {
   /** Âncora usada no sumário (`#id`). */
@@ -110,7 +110,7 @@ export const PRIVACY_POLICY: LegalDocument = {
         "Pedir a anonimização, o bloqueio ou a exclusão de dados desnecessários.",
         "Pedir a portabilidade dos seus dados.",
         "Revogar o consentimento e saber as consequências disso.",
-        "Excluir sua conta e os dados vinculados a ela.",
+        "Excluir sua conta e os dados vinculados a ela — o passo a passo está na página Excluir Conta, linkada no rodapé do site.",
       ],
     },
     {
@@ -233,8 +233,79 @@ export const TERMS_OF_USE: LegalDocument = {
   ],
 };
 
-/** O outro documento, pro link cruzado no rodapé da página legal. */
+// Mesmo prazo citado na seção "Por quanto tempo guardamos" da política.
+const DELETION_DEADLINE_DAYS = 30;
+
+export const ACCOUNT_DELETION_EMAIL_SUBJECT = "Solicitação de exclusão de conta";
+export const ACCOUNT_DELETION_EMAIL_BODY = [
+  "Olá, equipe AnimeConnect.",
+  "",
+  "Quero excluir minha conta e os dados vinculados a ela.",
+  "",
+  "E-mail da conta:",
+  "Nome de usuário:",
+].join("\n");
+
+export const ACCOUNT_DELETION: LegalDocument = {
+  path: ACCOUNT_DELETION_PATH,
+  eyebrow: "Deixar a Frota",
+  title: "Excluir Conta",
+  summary:
+    "Como pedir a exclusão da sua conta do AnimeConnect e o que acontece com os seus dados depois disso.",
+  lastUpdated: LAST_UPDATED,
+  sections: [
+    {
+      id: "como-solicitar",
+      title: "1. Como solicitar",
+      paragraphs: [
+        "Você pode pedir a exclusão a qualquer momento, mesmo sem o app instalado:",
+      ],
+      items: [
+        "Envie um e-mail para o endereço de contato no fim desta página (ou use o botão acima), de preferência a partir do mesmo e-mail cadastrado na conta.",
+        "Informe o e-mail da conta e o seu nome de usuário.",
+        "Se o pedido vier de outro e-mail, podemos pedir uma confirmação extra pra garantir que a conta é mesmo sua.",
+        "Você recebe uma resposta confirmando o pedido e, depois, a conclusão da exclusão.",
+      ],
+    },
+    {
+      id: "dados-excluidos",
+      title: "2. O que é excluído",
+      paragraphs: [
+        `Em até ${DELETION_DEADLINE_DAYS} dias após a confirmação do pedido, apagamos ou anonimizamos:`,
+      ],
+      items: [
+        "Dados de conta: nome de usuário, e-mail, senha, foto e descrição de perfil.",
+        "Conteúdo que você criou: mensagens, publicações, comentários e participação em comunidades e grupos.",
+        "Dados de progresso: patente, experiência, powers e itens virtuais.",
+        "Dados de uso e identificadores do dispositivo vinculados à conta.",
+      ],
+    },
+    {
+      id: "dados-mantidos",
+      title: "3. O que pode ser mantido",
+      paragraphs: [
+        "Alguns dados só são guardados quando a lei exige, e apenas pelo prazo necessário:",
+      ],
+      items: [
+        "Registros de acesso ao aplicativo (data, hora e IP), mantidos por 6 meses conforme o Marco Civil da Internet.",
+        "Informações necessárias pra cumprir obrigação legal, ordem judicial ou pra investigar fraude e abuso já denunciados.",
+        "Dados estatísticos totalmente anonimizados, que não identificam mais você.",
+      ],
+    },
+    {
+      id: "importante",
+      title: "4. Antes de excluir",
+      paragraphs: [
+        "A exclusão é definitiva: depois de concluída, não dá pra recuperar a conta, o progresso nem os powers. Se quiser só dar um tempo, basta sair da conta ou desinstalar o app — a conta continua guardada.",
+        "Mensagens que você enviou em conversas com outras pessoas deixam de ser associadas ao seu perfil.",
+      ],
+    },
+  ],
+};
+
+/** Documento linkado no "Veja também" do rodapé de cada página legal. */
 export const LEGAL_COUNTERPART: Record<string, LegalDocument> = {
   [PRIVACY_PATH]: TERMS_OF_USE,
   [TERMS_PATH]: PRIVACY_POLICY,
+  [ACCOUNT_DELETION_PATH]: PRIVACY_POLICY,
 };

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { HOME_PATH } from "@/core/routes";
 import HexFrame from "@/presentation/components/ui/HexFrame";
 import SectionHeading from "@/presentation/components/ui/SectionHeading";
@@ -17,10 +18,12 @@ const LINK_STYLE =
 
 interface LegalScreenProps {
   document: LegalDocument;
+  /** Bloco de ação opcional exibido antes do texto (ex.: CTA de exclusão de conta). */
+  children?: ReactNode;
 }
 
 /** Layout compartilhado da Política de Privacidade e dos Termos de Uso. */
-export default function LegalScreen({ document }: LegalScreenProps) {
+export default function LegalScreen({ document, children }: LegalScreenProps) {
   const counterpart = LEGAL_COUNTERPART[document.path];
 
   return (
@@ -49,6 +52,7 @@ export default function LegalScreen({ document }: LegalScreenProps) {
       </section>
 
       <div className="mx-auto max-w-3xl px-6 pb-20">
+        {children && <div className="mb-10">{children}</div>}
         <HexFrame as="article" highlight className="px-5 py-8 md:px-10 md:py-12">
           <nav aria-label="Sumário" className="border-b border-hex-gold-dark/40 pb-8">
             <p className="font-display text-xs font-bold uppercase tracking-[0.3em] text-hex-gold">
