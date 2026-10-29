@@ -1,4 +1,9 @@
-import { ACCOUNT_DELETION_PATH, PRIVACY_PATH, TERMS_PATH } from "@/core/routes";
+import {
+  ACCOUNT_DELETION_PATH,
+  CHILD_SAFETY_PATH,
+  PRIVACY_PATH,
+  TERMS_PATH,
+} from "@/core/routes";
 
 // TODO: trocar por um e-mail do domínio de produção assim que ele existir
 // (mesma pendência do SITE_URL em core/seo.ts).
@@ -172,7 +177,7 @@ export const TERMS_OF_USE: LegalDocument = {
       paragraphs: ["Para manter a galáxia um lugar bom pra todo mundo, é proibido:"],
       items: [
         "Assediar, ameaçar, discriminar ou incitar ódio contra qualquer pessoa ou grupo.",
-        "Publicar conteúdo sexual envolvendo menores, conteúdo sexual explícito sem sinalização adequada, violência gráfica ou qualquer material ilegal.",
+        "Publicar qualquer conteúdo que sexualize menores (veja a página Segurança Infantil, linkada no rodapé do site), conteúdo sexual explícito sem sinalização adequada, violência gráfica ou qualquer material ilegal.",
         "Compartilhar dados pessoais de terceiros sem autorização.",
         "Enviar spam, golpes, links maliciosos ou se passar por outra pessoa ou pela equipe do AnimeConnect.",
         "Compartilhar links ou arquivos que violem direitos autorais, incluindo episódios e mangás pirateados.",
@@ -303,9 +308,121 @@ export const ACCOUNT_DELETION: LegalDocument = {
   ],
 };
 
+export const CHILD_SAFETY_REPORT_SUBJECT = "Denúncia de segurança infantil";
+
+export interface ExternalReportChannel {
+  name: string;
+  description: string;
+  href: string;
+  linkLabel: string;
+}
+
+// Canais oficiais fora do app — denúncia de crime não depende só da gente.
+export const CHILD_SAFETY_EXTERNAL_CHANNELS: ExternalReportChannel[] = [
+  {
+    name: "SaferNet Brasil",
+    description: "Central nacional de denúncias de crimes contra direitos humanos na internet.",
+    href: "https://new.safernet.org.br/denuncie",
+    linkLabel: "new.safernet.org.br/denuncie",
+  },
+  {
+    name: "Disque 100",
+    description: "Canal do governo federal para violações de direitos de crianças e adolescentes. Gratuito, 24 horas.",
+    href: "tel:100",
+    linkLabel: "Ligar 100",
+  },
+  {
+    name: "NCMEC CyberTipline",
+    description: "Para denúncias fora do Brasil (National Center for Missing & Exploited Children, EUA).",
+    href: "https://report.cybertip.org",
+    linkLabel: "report.cybertip.org",
+  },
+];
+
+export const CHILD_SAFETY: LegalDocument = {
+  path: CHILD_SAFETY_PATH,
+  eyebrow: "Escudo da Frota",
+  title: "Segurança Infantil",
+  summary:
+    "Os padrões do AnimeConnect contra o abuso e a exploração sexual infantil (CSAE): o que é proibido, como prevenimos, como denunciar e o que fazemos com cada denúncia.",
+  lastUpdated: LAST_UPDATED,
+  sections: [
+    {
+      id: "tolerancia-zero",
+      title: "1. Tolerância zero",
+      paragraphs: [
+        "O AnimeConnect tem tolerância zero com abuso e exploração sexual infantil (CSAE) e com material de abuso sexual infantil (CSAM). Isso vale para perfis, mensagens privadas, grupos, comunidades, imagens, links e qualquer outro espaço do app.",
+        "Por ser uma comunidade de anime, deixamos claro: personagens desenhados, animados ou gerados por IA que sejam ou aparentem ser menores de idade também estão cobertos por esta política, independentemente da idade “oficial” atribuída ao personagem.",
+      ],
+    },
+    {
+      id: "proibido",
+      title: "2. O que é proibido",
+      paragraphs: ["É proibido, sem exceção:"],
+      items: [
+        "Publicar, enviar, pedir, armazenar ou divulgar qualquer material que mostre ou sexualize menores de 18 anos, real, desenhado, editado ou gerado por IA.",
+        "Aliciar menores (grooming): criar vínculo com uma criança ou adolescente com intenção sexual, inclusive levando a conversa para outros apps.",
+        "Pedir fotos, vídeos ou encontros de cunho sexual a menores, ou chantagear alguém com imagens íntimas (sextorsão).",
+        "Promover, normalizar ou dar instruções sobre abuso sexual infantil, tráfico ou exploração de menores.",
+        "Compartilhar links, grupos ou contatos que levem a esse tipo de conteúdo.",
+      ],
+    },
+    {
+      id: "prevencao",
+      title: "3. Como prevenimos",
+      paragraphs: [],
+      items: [
+        "Idade mínima de 13 anos para criar conta, com autorização de um responsável para menores de 18.",
+        "Moderação de conteúdo e de contas denunciadas, com prioridade máxima para casos envolvendo menores.",
+        "Ferramentas no app para bloquear e denunciar perfis, mensagens e publicações.",
+        "Revisão contínua destes padrões e das ferramentas de segurança conforme o app evolui.",
+      ],
+    },
+    {
+      id: "como-denunciar",
+      title: "4. Como denunciar",
+      paragraphs: [
+        "Se você encontrar algo que viole esta política, denuncie mesmo sem ter certeza — nós avaliamos cada caso:",
+      ],
+      items: [
+        "Pelo app, usando a opção de denúncia no perfil, na mensagem ou na publicação.",
+        "Por e-mail, pelo endereço de contato no fim desta página (ou pelo botão acima). Não anexe o material ilegal: envie o nome de usuário, o link ou a descrição de onde ele está.",
+        "Pelos canais oficiais listados acima, como a SaferNet Brasil e o Disque 100.",
+        "Se uma criança estiver em perigo imediato, ligue 190 (Polícia Militar) antes de qualquer outra coisa.",
+      ],
+    },
+    {
+      id: "o-que-fazemos",
+      title: "5. O que fazemos com a denúncia",
+      paragraphs: ["Quando confirmamos uma violação:"],
+      items: [
+        "Removemos o conteúdo imediatamente.",
+        "Banimos a conta de forma permanente, sem direito a nova conta.",
+        "Preservamos as evidências e comunicamos o caso às autoridades competentes, como a Polícia Federal e o Ministério Público, conforme a lei.",
+        "Cooperamos com investigações e atendemos ordens judiciais.",
+      ],
+    },
+    {
+      id: "conformidade-legal",
+      title: "6. Conformidade legal",
+      paragraphs: [
+        "Seguimos o Estatuto da Criança e do Adolescente (Lei nº 8.069/1990), que tipifica como crime produzir, vender, divulgar, possuir e simular material de abuso sexual infantil e aliciar crianças pela internet, além do Marco Civil da Internet (Lei nº 12.965/2014), da LGPD e das políticas do Google Play para segurança infantil.",
+      ],
+    },
+    {
+      id: "ponto-de-contato",
+      title: "7. Ponto de contato",
+      paragraphs: [
+        "A equipe do AnimeConnect mantém um ponto de contato dedicado à segurança infantil, responsável por receber denúncias e responder a autoridades sobre nossas práticas de prevenção ao CSAM. O endereço está no fim desta página.",
+      ],
+    },
+  ],
+};
+
 /** Documento linkado no "Veja também" do rodapé de cada página legal. */
 export const LEGAL_COUNTERPART: Record<string, LegalDocument> = {
   [PRIVACY_PATH]: TERMS_OF_USE,
   [TERMS_PATH]: PRIVACY_POLICY,
   [ACCOUNT_DELETION_PATH]: PRIVACY_POLICY,
+  [CHILD_SAFETY_PATH]: TERMS_OF_USE,
 };
