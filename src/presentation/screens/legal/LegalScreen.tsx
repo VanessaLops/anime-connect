@@ -13,7 +13,7 @@ import {
 const STARFIELD_SEED = 21;
 const CONTACT_SECTION_ID = "contato";
 
-const LINK_STYLE =
+export const LEGAL_LINK_STYLE =
   "text-hex-blue underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hex-blue";
 
 interface LegalScreenProps {
@@ -22,7 +22,7 @@ interface LegalScreenProps {
   children?: ReactNode;
 }
 
-/** Layout compartilhado da Política de Privacidade e dos Termos de Uso. */
+/** Layout compartilhado das páginas legais (privacidade, termos, exclusão de conta…). */
 export default function LegalScreen({ document, children }: LegalScreenProps) {
   const counterpart = LEGAL_COUNTERPART[document.path];
 
@@ -33,7 +33,7 @@ export default function LegalScreen({ document, children }: LegalScreenProps) {
         <div className="relative mx-auto max-w-3xl">
           <Link
             href={HOME_PATH}
-            className={`font-display text-xs font-bold uppercase tracking-[0.3em] ${LINK_STYLE}`}
+            className={`font-display text-xs font-bold uppercase tracking-[0.3em] ${LEGAL_LINK_STYLE}`}
           >
             ← Voltar à galáxia
           </Link>
@@ -61,7 +61,7 @@ export default function LegalScreen({ document, children }: LegalScreenProps) {
             <ol className="mt-4 grid gap-2 text-sm sm:grid-cols-2">
               {document.sections.map((section) => (
                 <li key={section.id}>
-                  <a href={`#${section.id}`} className={LINK_STYLE}>
+                  <a href={`#${section.id}`} className={LEGAL_LINK_STYLE}>
                     {section.title}
                   </a>
                 </li>
@@ -104,7 +104,7 @@ export default function LegalScreen({ document, children }: LegalScreenProps) {
             </h2>
             <p className="mt-3 leading-relaxed text-hex-gold-light/80">
               Dúvidas, pedidos sobre seus dados ou denúncias: escreva para{" "}
-              <a href={`mailto:${LEGAL_CONTACT_EMAIL}`} className={LINK_STYLE}>
+              <a href={`mailto:${LEGAL_CONTACT_EMAIL}`} className={LEGAL_LINK_STYLE}>
                 {LEGAL_CONTACT_EMAIL}
               </a>
               . Respondemos em até 15 dias.
@@ -114,7 +114,7 @@ export default function LegalScreen({ document, children }: LegalScreenProps) {
 
         <p className="mt-10 text-center text-sm text-hex-gold-light/60">
           Veja também:{" "}
-          <Link href={counterpart.path} className={LINK_STYLE}>
+          <Link href={counterpart.path} className={LEGAL_LINK_STYLE}>
             {counterpart.title}
           </Link>
         </p>

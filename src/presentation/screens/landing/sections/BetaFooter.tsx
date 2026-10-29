@@ -1,5 +1,10 @@
 import Link from "next/link";
-import { ACCOUNT_DELETION_PATH, PRIVACY_PATH, TERMS_PATH } from "@/core/routes";
+import {
+  ACCOUNT_DELETION_PATH,
+  CHILD_SAFETY_PATH,
+  PRIVACY_PATH,
+  TERMS_PATH,
+} from "@/core/routes";
 import HexButton from "@/presentation/components/ui/HexButton";
 import Ornament from "@/presentation/components/ui/Ornament";
 import {
@@ -11,6 +16,7 @@ import {
 const LEGAL_LINKS = [
   { href: PRIVACY_PATH, label: "Política de Privacidade" },
   { href: TERMS_PATH, label: "Termos de Uso" },
+  { href: CHILD_SAFETY_PATH, label: "Segurança Infantil" },
   { href: ACCOUNT_DELETION_PATH, label: "Excluir Conta" },
 ];
 
